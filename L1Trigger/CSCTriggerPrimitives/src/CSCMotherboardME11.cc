@@ -224,11 +224,11 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   clctV1b = clct->run(compdc); // run cathodeLCT in ME1/b
   clctV1a = clct1a->run(compdc); // run cathodeLCT in ME1/a
 
-  bool runCSCTriggerWithGEMs(false);
+  bool gemGeometryAvailable(false);
   if (gem_g != nullptr) {
     if (infoV >= 0) edm::LogInfo("L1CSCTPEmulatorSetupInfo")
       << "+++ run() called for GEM-CSC integrated trigger! +++ \n";
-    runCSCTriggerWithGEMs = true;
+    gemGeometryAvailable = true;
   }
 
   //int n_clct_a=0, n_clct_b=0;
@@ -707,13 +707,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
   } // end of ALCT-centric matching
 
-
-
-
-
   // possibly use some discrimination from GEMs
-  if (gemPads != nullptr &&  do_gem_matching) matchGEMPads(gemPads);
-
+  if (gemPads != nullptr and gemGeometryAvailable and do_gem_matching) matchGEMPads(gemPads);
 
   // reduction of nLCTs per each BX
   for (int bx = 0; bx < MAX_LCT_BINS; bx++)
