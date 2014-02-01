@@ -206,8 +206,21 @@ class CSCMotherboardME11 : public CSCMotherboard
   // Drop low quality stubs if they don't have GEMs
   bool dropLowQualityALCTsNoGEMs_;
 
+  // use only the central BX for GEM matching
   bool centralBXonlyGEM_;
   
+  // build LCT from ALCT and GEM
+  bool buildLCTfromALCTandGEM_;
+
+  // build LCT from CLCT and GEM
+  bool buildLCTfromCLCTandGEM_;
+
+  // LCT ghostbusting
+  bool callBillMurray_;
+
+  // correct LCT timing with GEMs
+  bool correctLCTtimingWithGEM_;
+
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
   std::map<int,int> wireGroupGEMRollMap_;
