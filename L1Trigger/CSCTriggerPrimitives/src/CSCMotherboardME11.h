@@ -17,8 +17,9 @@
 #include <DataFormats/GEMDigi/interface/GEMCSCPadDigiCollection.h>
 
 class CSCGeometry;
-class GEMGeometry;
 class CSCChamber;
+class GEMGeometry;
+class GEMSuperChamber;
 
 class CSCMotherboardME11 : public CSCMotherboard
 {
@@ -108,10 +109,13 @@ class CSCMotherboardME11 : public CSCMotherboard
 		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
 		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me);
 
-  void correlateLCTs(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
-		     GEMCSCPadDigi pad1, GEMCSCPadDigi pad2,
-		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
+  void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
+			GEMCSCPadDigi gemPad,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
+  void correlateLCTsGEM(CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
+			GEMCSCPadDigi gemPad,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
   void matchGEMPads(const GEMCSCPadDigiCollection* gemPads);
 
@@ -119,12 +123,25 @@ class CSCMotherboardME11 : public CSCMotherboard
 			    GEMCSCPadDigiCollection& out_co_pads,
 			    int deltaPad = 0, int deltaRoll = 0);
 
+  void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
+
   void createGEMPadLUT(std::map<int,std::pair<double,double> >& gemPadLUT);
 
   int assignGEMRoll(double eta);
   int assignGEMStrip(double phi);
 
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct,
+					const GEMCSCPadDigi& gem); 
+  
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct,
+					const GEMCSCPadDigi& gem); 
 
+  unsigned int encodePatternGEM(const int ptn, const int highPt);
+  unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const GEMCSCPadDigi& gem);
+  unsigned int findQualityGEM(const CSCCLCTDigi& cLCT, const GEMCSCPadDigi& gem);
+
+  void printGEMTriggerPads(int minBX, int maxBx, bool iscopad = false);
+  
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
   std::vector<CSCCLCTDigi> clctV1a;
@@ -186,7 +203,12 @@ class CSCMotherboardME11 : public CSCMotherboard
   // Drop low quality stubs if they don't have GEMs
   bool dropLowQualityALCTsNoGEMs_;
 
+  bool centralBXonlyGEM_;
+
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
+
+  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > pads_;
+  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > coPads_;
 };
 #endif
