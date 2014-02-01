@@ -117,7 +117,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 			GEMCSCPadDigi gemPad,
 			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
-  void matchGEMPads(const GEMCSCPadDigiCollection* gemPads);
+  void matchGEMPads();
 
   void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, 
 			    GEMCSCPadDigiCollection& out_co_pads,
