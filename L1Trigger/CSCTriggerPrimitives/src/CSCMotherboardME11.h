@@ -117,7 +117,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 			GEMCSCPadDigi gemPad,
 			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
-  void matchGEMPads(const GEMCSCPadDigiCollection* gemPads);
+  void matchGEMPads();
 
   void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, 
 			    GEMCSCPadDigiCollection& out_co_pads,
@@ -141,6 +141,9 @@ class CSCMotherboardME11 : public CSCMotherboard
   unsigned int findQualityGEM(const CSCCLCTDigi& cLCT, const GEMCSCPadDigi& gem);
 
   void printGEMTriggerPads(int minBX, int maxBx, bool iscopad = false);
+
+  bool isPadInOverlap(int roll);
+  
   
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
@@ -204,10 +207,12 @@ class CSCMotherboardME11 : public CSCMotherboard
   bool dropLowQualityALCTsNoGEMs_;
 
   bool centralBXonlyGEM_;
-
+  
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
+  std::map<int,int> wireGroupGEMRollMap_;
 
+  // map< bx , vector<gemid, pad> >
   std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > pads_;
   std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > coPads_;
 };
