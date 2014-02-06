@@ -1390,7 +1390,7 @@ CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCALCTDigi& alc
   unsigned int pattern = 0;//encodePatternGEM(cLCT.getPattern(), cLCT.getStripType());
   
   // LCT quality number -  dummy quality
-  unsigned int quality = 5;//findQualityGEM(alct, gem);
+  unsigned int quality = 1;//findQualityGEM(alct, gem);
   
   // Bunch crossing: get it from cathode LCT if anode LCT is not there.
   int bx = alct.isValid() ? alct.getBX() : gem.bx();
