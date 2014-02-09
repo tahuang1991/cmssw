@@ -1384,16 +1384,16 @@ int CSCMotherboardME11::assignGEMStrip(double cscStripPhi)
 }
 
 CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCALCTDigi& alct,
-							  const GEMCSCPadDigi& gem) 
+                                                          const GEMCSCPadDigi& gem) 
 {
   // CLCT pattern number - no pattern
-  unsigned int pattern = 0;//encodePatternGEM(cLCT.getPattern(), cLCT.getStripType());
+  unsigned int pattern = 0;
   
   // LCT quality number -  dummy quality
-  unsigned int quality = 1;//findQualityGEM(alct, gem);
+  unsigned int quality = 1;
   
-  // Bunch crossing: get it from cathode LCT if anode LCT is not there.
-  int bx = alct.isValid() ? alct.getBX() : gem.bx();
+  // Bunch crossing
+  int bx = alct.getBX();
   
   // construct correlated LCT; temporarily assign track number of 0.
   return CSCCorrelatedLCTDigi(0, 1, quality, alct.getKeyWG(), 0, pattern, 0, bx, 0, 0, 0, theTrigChamber);
