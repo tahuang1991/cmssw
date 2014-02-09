@@ -17,8 +17,9 @@
 #include <DataFormats/GEMDigi/interface/GEMCSCPadDigiCollection.h>
 
 class CSCGeometry;
-class GEMGeometry;
 class CSCChamber;
+class GEMGeometry;
+class GEMSuperChamber;
 
 class CSCMotherboardME11 : public CSCMotherboard
 {
@@ -40,6 +41,11 @@ class CSCMotherboardME11 : public CSCMotherboard
 	   const CSCComparatorDigiCollection* compdc,
 	   const GEMCSCPadDigiCollection* gemPads);
 
+  /** New algorithm that is based on a voting principle **/
+  void runNewAlgorithm(const CSCWireDigiCollection* wiredc,
+		       const CSCComparatorDigiCollection* compdc,
+		       const GEMCSCPadDigiCollection* gemPads);
+  
   /** Returns vectors of found correlated LCTs in ME1a and ME1b, if any. */
   std::vector<CSCCorrelatedLCTDigi> getLCTs1a();
   std::vector<CSCCorrelatedLCTDigi> getLCTs1b();
@@ -77,7 +83,7 @@ class CSCMotherboardME11 : public CSCMotherboard
   static const int lut_wg_vs_hs_me1b[48][2];
   static const int lut_wg_vs_hs_me1a[48][2];
   static const int lut_wg_vs_hs_me1ag[48][2];
-  static const double lut_pt_vs_dphi_gemcsc[6][3];
+  static const double lut_pt_vs_dphi_gemcsc[7][3];
 
   /** SLHC: special configuration parameters for ME11 treatment. */
   bool smartME1aME1b, disableME1a, gangedME1a;
@@ -103,8 +109,42 @@ class CSCMotherboardME11 : public CSCMotherboard
 		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
 		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me);
 
-  void matchGEMPads(const GEMCSCPadDigiCollection* gemPads);
+  void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
+			GEMCSCPadDigi gemPad,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
+  void correlateLCTsGEM(CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
+			GEMCSCPadDigi gemPad,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
+
+  void matchGEMPads();
+
+  void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, 
+			    GEMCSCPadDigiCollection& out_co_pads,
+			    int deltaPad = 0, int deltaRoll = 0);
+
+  void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
+
+  void createGEMPadLUT(std::map<int,std::pair<double,double> >& gemPadLUT);
+
+  int assignGEMRoll(double eta);
+  int assignGEMStrip(double phi);
+
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct,
+					const GEMCSCPadDigi& gem); 
+  
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct,
+					const GEMCSCPadDigi& gem); 
+
+  unsigned int encodePatternGEM(const int ptn, const int highPt);
+  unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const GEMCSCPadDigi& gem);
+  unsigned int findQualityGEM(const CSCCLCTDigi& cLCT, const GEMCSCPadDigi& gem);
+
+  void printGEMTriggerPads(int minBX, int maxBx, bool iscopad = false);
+
+  bool isPadInOverlap(int roll);
+  
+  
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
   std::vector<CSCCLCTDigi> clctV1a;
@@ -127,6 +167,9 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   /** maximum lcts per BX in ME11: 2, 3, 4 or 999 */
   unsigned int max_me11_lcts;
+
+  /// Do GEM matching?
+  bool do_gem_matching;
 
   /// GEM matching dphi and deta
   double gem_match_delta_phi_odd;
@@ -151,5 +194,39 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   // debug gem matching
   bool debug_gem_matching;
+
+  bool print_available_pads;
+
+  // max BX for window to perform matching
+  int maxPadDeltaBX_;
+  
+  // Drop low quality stubs if they don't have GEMs
+  bool dropLowQualityCLCTsNoGEMs_;
+
+  // Drop low quality stubs if they don't have GEMs
+  bool dropLowQualityALCTsNoGEMs_;
+
+  // use only the central BX for GEM matching
+  bool centralBXonlyGEM_;
+  
+  // build LCT from ALCT and GEM
+  bool buildLCTfromALCTandGEM_;
+
+  // build LCT from CLCT and GEM
+  bool buildLCTfromCLCTandGEM_;
+
+  // LCT ghostbusting
+  bool callBillMurray_;
+
+  // correct LCT timing with GEMs
+  bool correctLCTtimingWithGEM_;
+
+  // map of roll N to min and max eta
+  std::map<int,std::pair<double,double> > gemPadLUT;
+  std::map<int,int> wireGroupGEMRollMap_;
+
+  // map< bx , vector<gemid, pad> >
+  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > pads_;
+  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > coPads_;
 };
 #endif
