@@ -38,7 +38,7 @@ def customise_Digi(process):
     process=outputCustoms(process)
     return process
 
-def customise_L1Emulator(process, ptdphi):
+def customise_L1Emulator(process, ptdphi = 'pt0'):
     process.simCscTriggerPrimitiveDigis.gemPadProducer =  cms.untracked.InputTag("simMuonGEMCSCPadDigis","")
     process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
