@@ -84,6 +84,8 @@ class CSCMotherboardME11 : public CSCMotherboard
   static const int lut_wg_vs_hs_me1a[48][2];
   static const int lut_wg_vs_hs_me1ag[48][2];
   static const double lut_pt_vs_dphi_gemcsc[7][3];
+  static const double lut_wg_etaMin_etaMax_odd[48][3];
+  static const double lut_wg_etaMin_etaMax_even[48][3];
 
   /** SLHC: special configuration parameters for ME11 treatment. */
   bool smartME1aME1b, disableME1a, gangedME1a;
@@ -212,8 +214,14 @@ class CSCMotherboardME11 : public CSCMotherboard
   // build LCT from ALCT and GEM
   bool buildLCTfromALCTandGEM_;
 
+  // build LCT from ALCT and GEM
+  bool buildLCTfromALCTandGEMinOverlap_;
+
   // build LCT from CLCT and GEM
   bool buildLCTfromCLCTandGEM_;
+
+  // build LCT from CLCT and GEM
+  bool buildLCTfromCLCTandGEMinOverlap_;
 
   // LCT ghostbusting
   bool callBillMurray_;
@@ -223,7 +231,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
-  std::map<int,int> wireGroupGEMRollMap_;
+  std::map<int,std::pair<double,double>> wireGroupGEMRollMap_;
 
   // map< bx , vector<gemid, pad> >
   std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > pads_;
