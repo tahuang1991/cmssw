@@ -17,6 +17,8 @@
 #include <Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h>
 #include <L1Trigger/CSCCommonTrigger/interface/CSCTriggerGeometry.h>
 #include <DataFormats/Math/interface/deltaPhi.h>
+#include <DataFormats/Math/interface/normalizedPhi.h>
+#include <cmath>
 
 // LUT for which ME1/1 wire group can cross which ME1/a halfstrip
 // 1st index: WG number
@@ -221,6 +223,15 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
     pref[m]   = pref[0] + m/2;
   }
 
+  //----------------------------------------------------------------------------------------//
+
+  //       G E M  -  C S C   I N T E G R A T E D   L O C A L   A L G O R I T H M
+
+  //----------------------------------------------------------------------------------------//
+
+  // masterswitch
+  runGEMCSCILT_ = tmbParams.getUntrackedParameter<bool>("runGEMCSCILT", false);
+
   /// Do GEM matching?
   do_gem_matching = tmbParams.getUntrackedParameter<bool>("doGemMatching", true);
   
@@ -272,7 +283,7 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
   buildLCTfromCLCTandGEMinOverlap_ = tmbParams.getUntrackedParameter<bool>("buildLCTfromALCTandGEMinOverlap",false);
 
   // LCT ghostbusting
-  callBillMurray_ = tmbParams.getUntrackedParameter<bool>("callBillMurray",false);
+  doLCTGhostBustingWithGEMs_ = tmbParams.getUntrackedParameter<bool>("doLCTGhostBustingWithGEMs",false);
 
   // correct LCT timing with GEMs
   correctLCTtimingWithGEM_ = tmbParams.getUntrackedParameter<bool>("correctLCTtimingWithGEM",false);
@@ -375,45 +386,66 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   // retrieve CSCChamber geometry                                                                                                                                        
   CSCTriggerGeomManager* geo_manager = CSCTriggerGeometry::get();
   CSCChamber* cscChamber = geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber);
-
-  // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
-  int numberOfWG(cscChamber->layer(1)->geometry()->numberOfWireGroups());
+  const CSCLayerGeometry* layerGeometry = cscChamber->layer(1)->geometry();
   auto csc_id(cscChamber->id());
-  bool isEven(csc_id%2);
-  for (int i = 0; i< numberOfWG; ++i){
-    auto etaMin(isEven ? lut_wg_etaMin_etaMax_even[i][1] : lut_wg_etaMin_etaMax_odd[i][1]); 
-    auto etaMax(isEven ? lut_wg_etaMin_etaMax_even[i][2] : lut_wg_etaMin_etaMax_odd[i][2]); 
-    wireGroupGEMRollMap_[i] = std::make_pair(assignGEMRoll(etaMin), assignGEMRoll(etaMax));
+  const bool isEven(csc_id%2);
+    
+  // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
+  bool constructWGLUT(true);
+  if (constructWGLUT){
+    int numberOfWG(layerGeometry->numberOfWireGroups());
+    for (int i = 0; i< numberOfWG; ++i){
+      auto etaMin(isEven ? lut_wg_etaMin_etaMax_even[i][1] : lut_wg_etaMin_etaMax_odd[i][1]); 
+      auto etaMax(isEven ? lut_wg_etaMin_etaMax_even[i][2] : lut_wg_etaMin_etaMax_odd[i][2]); 
+      wireGroupGEMRollMap_[i] = std::make_pair(assignGEMRoll(etaMin), assignGEMRoll(etaMax));
+    }
   }
 
-  // print-out
-  for(auto it = wireGroupGEMRollMap_.begin(); it != wireGroupGEMRollMap_.end(); it++) {
-    std::cout << "WG "<< it->first << " GEM pads " << (it->second).first << " " << (it->second).second << std::endl;
+  // debug
+  bool debugWGLUT(false);
+  if (debugWGLUT){
+    for(auto it = wireGroupGEMRollMap_.begin(); it != wireGroupGEMRollMap_.end(); it++) {
+      std::cout << "WG "<< it->first << " GEM pads " << (it->second).first << " " << (it->second).second << std::endl;
+    }
   }
 
-  /*
-  // loop on all strips to create a LUT <csc half-strip,gem strip>
   std::map<int,int> halfStripGEMStripME1bMap;
-  halfStripGEMStripME1bMap.clear();
-  int numberOfStrips(cscChamber->layer(1)->geometry()->numberOfStrips());
-  for (int i = 0; i< numberOfStrips; ++i){
-    auto phi(cscChamber->layer(1)->geometry()->stripAngle(i));
-    halfStripGEMStripME1bMap[i] = assignGEMStrip(phi);
+  bool constructStripLUT(true);
+  if (constructStripLUT){
+    halfStripGEMStripME1bMap.clear();
+    // loop on all strips to create a LUT <csc half-strip,gem strip>
+    int numberOfStrips(layerGeometry->numberOfStrips());
+    for (int i = 0; i< numberOfStrips; ++i){
+      auto phi_c(layerGeometry->stripAngle(layerGeometry->numberOfStrips()/2.));
+      auto phi(layerGeometry->stripAngle(i) - phi_c);
+      std::cout << "phi " << phi << std::endl;
+      halfStripGEMStripME1bMap[i] = assignGEMStrip(phi, isEven);
+    }
   }
-  */
+
+  std::cout << "detId " << csc_id << std::endl;
+  for(auto it = halfStripGEMStripME1bMap.begin(); it != halfStripGEMStripME1bMap.end(); it++) {
+    std::cout << "CSC strip "<< it->first << " GEM strip " << it->second << std::endl;
+  }
   
   // build coincidence pads
   std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
-  buildCoincidencePads(gemPads, *pCoPads);
+  bool buildGEMCSCCoPads(true);
+  if (buildGEMCSCCoPads){
+    buildCoincidencePads(gemPads, *pCoPads);
+  }
 
   // retrieve pads and copads in a certain BX window for this CSC 
   const int region((theEndcap == 1) ? 1: -1);
   GEMDetId schDetId(region, 1, theStation, 1, csc_id.chamber(), 0);
-  retrieveGEMPads(gemPads, schDetId);
-  retrieveGEMPads(pCoPads.get(), schDetId, true);
+  bool wrapPads(true);
+  if (wrapPads){
+    retrieveGEMPads(gemPads, schDetId);
+    retrieveGEMPads(pCoPads.get(), schDetId, true);
+  }
 
   const bool hasPads(pads_.size()!=0);
-  const bool hasCoPads(coPads_.size()!=0);
+  const bool hasCoPads(hasPads and coPads_.size()!=0);
 
   // CLCT-centric CLCT-to-ALCT matching
   if (clct_to_alct) for (int bx_clct = 0; bx_clct < CSCCathodeLCTProcessor::MAX_CLCT_BINS; bx_clct++) {
@@ -1079,7 +1111,6 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
        (clct_trig_enable  and secondCLCT.isValid()) or
        (match_trig_enable and secondALCT.isValid() and secondCLCT.isValid())))
   {
-    std::cout << "CALL BILL MURRAY!!!" << std::endl;
     lct2 = constructLCTs(secondALCT, secondCLCT);
     lct2.setTrknmb(2);
   }
@@ -1195,6 +1226,22 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
   };
 
   if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
+
+  // first check the special case (11,22) where we have an ambiguity
+  if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][0] == 22)){
+    
+    
+//      lct1 = constructLCTs(bestALCT, bestCLCT);
+//      lct1.setTrknmb(1);
+//      lct2 = constructLCTs(secondALCT, secondCLCT);
+//      lct2.setTrknmb(2);
+  
+//      lct1 = constructLCTs(bestALCT, secondCLCT);
+//      lct1.setTrknmb(1);
+//      lct2 = constructLCTs(secondLCT, bestCLCT);
+//      lct2.setTrknmb(2);
+    return;
+  }
 
   switch (lut[code][0]) {
     case 11:
@@ -1471,23 +1518,30 @@ int CSCMotherboardME11::assignGEMRoll(double eta)
 }
 
 
-int CSCMotherboardME11::assignGEMStrip(double cscStripPhi)
+int CSCMotherboardME11::assignGEMStrip(double cscStripPhi, bool isEven)
 {
+  //  std::cout << "cscStripPhi " <<cscStripPhi << std::endl;
   // pick any roll to calculate the strip phi
-  auto roll(gem_g->etaPartition(GEMDetId(1,1,1,1,1,1)));
-  int nStrips(roll->nstrips());
-  double minDphi = 99;
-  int result = 999;
-  for (int i=0; i < nStrips; ++i) {
-    auto lp(roll->centreOfStrip(i));
-    float gemStripPhi(lp.barePhi());
-    float newMinDphi(abs(deltaPhi(gemStripPhi, cscStripPhi)));    
-    if (newMinDphi < minDphi) {
-      minDphi = newMinDphi;
-      result = i;
-    }
-  }
-  return result;
+   auto roll(gem_g->etaPartition(GEMDetId(1,1,1,1,1,2)));
+   int nPads(roll->npads());
+   double minDphi = 99;
+   int result = 999;
+   for (int i=0; i < nPads; ++i) {
+     auto gemPadPhi(roll->specificPadTopology().stripAngle(i));
+     //      auto lp_c(roll->centreOfPad(48));
+     //     float gemStripPhi(lp.phi());
+     std::cout << i << " " << gemPadPhi << std::endl;
+     float newMinDphi(abs(deltaPhi(gemPadPhi, cscStripPhi)));    
+     std::cout << "newMinDphi " << newMinDphi << std::endl;
+     if (newMinDphi < minDphi) {
+       std::cout << "ok" << std::endl;
+       minDphi = newMinDphi;
+       std::cout << minDphi << " " << newMinDphi << std::endl;
+       result = i;
+     }
+   }
+   //  return std::round(isEven ? cscStripPhi*(-36) : cscStripPhi*36);
+   return result;
 }
 
 CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCALCTDigi& alct,

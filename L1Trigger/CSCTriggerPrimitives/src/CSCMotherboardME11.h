@@ -130,7 +130,7 @@ class CSCMotherboardME11 : public CSCMotherboard
   void createGEMPadLUT(std::map<int,std::pair<double,double> >& gemPadLUT);
 
   int assignGEMRoll(double eta);
-  int assignGEMStrip(double phi);
+  int assignGEMStrip(double phi, bool isEven);
 
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct,
 					const GEMCSCPadDigi& gem); 
@@ -169,6 +169,9 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   /** maximum lcts per BX in ME11: 2, 3, 4 or 999 */
   unsigned int max_me11_lcts;
+
+  /// GEM-CSC integrated local algorithm
+  bool runGEMCSCILT_;
 
   /// Do GEM matching?
   bool do_gem_matching;
@@ -224,7 +227,7 @@ class CSCMotherboardME11 : public CSCMotherboard
   bool buildLCTfromCLCTandGEMinOverlap_;
 
   // LCT ghostbusting
-  bool callBillMurray_;
+  bool doLCTGhostBustingWithGEMs_;
 
   // correct LCT timing with GEMs
   bool correctLCTtimingWithGEM_;
