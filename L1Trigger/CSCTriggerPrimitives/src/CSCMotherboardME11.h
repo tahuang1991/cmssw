@@ -23,6 +23,9 @@ class GEMSuperChamber;
 
 class CSCMotherboardME11 : public CSCMotherboard
 {
+  typedef std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > GEMPads;
+  typedef std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > GEMPadsBX;
+
  public:
   /** Normal constructor. */
   CSCMotherboardME11(unsigned endcap, unsigned station, unsigned sector, 
@@ -108,8 +111,9 @@ class CSCMotherboardME11 : public CSCMotherboard
 		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
   void correlateLCTs(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
-		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
-		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me);
+             		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
+                     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me,
+                     const GEMPadsBX& pads = GEMPadsBX(), const GEMPadsBX& copads = GEMPadsBX());
 
   void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
 			GEMCSCPadDigi gemPad,
@@ -131,6 +135,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   int assignGEMRoll(double eta);
   int assignGEMStrip(double phi, bool isEven);
+  int deltaRollPad(std::pair<int,int> wgPads, int pad);
 
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct,
 					const GEMCSCPadDigi& gem); 
@@ -234,10 +239,10 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
-  std::map<int,std::pair<double,double>> wireGroupGEMRollMap_;
+  std::map<int,std::pair<int,int>> wireGroupGEMRollMap_;
 
   // map< bx , vector<gemid, pad> >
-  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > pads_;
-  std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > coPads_;
+  GEMPads pads_;
+  GEMPads coPads_;
 };
 #endif

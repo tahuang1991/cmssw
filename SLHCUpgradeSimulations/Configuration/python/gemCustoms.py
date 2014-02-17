@@ -56,10 +56,11 @@ def customise_L1Emulator(process, ptdphi):
     }
 
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.printAvailablePads = cms.untracked.bool(False)
-    tmb.dropLowQualityCLCTsNoGEMs = cms.untracked.bool(False)
-    tmb.buildLCTfromALCTandGEMinME1b = cms.untracked.bool(False) 
-    tmb.buildLCTfromALCTandGEMinOverlap = cms.untracked.bool(False) 
+    tmb.printAvailablePads = cms.untracked.bool(True)
+    tmb.dropLowQualityCLCTsNoGEMs = cms.untracked.bool(True)
+    tmb.buildLCTfromALCTandGEMinME1b = cms.untracked.bool(True) 
+    tmb.buildLCTfromALCTandGEMinOverlap = cms.untracked.bool(True)
+    tmb.doLCTGhostBustingWithGEMs = cms.untracked.bool(True)
     tmb.gemMatchDeltaEta = cms.untracked.double(0.08)
     tmb.gemMatchDeltaBX = cms.untracked.int32(1)
     tmb.gemMatchDeltaPhiOdd = cms.untracked.double(dphi_lct_pad98[ptdphi]['odd'])

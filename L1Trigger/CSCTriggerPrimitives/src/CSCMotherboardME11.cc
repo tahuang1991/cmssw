@@ -423,7 +423,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
   }
 
-  bool debugStripLUT(true);
+  bool debugStripLUT(false);
   if (debugStripLUT){
     std::cout << "detId " << csc_id << std::endl;
     for(auto it = halfStripGEMStripME1bMap.begin(); it != halfStripGEMStripME1bMap.end(); it++) {
@@ -1180,7 +1180,7 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
 				       CSCCLCTDigi secondCLCT,
 				       CSCCorrelatedLCTDigi& lct1,
 				       CSCCorrelatedLCTDigi& lct2,
-				       int me)
+               int me, const GEMPadsBX& pads, const GEMPadsBX& copads)
 {
   // assume that always anodeBestValid and cathodeBestValid
   
@@ -1231,8 +1231,45 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
   if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
 
   // first check the special case (11,22) where we have an ambiguity
-  if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][0] == 22)){
-    auto deltaRoll1(std::abs(wireGroupGEMRollMap_[bestALCT.keyWG()], ))
+  const int nPads(pads.size());
+  const int nCoPads(copads.size());
+  const bool hasPads(nPads!=0);
+  //  const bool hasCoPads(nCoPads!=0);
+
+  if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][0] == 22) and hasPads and (me==ME1B)){
+    // calculate deltaRoll for each ALCT-GEM pair
+    // have to find a smarter way to deal with this
+    double deltaRollPads[2][nPads];
+    double deltaRollCoPads[2][nCoPads];
+    std::pair<int,int> p1(wireGroupGEMRollMap_[bestALCT.getKeyWG()]);
+    std::pair<int,int> p2(wireGroupGEMRollMap_[secondALCT.getKeyWG()]);
+    std::cout << "LCT ghostbusting " << std::endl;
+    std::cout << "1st keystrip " << bestCLCT.getKeyStrip() << " " << "2nd keystrip " << secondCLCT.getKeyStrip() << std::endl;
+    for (int i = 0; i < nPads; ++i){
+      auto gemPad((pads.at(i)).second);
+      deltaRollPads[0][i] = deltaRollPad(p1, gemPad->pad());
+      deltaRollPads[1][i] = deltaRollPad(p2, gemPad->pad());
+      std::cout << "pads i " << i << " " << deltaRollPads[0][i] << " " << deltaRollPads[1][i] << std::endl;
+    }
+    for (int i = 0; i < nCoPads; ++i){ 
+      auto gemPad((copads.at(i)).second);
+      deltaRollCoPads[0][i] = deltaRollPad(p1, gemPad->pad());
+      deltaRollCoPads[1][i] = deltaRollPad(p2, gemPad->pad());
+      std::cout << "copads i " << i << " " << deltaRollCoPads[0][i] << " " << deltaRollCoPads[1][i] << std::endl;
+    }
+    
+//     double deltaStripPads[2][nPads];
+//     double deltaStripCoPads[2][nCoPads];
+    
+
+    //     for (int i = 0; i < nPads; ++i){
+//       deltaStripPads[0][i] = auto deltaStrip(std::abs(halfStripGEMStripME1bMap[i][bestCLCT.getKeyWG()], pads.at(i).second.pad()));
+//       deltaStripPads[1][i] = auto deltaStrip(std::abs(wireGroupGEMStripMap_[secondALCT.getKeyWG()], pads.at(i).second.pad()));
+//     }
+//     for (int i = 0; i < nCoPads; ++i){
+//       deltaStripCoPads[0][i] = auto deltaStrip(std::abs(wireGroupGEMStripMap_[bestALCT.getKeyWG()], copads.at(i).second.pad()));
+//       deltaRollCoPads[1][i] = auto deltaRoll(std::abs(wireGroupGEMRollMap_[secondALCT.getKeyWG()], copads.at(i).second.pad()));
+//     }
     
 //      lct1 = constructLCTs(bestALCT, bestCLCT);
 //      lct1.setTrknmb(1);
@@ -1665,3 +1702,10 @@ bool CSCMotherboardME11::isPadInOverlap(int roll)
   // pad was not in overlap
   return false;
 }
+
+
+int CSCMotherboardME11::deltaRollPad(std::pair<int,int> padsWG, int pad)
+{
+  return std::min(std::abs(padsWG.first - pad),std::abs(padsWG.second - pad));
+}
+
