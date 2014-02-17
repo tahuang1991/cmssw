@@ -388,7 +388,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   CSCChamber* cscChamber = geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber);
   const CSCLayerGeometry* layerGeometry = cscChamber->layer(1)->geometry();
   auto csc_id(cscChamber->id());
-  const bool isEven(csc_id%2);
+  const bool isEven(csc_id%2==0);
     
   // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
   bool constructWGLUT(true);
@@ -418,16 +418,19 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     for (int i = 0; i< numberOfStrips; ++i){
       auto phi_c(layerGeometry->stripAngle(layerGeometry->numberOfStrips()/2.));
       auto phi(layerGeometry->stripAngle(i) - phi_c);
-      std::cout << "phi " << phi << std::endl;
+      //      std::cout << i << " " << phi << std::endl;
       halfStripGEMStripME1bMap[i] = assignGEMStrip(phi, isEven);
     }
   }
 
-  std::cout << "detId " << csc_id << std::endl;
-  for(auto it = halfStripGEMStripME1bMap.begin(); it != halfStripGEMStripME1bMap.end(); it++) {
-    std::cout << "CSC strip "<< it->first << " GEM strip " << it->second << std::endl;
+  bool debugStripLUT(true);
+  if (debugStripLUT){
+    std::cout << "detId " << csc_id << std::endl;
+    for(auto it = halfStripGEMStripME1bMap.begin(); it != halfStripGEMStripME1bMap.end(); it++) {
+      std::cout << "CSC strip "<< it->first << " GEM pad " << it->second << std::endl;
+    }
   }
-  
+
   // build coincidence pads
   std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
   bool buildGEMCSCCoPads(true);
@@ -1229,7 +1232,7 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
 
   // first check the special case (11,22) where we have an ambiguity
   if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][0] == 22)){
-    
+    auto deltaRoll1(std::abs(wireGroupGEMRollMap_[bestALCT.keyWG()], ))
     
 //      lct1 = constructLCTs(bestALCT, bestCLCT);
 //      lct1.setTrknmb(1);
@@ -1520,28 +1523,20 @@ int CSCMotherboardME11::assignGEMRoll(double eta)
 
 int CSCMotherboardME11::assignGEMStrip(double cscStripPhi, bool isEven)
 {
-  //  std::cout << "cscStripPhi " <<cscStripPhi << std::endl;
-  // pick any roll to calculate the strip phi
-   auto roll(gem_g->etaPartition(GEMDetId(1,1,1,1,1,2)));
-   int nPads(roll->npads());
-   double minDphi = 99;
-   int result = 999;
-   for (int i=0; i < nPads; ++i) {
-     auto gemPadPhi(roll->specificPadTopology().stripAngle(i));
-     //      auto lp_c(roll->centreOfPad(48));
-     //     float gemStripPhi(lp.phi());
-     std::cout << i << " " << gemPadPhi << std::endl;
-     float newMinDphi(abs(deltaPhi(gemPadPhi, cscStripPhi)));    
-     std::cout << "newMinDphi " << newMinDphi << std::endl;
-     if (newMinDphi < minDphi) {
-       std::cout << "ok" << std::endl;
-       minDphi = newMinDphi;
-       std::cout << minDphi << " " << newMinDphi << std::endl;
-       result = i;
-     }
-   }
-   //  return std::round(isEven ? cscStripPhi*(-36) : cscStripPhi*36);
-   return result;
+  const int chamber( isEven ? 2 : 1);
+  auto roll(gem_g->etaPartition(GEMDetId(1,1,1,1,chamber,2)));
+  int nPads(roll->npads());
+  double minDphi = 99;
+  int result = 999;
+  for (int i=0; i < nPads; ++i) {
+    auto gemPadPhi(roll->specificPadTopology().stripAngle(i));
+    double newMinDphi(std::abs(deltaPhi(gemPadPhi,cscStripPhi)));    
+    if (newMinDphi < minDphi) {
+      minDphi = newMinDphi;
+      result = i;
+    }
+  }
+  return result;
 }
 
 CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCALCTDigi& alct,
