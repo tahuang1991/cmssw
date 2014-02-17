@@ -42,7 +42,7 @@ def customise_L1Emulator(process, ptdphi = 'pt0'):
     process.simCscTriggerPrimitiveDigis.gemPadProducer =  cms.untracked.InputTag("simMuonGEMCSCPadDigis","")
     process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
-    process.simCscTriggerPrimitiveDigis.clctSLHC.clctNplanesHitPattern = 3
+    process.simCscTriggerPrimitiveDigis.clctSLHC.clctNplanesHitPattern = 4
 
     dphi_lct_pad98 = {
         'pt0'  : { 'odd' :  2.00000000 , 'even' :  2.00000000 },
@@ -56,13 +56,16 @@ def customise_L1Emulator(process, ptdphi = 'pt0'):
     }
 
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.printAvailablePads = cms.untracked.bool(False)
+    tmb.printAvailablePads = cms.untracked.bool(True)
     tmb.dropLowQualityCLCTsNoGEMs = cms.untracked.bool(True)
-    tmb.buildLCTfromALCTandGEM = cms.untracked.bool(True) 
+    tmb.buildLCTfromALCTandGEMinME1b = cms.untracked.bool(True) 
+    tmb.buildLCTfromALCTandGEMinOverlap = cms.untracked.bool(True)
+    tmb.doLCTGhostBustingWithGEMs = cms.untracked.bool(True)
     tmb.gemMatchDeltaEta = cms.untracked.double(0.08)
     tmb.gemMatchDeltaBX = cms.untracked.int32(1)
     tmb.gemMatchDeltaPhiOdd = cms.untracked.double(dphi_lct_pad98[ptdphi]['odd'])
     tmb.gemMatchDeltaPhiEven = cms.untracked.double(dphi_lct_pad98[ptdphi]['even'])
+    print tmb.gemMatchDeltaPhiOdd, tmb.gemMatchDeltaPhiEven
     if ptdphi == 'pt0':
         tmb.gemClearNomatchLCTs = cms.untracked.bool(False)
         
