@@ -25,6 +25,8 @@ class CSCMotherboardME11 : public CSCMotherboard
 {
   typedef std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > GEMPads;
   typedef std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > GEMPadsBX;
+  // roll, pad, isCopad?
+  typedef std::vector<std::tuple<unsigned int, const GEMCSCPadDigi*, bool> > GEMPadsBXGeneral;
 
  public:
   /** Normal constructor. */
@@ -130,6 +132,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 			    int deltaPad = 0, int deltaRoll = 0);
 
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
+  void collectGEMPads(const GEMCSCPadDigiCollection* pads, const GEMCSCPadDigiCollection* copads, unsigned id);
 
   void createGEMPadLUT(std::map<int,std::pair<double,double> >& gemPadLUT);
 
@@ -220,16 +223,16 @@ class CSCMotherboardME11 : public CSCMotherboard
   bool centralBXonlyGEM_;
   
   // build LCT from ALCT and GEM
-  bool buildLCTfromALCTandGEM_;
+  bool buildLCTfromALCTandGEM_ME1b_;
 
   // build LCT from ALCT and GEM
-  bool buildLCTfromALCTandGEMinOverlap_;
+  bool buildLCTfromALCTandGEM_overlap_;
 
   // build LCT from CLCT and GEM
-  bool buildLCTfromCLCTandGEM_;
+  bool buildLCTfromCLCTandGEM_ME1b_;
 
   // build LCT from CLCT and GEM
-  bool buildLCTfromCLCTandGEMinOverlap_;
+  bool buildLCTfromCLCTandGEM_overlap_;
 
   // LCT ghostbusting
   bool doLCTGhostBustingWithGEMs_;
