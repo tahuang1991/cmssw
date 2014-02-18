@@ -813,49 +813,52 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
           }
         else {
           if (print_available_pads) std::cout << "++Not a valid CLCT in BX: " << bx_clct << std::endl;
-          // at this point we don't hav a valid CLCT...
-          if (hasCoPads and buildLCTfromALCTandGEM_overlap_) {
-            // need a function to get the best copad for a CLCT/ALCT
-            // now it simply gets the first one in the list 
-            // check if there are any gem copads 
-            auto coPadsInBx(coPads_[bx_alct]);
-            if (coPadsInBx.size()==0){
-              if (print_available_pads) std::cout << "No GEM CoPads for this ALCT BX" << std::endl;
-              continue;
-            }
-            auto firstCoPadInBx((coPadsInBx.at(0)).second);
-            GEMDetId detId(((coPadsInBx.at(0)).first));
-            int rollN(detId.roll());
-            if (isPadInOverlap(rollN)) {
-              ++nSuccesFulGEMMatches;
-              correlateLCTsGEM(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
-                               *firstCoPadInBx, allLCTs1a[bx_alct][0][0], allLCTs1a[bx_alct][0][1]);
-              if (allLCTs1a[bx_alct][0][0].isValid()){
-                if (match_earliest_clct_me11_only) break;
-              }
-            }
-            if (print_available_pads) 
-              std::cout << "Successful ALCT-GEM CoPad match in Me1a: bx_alct = " << bx_alct << std::endl << std::endl;
+          if (buildLCTfromALCTandGEM_overlap_) continue;
+          // Try to build an ME1/a LCT out of an ALCT and a GEM Co-Pad in the overlap region
+          if (10 > alct->bestALCT[bx_alct].getKeyWG() or alct->bestALCT[bx_alct].getKeyWG() > 15) continue;
+          if (!hasCoPads) continue;
+          
+          // find the best matching copad - first one 
+          auto copad(matchingGEMPads(alct->bestALCT[bx_alct], coPads_[bx_alct]).at(0));             
+          if (copad==CSCMotherboardME11::GEMPadBX()) {
+            if (print_available_pads) std::cout << "++No valid GEM CoPads in BX: " << bx_alct << std::endl;
+            continue;
           }
+          if (print_available_pads) std::cout << "++Valid GEM CoPad in BX: " << bx_alct << std::endl;
+         
+          ++nSuccesFulGEMMatches;            
+          correlateLCTsGEM(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+                           *(copad.second), allLCTs1a[bx_alct][0][0], allLCTs1a[bx_alct][0][1]);
+          if (allLCTs1a[bx_alct][0][0].isValid()) {
+            if (match_earliest_clct_me11_only) break;
+          }
+          if (print_available_pads) 
+            std::cout << "Successful ALCT-GEM CoPad match in ME1a: bx_alct = " << bx_alct << std::endl << std::endl;
         }
       }
-      if (nSuccesFulMatches>1){
-        if (print_available_pads) std::cout << "Too many successful ALCT-CLCT matches in Me1a: " << nSuccesFulMatches
-                                            << ", CSCDetId " << cscChamber->id()
-                                            << ", bx_alct = " << bx_alct
-                                            << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
-      }
-      else if (nSuccesFulMatches==1){
-        if (print_available_pads) std::cout << "1 successful ALCT-CLCT match in Me1a: " 
-                                            << " CSCDetId " << cscChamber->id()
-                                            << ", bx_alct = " << bx_alct
-                                            << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
-      }
-      else {
-        if (print_available_pads) std::cout << "Unsuccessful ALCT-CLCT match in Me1a: " 
-                                            << "CSCDetId " << cscChamber->id()
-                                            << ", bx_alct = " << bx_alct
-                                            << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
+      if (print_available_pads) {
+        std::cout << "========================================================================" << std::endl;
+        std::cout << "Summary: " << std::endl;
+        if (nSuccesFulMatches>1)
+          std::cout << "Too many successful ALCT-CLCT matches in ME1a: " << nSuccesFulMatches
+                    << ", CSCDetId " << cscChamber->id()
+                    << ", bx_alct = " << bx_alct
+                    << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
+        else if (nSuccesFulMatches==1)
+          std::cout << "1 successful ALCT-CLCT match in ME1a: " 
+                    << " CSCDetId " << cscChamber->id()
+                    << ", bx_alct = " << bx_alct
+                    << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
+        else if (nSuccesFulGEMMatches==1)
+          std::cout << "1 successful ALCT-GEM match in ME1a: " 
+                    << " CSCDetId " << cscChamber->id()
+                    << ", bx_alct = " << bx_alct
+                    << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
+        else 
+          std::cout << "Unsuccessful ALCT-CLCT match in ME1a: " 
+                    << "CSCDetId " << cscChamber->id()
+                    << ", bx_alct = " << bx_alct
+                    << "; match window: [" << bx_clct_start << "; " << bx_clct_stop << "]" << std::endl;
       }
     }
   } // end of ALCT-centric matching
