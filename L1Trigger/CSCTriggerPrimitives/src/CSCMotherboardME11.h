@@ -15,6 +15,7 @@
 #include <L1Trigger/CSCTriggerPrimitives/src/CSCMotherboard.h>
 #include <DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h>
 #include <DataFormats/GEMDigi/interface/GEMCSCPadDigiCollection.h>
+#include <set>
 
 class CSCGeometry;
 class CSCChamber;
@@ -24,8 +25,8 @@ class GEMSuperChamber;
 class CSCMotherboardME11 : public CSCMotherboard
 {
   typedef std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > GEMPads;
-  typedef std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > GEMPadsBX;
   typedef std::pair<unsigned int, const GEMCSCPadDigi*> GEMPadBX;
+  typedef std::vector<GEMPadBX> GEMPadsBX;
   // roll, pad, isCopad?
   typedef std::vector<std::tuple<unsigned int, const GEMCSCPadDigi*, bool> > GEMPadsBXGeneral;
 
@@ -155,10 +156,6 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   bool isPadInOverlap(int roll);
   
-  GEMPadBX matchingGEMPad(const CSCCLCTDigi& cLCT, const GEMPadsBX& pads = GEMPadsBX());  
-  GEMPadBX matchingGEMPad(const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX());  
-  GEMPadBX matchingGEMPad(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX());  
-
   GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
   GEMPadsBX matchingGEMPads(const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
   GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
@@ -251,6 +248,10 @@ class CSCMotherboardME11 : public CSCMotherboard
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadLUT;
   std::map<int,std::pair<int,int>> wireGroupGEMRollMap_;
+
+  // map of pad to HS
+  std::map<int,int> gemPadToCscHs_;
+  std::map<int,std::pair<int,int>> cscHstoGemPad_;
 
   // map< bx , vector<gemid, pad> >
   GEMPads pads_;
