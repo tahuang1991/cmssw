@@ -25,6 +25,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 {
   typedef std::map<int, std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > > GEMPads;
   typedef std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > GEMPadsBX;
+  typedef std::pair<unsigned int, const GEMCSCPadDigi*> GEMPadBX;
   // roll, pad, isCopad?
   typedef std::vector<std::tuple<unsigned int, const GEMCSCPadDigi*, bool> > GEMPadsBXGeneral;
 
@@ -154,7 +155,14 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   bool isPadInOverlap(int roll);
   
-  
+  GEMPadBX matchingGEMPad(const CSCCLCTDigi& cLCT, const GEMPadsBX& pads = GEMPadsBX());  
+  GEMPadBX matchingGEMPad(const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX());  
+  GEMPadBX matchingGEMPad(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX());  
+
+  GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
+  GEMPadsBX matchingGEMPads(const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
+  GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), bool first = true);  
+
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
   std::vector<CSCCLCTDigi> clctV1a;
