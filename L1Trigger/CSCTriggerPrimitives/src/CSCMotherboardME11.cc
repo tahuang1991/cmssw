@@ -68,6 +68,7 @@ const int CSCMotherboardME11::lut_wg_vs_hs_me1b[48][2] = {
 // 2nd index: bending angle for odd numbered chambers
 // 3rd index: bending angle for even numbered chambers
 const double CSCMotherboardME11::lut_pt_vs_dphi_gemcsc[7][3] = {
+//  {3.,  0.02974150, 0.01970300},
   {5.,  0.02203511, 0.00930056},
   {6 ,  0.0182579 , 0.00790009},
   {10., 0.01066000, 0.00483286},
