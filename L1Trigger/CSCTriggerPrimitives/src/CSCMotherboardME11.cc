@@ -705,7 +705,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
             }
             else {
               if (nFound != 0){
-                if (print_available_pads) std::cout << "\tInfo: low quality CLCT with matching GEM trigger pad" << std::endl;
+                if (print_available_pads) std::cout << "\tInfo: low quality CLCT with " + nFound + " matching GEM trigger pads" << std::endl;
               }
               else {
                 if (print_available_pads) std::cout << "\tWarning: low quality CLCT without matching GEM trigger pad" << std::endl;
@@ -1611,16 +1611,15 @@ CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCALCTDigi& alc
   // Bunch crossing
   int bx = alct.getBX();
   
-  // construct correlated LCT; temporarily assign track number of 0.
-  int trknmb = 0;
-
+  // get keyStrip from LUT
   int keyStrip = gemPadToCscHs_[gem.pad()];
-  // assume very high pt track - gem strip = csc strip
-  return CSCCorrelatedLCTDigi(trknmb, 1, quality, alct.getKeyWG(), keyStrip, pattern, 0, bx, 0, 0, 0, theTrigChamber);
+  
+  // construct correlated LCT; temporarily assign track number of 0.
+  return CSCCorrelatedLCTDigi(0, 1, quality, alct.getKeyWG(), keyStrip, pattern, 0, bx, 0, 0, 0, theTrigChamber);
 }
 
 CSCCorrelatedLCTDigi CSCMotherboardME11::constructLCTsGEM(const CSCCLCTDigi& clct,
-							  const GEMCSCPadDigi& gem) 
+                                                          const GEMCSCPadDigi& gem) 
 {
   // CLCT pattern number - no pattern
   unsigned int pattern = 12;//encodePatternGEM(cLCT.getPattern(), cLCT.getStripType());
@@ -1834,9 +1833,14 @@ CSCMotherboardME11::matchingGEMPads(const CSCCLCTDigi& clct, const CSCALCTDigi& 
 {
   // Fetch the pads matching to ALCTs and CLCTs
   auto padsClct(matchingGEMPads(clct, pads, first));
-  auto padsAlct(matchingGEMPads(clct, pads, first));
+  auto padsAlct(matchingGEMPads(alct, pads, first));
 
-  // Find the overlapping pads
-  
+  // Check if the pads overlap
+  int nOverlaps(0);
+  for (auto p : padsClct){
+    for (auto q: padsAlct){
+      if (p.second == q.second) ++nOverlaps;
+    }
+  }
   return GEMPadsBX();
 }
