@@ -1859,8 +1859,8 @@ CSCMotherboardME11::matchingGEMPads(const CSCCLCTDigi& clct, const GEMPadsBX& pa
   const int lowPad(cscHsToGemPad_[clct.getKeyStrip()].first);
   const int highPad(cscHsToGemPad_[clct.getKeyStrip()].second);
   for (auto p: pads){
-    auto padRoll((p.second)->pad());
-    if (lowPad != padRoll or padRoll != highPad) continue;
+    auto gPad((p.second)->pad());
+    if (lowPad != gPad or gPad != highPad) continue;
     result.push_back(p);
     if (first) return result;
   }
