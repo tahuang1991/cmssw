@@ -15,7 +15,6 @@
 #include <L1Trigger/CSCTriggerPrimitives/src/CSCMotherboard.h>
 #include <DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h>
 #include <DataFormats/GEMDigi/interface/GEMCSCPadDigiCollection.h>
-#include <set>
 
 class CSCGeometry;
 class CSCChamber;
@@ -136,7 +135,7 @@ class CSCMotherboardME11 : public CSCMotherboard
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
   void collectGEMPads(const GEMCSCPadDigiCollection* pads, const GEMCSCPadDigiCollection* copads, unsigned id);
 
-  void createGEMPadLUT();
+  void createGEMPadLUT(bool isEven);
 
   int assignGEMRoll(double eta);
   int deltaRoll(int wg, int roll);
@@ -244,6 +243,12 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   // correct LCT timing with GEMs
   bool correctLCTtimingWithGEM_;
+
+  // send LCT from ALCT-GEM in old dataformat
+  bool useOldLCTDataFormatALCTGEM_;
+
+  // send LCT from CLCT-GEM in old dataformat
+  bool useOldLCTDataFormatCLCTGEM_;
 
   // map of roll N to min and max eta
   std::map<int,std::pair<double,double> > gemPadToEtaLimits_;
