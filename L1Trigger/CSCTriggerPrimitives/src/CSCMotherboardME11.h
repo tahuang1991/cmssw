@@ -15,7 +15,6 @@
 #include <L1Trigger/CSCTriggerPrimitives/src/CSCMotherboard.h>
 #include <DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h>
 #include <DataFormats/GEMDigi/interface/GEMCSCPadDigiCollection.h>
-#include <set>
 
 class CSCGeometry;
 class CSCChamber;
@@ -136,17 +135,17 @@ class CSCMotherboardME11 : public CSCMotherboard
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
   void collectGEMPads(const GEMCSCPadDigiCollection* pads, const GEMCSCPadDigiCollection* copads, unsigned id);
 
-  void createGEMPadLUT(std::map<int,std::pair<double,double> >& gemPadLUT);
+  void createGEMPadLUT(bool isEven);
 
   int assignGEMRoll(double eta);
-  int assignGEMStrip(double phi, bool isEven);
-  int deltaRollPad(std::pair<int,int> wgPads, int pad);
+  int deltaRoll(int wg, int roll);
+  int deltaPad(int hs, int pad);
 
-  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct,
-					const GEMCSCPadDigi& gem); 
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct, const GEMCSCPadDigi& gem,
+                                        bool oldDataFormat = true); 
   
-  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct,
-					const GEMCSCPadDigi& gem); 
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct, const GEMCSCPadDigi& gem,
+                                        bool oldDataFormat = true); 
 
   unsigned int encodePatternGEM(const int ptn, const int highPt);
   unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const GEMCSCPadDigi& gem);
@@ -245,13 +244,19 @@ class CSCMotherboardME11 : public CSCMotherboard
   // correct LCT timing with GEMs
   bool correctLCTtimingWithGEM_;
 
+  // send LCT from ALCT-GEM in old dataformat
+  bool useOldLCTDataFormatALCTGEM_;
+
+  // send LCT from CLCT-GEM in old dataformat
+  bool useOldLCTDataFormatCLCTGEM_;
+
   // map of roll N to min and max eta
-  std::map<int,std::pair<double,double> > gemPadLUT;
-  std::map<int,std::pair<int,int>> wireGroupGEMRollMap_;
+  std::map<int,std::pair<double,double> > gemPadToEtaLimits_;
+  std::map<int,std::pair<int,int>> cscWgToGemRoll_;
 
   // map of pad to HS
   std::map<int,int> gemPadToCscHs_;
-  std::map<int,std::pair<int,int>> cscHstoGemPad_;
+  std::map<int,std::pair<int,int>> cscHsToGemPad_;
 
   // map< bx , vector<gemid, pad> >
   GEMPads pads_;
