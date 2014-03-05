@@ -758,8 +758,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
         }
         else {
           if (print_available_pads) std::cout << "++Not a valid CLCT in BX: " << bx_clct << std::endl;
-          if (buildLCTfromALCTandGEM_ME1b_) continue;
-          if (!hasCoPads) continue;
+          if (not buildLCTfromALCTandGEM_ME1b_) continue;
+          if (not hasCoPads) continue;
           
           // find the best matching copad - first one 
           try {
