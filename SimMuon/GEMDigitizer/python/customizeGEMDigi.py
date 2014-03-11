@@ -107,7 +107,6 @@ def customize_digi_addGEM(process):
         cms.SequencePlaceholder("randomEngineStateProducer")*
         cms.SequencePlaceholder("mix")*
         process.doAllDigi*
-        #process.trackingParticles*
         process.addPileupInfo
     )
     return process
