@@ -338,6 +338,13 @@ void CSCMotherboardME11::clear()
         allLCTs1a[bx][mbx][i].clear();
       }
   }
+  cscWgToGemRoll_.clear();
+
+  gemPadToCscHsME1a_.clear();
+  gemPadToCscHsME1b_.clear();
+
+  cscHsToGemPadME1a_.clear();
+  cscHsToGemPadME1b_.clear();
 }
 
 // Set configuration parameters obtained via EventSetup mechanism.
@@ -420,7 +427,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
     
     // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
-    cscWgToGemRoll_.clear();
     int numberOfWG(keyLayerGeometryME1b->numberOfWireGroups());
     for (int i = 0; i< numberOfWG; ++i){
       auto etaMin(isEven ? lut_wg_etaMin_etaMax_even[i][1] : lut_wg_etaMin_etaMax_odd[i][1]); 
@@ -434,8 +440,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       }
     }
 
-    gemPadToCscHsME1a_.clear();
-    gemPadToCscHsME1b_.clear();
     // pick any roll
     auto randRoll(gemChamber->etaPartition(2));
     const int nGEMPads(randRoll->npads());
@@ -466,8 +470,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       }
     }
 
-    cscHsToGemPadME1a_.clear();
-    cscHsToGemPadME1b_.clear();
     // ME1a
     auto nStripsME1a(keyLayerGeometryME1a->numberOfStrips());
     for (float i = 0; i< nStripsME1a; i = i+0.5){
@@ -477,7 +479,12 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const int HS(i/0.5);
       const bool edge(HS < 4 or HS > 93);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      cscHsToGemPadME1a_[96-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      if (region==-1){
+	cscHsToGemPadME1a_[96-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      }
+      else{
+	cscHsToGemPadME1a_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      }
     }
     // ME1b
     auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
@@ -508,9 +515,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
-    if (runGEMCSCILT_){
-      buildCoincidencePads(gemPads, *pCoPads);
-    }
+    buildCoincidencePads(gemPads, *pCoPads);
+    
     // retrieve pads and copads in a certain BX window for this CSC 
     pads_.clear();
     coPads_.clear();
