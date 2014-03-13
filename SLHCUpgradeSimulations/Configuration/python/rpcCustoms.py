@@ -22,7 +22,7 @@ def customise(process):
 def customise_Digi(process):
     return process
 
-def customise_L1Emulator(process, ptdphi):
+def customise_L1Emulator(process):
     process.simCscTriggerPrimitiveDigis.rpcDigiProducer =  cms.untracked.InputTag("simMuonRPCDigis","")
     process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
