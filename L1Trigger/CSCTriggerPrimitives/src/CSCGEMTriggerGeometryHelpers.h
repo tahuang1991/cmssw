@@ -8,9 +8,9 @@
 #include <DataFormats/Math/interface/deltaPhi.h>
 #include <DataFormats/Math/interface/normalizedPhi.h>
 
-namepace cscgemtriggeom {
+namespace cscgemtriggeom {
 
-static const double CSCGEMTriggerGeometryHelpers::lut_wg_etaMin_etaMax_me11_odd[48][3] = {
+static const double lut_wg_etaMin_etaMax_me11_odd[48][3] = {
 {0, 2.44005, 2.44688},
 {1, 2.38863, 2.45035},
 {2, 2.32742, 2.43077},
@@ -60,7 +60,7 @@ static const double CSCGEMTriggerGeometryHelpers::lut_wg_etaMin_etaMax_me11_odd[
 {46, 1.60151, 1.66297},
 {47, 1.60198, 1.65144} };
 
-static const double CSCGEMTriggerGeometryHelpers::lut_wg_etaMin_etaMax_me11_even[48][3] = {
+static const double lut_wg_etaMin_etaMax_me11_even[48][3] = {
 {0, 2.3917, 2.39853},
 {1, 2.34037, 2.40199},
 {2, 2.27928, 2.38244},
