@@ -446,8 +446,14 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const LocalPoint lpCSCME1b(keyLayerME1b->toLocal(gp));
       const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
       const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
-      gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
-      gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
+      if (region==-1) {
+	gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
+	gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
+      }
+      else { 
+	gemPadToCscHsME1a_[i] = (int) (stripME1a - 0.25)/0.5;
+	gemPadToCscHsME1b_[i] = (int) (stripME1b - 0.25)/0.5;
+     }
     }
     debug = false;
     if (debug){
@@ -482,7 +488,12 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const int HS(i/0.5);
       const bool edge(HS < 5 or HS > 124);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      cscHsToGemPadME1b_[128-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      if (region==-1){
+	cscHsToGemPadME1b_[128-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      }
+      else{
+	cscHsToGemPadME1b_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      }
     }
     debug = false;
     if (debug){
