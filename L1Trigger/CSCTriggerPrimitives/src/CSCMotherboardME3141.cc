@@ -67,4 +67,86 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
   //CSCDetId csc_id(cscChamber->id());
   //const CSCLayer* keyLayer(cscChamber->layer(3));
   //const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
+
+  int used_alct_mask[20];
+  for (int a=0;a<20;++a) used_alct_mask[a]=0;
+  
+  int bx_alct_matched = 0; // bx of last matched ALCT
+  for (int bx_clct = 0; bx_clct < CSCCathodeLCTProcessor::MAX_CLCT_BINS;
+       bx_clct++) {
+    // There should be at least one valid ALCT or CLCT for a
+    // correlated LCT to be formed.  Decision on whether to reject
+    // non-complete LCTs (and if yes of which type) is made further
+    // upstream.
+    if (clct->bestCLCT[bx_clct].isValid()) {
+      // Look for ALCTs within the match-time window.  The window is
+      // centered at the CLCT bx; therefore, we make an assumption
+      // that anode and cathode hits are perfectly synchronized.  This
+      // is always true for MC, but only an approximation when the
+      // data is analyzed (which works fairly good as long as wide
+      // windows are used).  To get rid of this assumption, one would
+      // need to access "full BX" words, which are not readily
+      // available.
+      bool is_matched = false;
+      int bx_alct_start = bx_clct - match_trig_window_size/2;
+      int bx_alct_stop  = bx_clct + match_trig_window_size/2;
+      // Empirical correction to match 2009 collision data (firmware change?)
+      // (but don't do it for SLHC case, assume it would not be there)
+      if (!isSLHC) bx_alct_stop += match_trig_window_size%2;
+      
+      for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++) {
+	if (bx_alct < 0 || bx_alct >= CSCAnodeLCTProcessor::MAX_ALCT_BINS)
+	  continue;
+	// default: do not reuse ALCTs that were used with previous CLCTs
+	if (drop_used_alcts && used_alct_mask[bx_alct]) continue;
+	if (alct->bestALCT[bx_alct].isValid()) {
+	  if (infoV > 1) LogTrace("CSCMotherboard")
+	    << "Successful ALCT-CLCT match: bx_clct = " << bx_clct
+	    << "; match window: [" << bx_alct_start << "; " << bx_alct_stop
+	    << "]; bx_alct = " << bx_alct;
+	  correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+			clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct]);
+	  used_alct_mask[bx_alct] += 1;
+	  is_matched = true;
+	  bx_alct_matched = bx_alct;
+	  break;
+	}
+      }
+      // No ALCT within the match time interval found: report CLCT-only LCT
+      // (use dummy ALCTs).
+      if (!is_matched) {
+	if (infoV > 1) LogTrace("CSCMotherboard")
+	  << "Unsuccessful ALCT-CLCT match (CLCT only): bx_clct = "
+	  << bx_clct << "; match window: [" << bx_alct_start
+	  << "; " << bx_alct_stop << "]";
+	correlateLCTs(alct->bestALCT[bx_clct], alct->secondALCT[bx_clct],
+		      clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct]);
+      }
+    }
+    // No valid CLCTs; attempt to make ALCT-only LCT.  Use only ALCTs
+    // which have zeroth chance to be matched at later cathode times.
+    // (I am not entirely sure this perfectly matches the firmware logic.)
+    // Use dummy CLCTs.
+    else {
+      int bx_alct = bx_clct - match_trig_window_size/2;
+      if (bx_alct >= 0 && bx_alct > bx_alct_matched) {
+	if (alct->bestALCT[bx_alct].isValid()) {
+	  if (infoV > 1) LogTrace("CSCMotherboard")
+	    << "Unsuccessful ALCT-CLCT match (ALCT only): bx_alct = "
+	    << bx_alct;
+	  correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+			clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct]);
+	}
+      }
+    }
+  }
+  
+  if (infoV > 0) {
+    for (int bx = 0; bx < MAX_LCT_BINS; bx++) {
+      if (firstLCT[bx].isValid())
+	LogDebug("CSCMotherboard") << firstLCT[bx];
+      if (secondLCT[bx].isValid())
+	LogDebug("CSCMotherboard") << secondLCT[bx];
+    }
+  }
 }
