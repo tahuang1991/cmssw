@@ -80,6 +80,7 @@ def cust_2023(process):
     process=customise_HcalPhase1(process)
     process=customise_ev_BE5D(process)
     process=customise_gem(process)
+    process=customise_rpc(process)
     process=CustomiseValidation_NoGem_2023(process)
     return process
 
