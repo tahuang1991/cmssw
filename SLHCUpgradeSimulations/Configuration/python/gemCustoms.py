@@ -45,8 +45,24 @@ def customise_L1Emulator(process, ptdphi):
 
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
     tmb.me11ILT = cms.untracked.PSet(
+        runUpgradeME11 = cms.untracked.bool(False)
+        
     )
     tmb.me21ILT = cms.untracked.PSet(
+        runUpgradeME21 = cms.untracked.bool(False)
+        printAvailablePads = cms.untracked.bool(False)
+        gemMatchDeltaEta = cms.untracked.double(0.08)
+        gemMatchDeltaBX = cms.untracked.int32(1)
+        maxDeltaBXPad = cms.untracked.int32(0)
+        maxDeltaRollPad = cms.untracked.int32(0)
+        maxDeltaPadPad = cms.untracked.int32(1)
+        maxDeltaBXCoPad = cms.untracked.int32(0)
+        maxDeltaRollCoPad = cms.untracked.int32(0)
+        maxDeltaPadCoPad = cms.untracked.int32(1)
+        useOldLCTDataFormatALCTGEM = cms.untracked.bool(True),
+        dropLowQualityCLCTsNoGEMs = cms.untracked.bool(False),
+        buildLCTfromALCTandGEM = cms.untracked.bool(False),
+        tmb.doLCTGhostBustingWithGEMs = cms.untracked.bool(False)
     )
             
     """
@@ -86,15 +102,6 @@ def customise_L1Emulator(process, ptdphi):
         gemMatchDeltaPhiOdd = cms.untracked.double(dphi_lct_pad98[ptdphi]['odd']),
         gemMatchDeltaPhiEven = cms.untracked.double(dphi_lct_pad98[ptdphi]['even']),
         gemClearNomatchLCTs = cms.untracked.bool(ptdphi == 'pt0' and False),
-    )
-    tmb.me21IntegratedLocalTrigger.PSet(
-        runUpgradeME21 = cms.untracked.bool(False),
-        maxDeltaBXInCoPad = cms.untracked.int32(1),
-        maxDeltaRollInCoPad = cms.untracked.int32(0),
-        maxDeltaPadInCoPad = cms.untracked.int32(0),
-        useOldLCTDataFormatALCTGEM = cms.untracked.bool(True),
-        dropLowQualityCLCTsNoGEMs = cms.untracked.bool(False),
-        buildLCTfromALCTandGEM = cms.untracked.bool(False),
     )
     """
     ## Common

@@ -27,7 +27,9 @@ def customise_L1Emulator(process):
     process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.runUpgradeME3141 = cms.untracked.bool(True)
+    tmb.me3141ILT = cms.untracked.PSet(
+        runUpgradeME3141 = cms.untracked.bool(False)
+    )
     return process
 
 def customise_DigiToRaw(process):
