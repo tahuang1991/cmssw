@@ -44,9 +44,9 @@ def customise_L1Emulator(process, ptdphi):
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
 
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.me11ILT.PSet(
+    tmb.me11ILT = cms.untracked.PSet(
     )
-    tmb.me21ILT.PSet(
+    tmb.me21ILT = cms.untracked.PSet(
     )
             
     """
