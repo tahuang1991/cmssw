@@ -479,12 +479,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const int HS(i/0.5);
       const bool edge(HS < 4 or HS > 93);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      if (region==-1){
-	cscHsToGemPadME1a_[96-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-      }
-      else{
-	cscHsToGemPadME1a_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-      }
+      // HS are wrapped-around
+      cscHsToGemPadME1a_[96-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     // ME1b
     auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
@@ -495,12 +491,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const int HS(i/0.5);
       const bool edge(HS < 5 or HS > 124);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      if (region==-1){
-	cscHsToGemPadME1b_[128-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-      }
-      else{
-	cscHsToGemPadME1b_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-      }
+      // HS are wrapped-around
+      cscHsToGemPadME1b_[128-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     debug = false;
     if (debug){
@@ -512,6 +504,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
         std::cout << "CSC HS ME1b"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
       }
     }
+
+    return;
 
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
