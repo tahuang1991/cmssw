@@ -90,9 +90,9 @@ def customize_random_GEMDigi(process):
 
 ## load the digitizer and pad producer
 def load_GEM_digitizers(process):
-    process.load('SimMuon.GEMDigitizer.muonGEMDigis_cfi')
-    process.load('SimMuon.GEMDigitizer.muonGEMCSCPadDigis_cfi')
+    process.load('SimMuon.GEMDigitizer.muonGEMDigi_cff')
     return process
+
 
 # customize the full digitization sequence pdigi by adding GEMs
 def customize_digi_addGEM(process):
@@ -161,6 +161,7 @@ def customize_digi_addGEM_gem_only(process):
     )
     append_GEMDigi_event(process)
     return process
+
     
 # insert the GEMDigi and GEMCSCPadDigi collection to the event
 def append_GEMDigi_event(process):
@@ -170,3 +171,4 @@ def append_GEMDigi_event(process):
         if hasattr(process,b):
             getattr(process,b).outputCommands.append('keep *_simMuonGEMDigis_*_*')
             getattr(process,b).outputCommands.append('keep *_simMuonGEMCSCPadDigis_*_*')
+    return process
