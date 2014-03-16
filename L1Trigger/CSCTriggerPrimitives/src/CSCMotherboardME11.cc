@@ -393,8 +393,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   // retrieve CSCChamber geometry                                                                                                                                       
   CSCTriggerGeomManager* geo_manager(CSCTriggerGeometry::get());
   CSCChamber* cscChamberME1b(geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber));
-  CSCDetId me1bId(cscChamberME1b->id());
-  CSCDetId me1aId(me1bId.endcap(), me1bId.station(), 4, me1bId.chamber(), me1bId.layer());
+  const CSCDetId me1bId(cscChamberME1b->id());
+  const CSCDetId me1aId(me1bId.endcap(), me1bId.station(), 4, me1bId.chamber(), me1bId.layer());
   const CSCChamber* cscChamberME1a(csc_g->chamber(me1aId));
 
   if (runGEMCSCILT_){
@@ -413,8 +413,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
     const bool isEven(me1bId%2==0);
     const int region((theEndcap == 1) ? 1: -1);
-    GEMDetId gem_id(region, 1, theStation, 1, me1bId.chamber(), 0);
-    const GEMChamber* gemChamber = gem_g->chamber(gem_id);
+    const GEMDetId gem_id(region, 1, theStation, 1, me1bId.chamber(), 0);
+    const GEMChamber* gemChamber(gem_g->chamber(gem_id));
     
     // LUT<roll,<etaMin,etaMax> >    
     createGEMPadLUT(isEven);
@@ -427,7 +427,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
     
     // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
-    int numberOfWG(keyLayerGeometryME1b->numberOfWireGroups());
+    const int numberOfWG(keyLayerGeometryME1b->numberOfWireGroups());
     for (int i = 0; i< numberOfWG; ++i){
       auto etaMin(isEven ? lut_wg_etaMin_etaMax_even[i][1] : lut_wg_etaMin_etaMax_odd[i][1]); 
       auto etaMax(isEven ? lut_wg_etaMin_etaMax_even[i][2] : lut_wg_etaMin_etaMax_odd[i][2]); 
@@ -450,14 +450,9 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const LocalPoint lpCSCME1b(keyLayerME1b->toLocal(gp));
       const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
       const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
-      if (region==-1) {
-	gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
-	gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
-      }
-      else { 
-	gemPadToCscHsME1a_[i] = (int) (stripME1a - 0.25)/0.5;
-	gemPadToCscHsME1b_[i] = (int) (stripME1b - 0.25)/0.5;
-     }
+      // HS are wrapped-around
+      gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
+      gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
     }
     debug = false;
     if (debug){
@@ -504,8 +499,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
         std::cout << "CSC HS ME1b"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
       }
     }
-
-    return;
 
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
@@ -672,16 +665,16 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
-      int bx_clct_start = bx_alct - match_trig_window_size/2;
-      int bx_clct_stop  = bx_alct + match_trig_window_size/2;
-      int bx_gem_start = bx_alct - maxDeltaBXCoPad_;
-      int bx_gem_stop  = bx_alct + maxDeltaBXCoPad_;
+      const int bx_clct_start(bx_alct - match_trig_window_size/2);
+      const int bx_clct_stop(bx_alct + match_trig_window_size/2);
+      const int bx_gem_start(bx_alct - maxDeltaBXCoPad_);
+      const int bx_gem_stop(bx_alct + maxDeltaBXCoPad_);
 
       if (print_available_pads){ 
         std::cout << "========================================================================" << std::endl;
         std::cout << "ALCT-CLCT matching in ME1/1 chamber: " << cscChamberME1b->id() << std::endl;
         std::cout << "------------------------------------------------------------------------" << std::endl;
-       std::cout << "+++ Best ALCT Details: ";
+        std::cout << "+++ Best ALCT Details: ";
         alct->bestALCT[bx_alct].print();
         std::cout << "+++ Second ALCT Details: ";
         alct->secondALCT[bx_alct].print();
