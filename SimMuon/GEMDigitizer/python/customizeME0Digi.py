@@ -116,7 +116,7 @@ def customize_digi_addME0(process):
         process.trackingParticles*
         process.addPileupInfo
     )
-    append_ME0Digi_event(process)
+    process = append_ME0Digi_event(process)
     return process
 
 
@@ -136,7 +136,7 @@ def customize_digi_addME0_muon_only(process):
         cms.SequencePlaceholder("mix")*
         process.muonDigi
     )
-    append_ME0Digi_event(process)
+    process = append_ME0Digi_event(process)
     return process
 
 
@@ -150,7 +150,7 @@ def customize_digi_addME0_me0_only(process):
         cms.SequencePlaceholder("mix")*
         process.simMuonME0Digis
     )
-    append_ME0Digi_event(process)
+    process = append_ME0Digi_event(process)
     return process
 
 

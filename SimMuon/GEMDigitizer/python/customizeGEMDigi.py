@@ -116,7 +116,7 @@ def customize_digi_addGEM(process):
         process.doAllDigi*
         process.addPileupInfo
     )
-    append_GEMDigi_event(process)
+    process = append_GEMDigi_event(process)
     return process
 
 
@@ -137,7 +137,7 @@ def customize_digi_addGEM_muon_only(process):
         cms.SequencePlaceholder("mix")*
         process.muonDigi
     )
-    append_GEMDigi_event(process)
+    process = append_GEMDigi_event(process)
     return process
 
 
@@ -146,20 +146,13 @@ def customize_digi_addGEM_gem_only(process):
     process = load_GEM_digitizers(process)
     process = customize_random_GEMDigi(process)
     process = customize_mix_addGEM_muon_only(process)
-    process.muonDigi = cms.Sequence(
-        process.simMuonCSCDigis +
-        process.simMuonDTDigis +
-        process.simMuonRPCDigis +
-        process.simMuonGEMDigis +
-        process.simMuonGEMCSCPadDigis
-    )
     process.pdigi = cms.Sequence(
         cms.SequencePlaceholder("randomEngineStateProducer")*
         cms.SequencePlaceholder("mix")*
         process.simMuonGEMDigis*
         process.simMuonGEMCSCPadDigis
     )
-    append_GEMDigi_event(process)
+    process = append_GEMDigi_event(process)
     return process
 
     
