@@ -376,19 +376,16 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
   const bool debugStubs(false);
   if (debugStubs){
-    std::cout << "debugging the alcts" << std::endl;
     for (auto& p : alctV){
-      std::cout << p << std::endl;
+      std::cout << "ALCT: " << p << std::endl;
     }
     
-    std::cout << "debugging the 1b clcts" << std::endl;
     for (auto& p : clctV1b){
-      std::cout << p << std::endl;
+      std::cout << "CLCT in ME1b: " << p << std::endl;
     }
     
-    std::cout << "debugging the 1a clcts" << std::endl;
     for (auto& p : clctV1a){
-      std::cout << p << std::endl;
+      std::cout << "CLCT in ME1a: " << p << std::endl;
     }
   }
   
@@ -763,9 +760,10 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       int nSuccesFulGEMMatches = 0;
       if (nSuccesFulMatches==0){
 	if (print_available_pads) std::cout << "++No valid ALCT-CLCT matches in ME1b" << std::endl;
-	if (not runGEMCSCILT_) continue;
-	if (not buildLCTfromALCTandGEM_ME1b_) continue;
-	if (not hasCoPads) continue;  
+	//if (not runGEMCSCILT_) continue;
+	//if (not buildLCTfromALCTandGEM_ME1b_) continue;
+	//if (not hasCoPads) continue;  
+        if (runGEMCSCILT_ && buildLCTfromALCTandGEM_ME1b_ && hasCoPads) {
 	for (int bx_gem = bx_gem_start; bx_gem <= bx_gem_stop; bx_gem++) {
 	// find the best matching copad - first one 
 	  try {
@@ -788,6 +786,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 	  }
 	  if (print_available_pads) 
 	    std::cout << "------------------------------------------------------------------------" << std::endl << std::endl;
+        }
 	}
       }
       if (print_available_pads) {
@@ -875,9 +874,10 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       nSuccesFulGEMMatches = 0;
       if (nSuccesFulMatches==0){
 	if (print_available_pads) std::cout << "++No valid ALCT-CLCT matches in ME1a" << std::endl;
-  if (not runGEMCSCILT_) continue;
-	if (not buildLCTfromALCTandGEM_ME1a_) continue;
-	if (not hasCoPads) continue;  
+        //if (not runGEMCSCILT_) continue;
+	//if (not buildLCTfromALCTandGEM_ME1a_) continue;
+	//if (not hasCoPads) continue;
+        if (runGEMCSCILT_ && buildLCTfromALCTandGEM_ME1a_ && hasCoPads) {  
 	for (int bx_gem = bx_gem_start; bx_gem <= bx_gem_stop; bx_gem++) {
 	// find the best matching copad - first one 
 	  try {
@@ -901,6 +901,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 	  if (print_available_pads) 
 	    std::cout << "------------------------------------------------------------------------" << std::endl << std::endl;
 	}
+        }
       }
       
       if (print_available_pads) {
