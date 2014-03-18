@@ -77,7 +77,7 @@ class CSCMotherboardME21 : public CSCMotherboard
   // central LCT bx number
   int lct_central_bx;
 
-  bool runUpgradeME21_;
+  bool runME21ILT_;
 
   /** whether to not reuse CLCTs that were used by previous matching ALCTs
       in ALCT-to-CLCT algorithm */
@@ -97,6 +97,17 @@ class CSCMotherboardME21 : public CSCMotherboard
   int maxDeltaBXCoPad_;
   int maxDeltaRollCoPad_;
   int maxDeltaPadCoPad_;
+
+  // drop low quality stubs if they don't have GEMs
+  bool dropLowQualityCLCTsNoGEMs_;
+  bool dropLowQualityALCTsNoGEMs_;
+
+  // use only the central BX for GEM matching
+  bool centralBXonlyGEM_;
+  
+  // build LCT from ALCT and GEM
+  bool buildLCTfromALCTandGEM_;
+  bool buildLCTfromCLCTandGEM_;
 
   std::map<int,std::pair<double,double> > gemPadToEtaLimitsShort_;
   std::map<int,std::pair<double,double> > gemPadToEtaLimitsLong_;

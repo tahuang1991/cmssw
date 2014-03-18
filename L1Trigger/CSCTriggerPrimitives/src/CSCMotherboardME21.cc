@@ -33,13 +33,58 @@ CSCMotherboardME21::CSCMotherboardME21(unsigned endcap, unsigned station,
 
   //----------------------------------------------------------------------------------------//
 
-  runUpgradeME21_ = tmbParams.getUntrackedParameter<bool>("runUpgradeME21",false);
+  // masterswitch
+  runME21ILT_ = tmbParams.getUntrackedParameter<bool>("runME11ILT",false);
+
+  // central bx for LCT is 6 for simulation
+  lct_central_bx = tmbParams.getUntrackedParameter<int>("lctCentralBX", 6);
+
+  // debug gem matching
+  debug_gem_matching = tmbParams.getUntrackedParameter<bool>("debugGemMatching", false);
+
+  // print available pads
+  print_available_pads = tmbParams.getUntrackedParameter<bool>("printAvailablePads", false);
+
+  //  deltas used to construct GEM coincidence pads
+  maxDeltaBXInCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaBXInCoPad",1);
+  maxDeltaRollInCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaRollInCoPad",0);
+  maxDeltaPadInCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaPadInCoPad",0);
+
+  //  deltas used to match to GEM pads
+  maxDeltaBXPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaBXPad",1);
+  maxDeltaRollPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaRollPad",0);
+  maxDeltaPadPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaPadPad",0);
+
+  //  deltas used to match to GEM coincidence pads
+  maxDeltaBXCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaBXCoPad",1);
+  maxDeltaRollCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaRollCoPad",0);
+  maxDeltaPadCoPad_ = tmbParams.getUntrackedParameter<int>("maxDeltaPadCoPad",0);
+
+  // drop low quality stubs if they don't have GEMs
+  dropLowQualityCLCTsNoGEMs_ = tmbParams.getUntrackedParameter<bool>("dropLowQualityCLCTsNoGEMs",false);
+  dropLowQualityALCTsNoGEMs_ = tmbParams.getUntrackedParameter<bool>("dropLowQualityALCTsNoGEMs",false);
+
+  // use only the central BX for GEM matching
+  centralBXonlyGEM_ = tmbParams.getUntrackedParameter<bool>("centralBXonlyGEM",false);
+  
+  // build LCT from ALCT and GEM
+  buildLCTfromALCTandGEM_ = tmbParams.getUntrackedParameter<bool>("buildLCTfromALCTandGEM",false);
+  buildLCTfromCLCTandGEM_ = tmbParams.getUntrackedParameter<bool>("buildLCTfromCLCTandGEM",false);
 }
 
 CSCMotherboardME21::~CSCMotherboardME21() 
 {
 }
 
+void CSCMotherboardME21::clear()
+{
+  CSCMotherboard::clear();
+
+  cscWgToGemRollShort_.clear();
+  cscWgToGemRollLong_.clear();
+  gemPadToCscHs_.clear();
+  cscHsToGemPad_.clear();
+}
 
 void
 CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
@@ -48,7 +93,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
 {
   clear();
 
-  if (!( alct and clct and runUpgradeME21_))
+  if (!( alct and clct and runME21ILT_))
   {
     if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
       << "+++ run() called for non-existing ALCT/CLCT processor! +++ \n";
@@ -65,31 +110,36 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
     gemGeometryAvailable = true;
   }
 
-  if (runUpgradeME21_ and not gemGeometryAvailable) {
-    if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
-      << "+++ run() called for GEM-CSC integrated trigger without valid GEM geometry! +++ \n";
-    return;
-  }
 
-//   int used_clct_mask[20];
-//   for (int c=0;c<20;++c) used_clct_mask[c]=0;
+  //int used_clct_mask[20];
+  //for (int c=0;c<20;++c) used_clct_mask[c]=0;
 
   // retrieve CSCChamber geometry                                                                                                                                       
   CSCTriggerGeomManager* geo_manager(CSCTriggerGeometry::get());
-  CSCChamber* cscChamber(geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber));
-  CSCDetId csc_id(cscChamber->id());
-  /*
-  const CSCLayer* keyLayer(cscChamber->layer(3));
-  const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
-  */
+  const CSCChamber* cscChamber(geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber));
+  const CSCDetId csc_id(cscChamber->id());
 
-  const bool isEven(csc_id%2==0);
-  const int region((theEndcap == 1) ? 1: -1);
-  GEMDetId gem_id(region, 1, theStation, 1, csc_id.chamber(), 0);
-  //  const GEMChamber* gemChamber = gem_g->chamber(gem_id);
+  if (runME21ILT_){
+    
+    // check for GE2/1 geometry
+    if ((not gemGeometryAvailable) or (gemGeometryAvailable and gem_g->nStation()==2)) {
+      if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
+        << "+++ run() called for GEM-CSC integrated trigger without valid GE21 geometry! +++ \n";
+      return;
+    }
+    
+    // trigger geometry
+    const CSCLayer* keyLayer(cscChamber->layer(3));
+    const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
 
-  // LUT<roll,<etaMin,etaMax> >    
-  if (runUpgradeME21_){
+    const bool isEven(csc_id%2==0);
+    const int region((theEndcap == 1) ? 1: -1);
+    const GEMDetId gem_id_short(region, 1, 2, 1, csc_id.chamber(), 0);
+    const GEMDetId gem_id_long(region, 1, 3, 1, csc_id.chamber(), 0);
+    const GEMSuperChamber* gemSchChamberShort(gem_g->chamber(gem_id_short));
+    const GEMSuperChamber* gemSchChamberLong(gem_g->chamber(gem_id_long));
+    
+    // LUT<roll,<etaMin,etaMax> >    
     gemPadToEtaLimitsShort_ = createGEMPadLUT(isEven, false);
     gemPadToEtaLimitsLong_ = createGEMPadLUT(isEven, true);
 
@@ -104,65 +154,89 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
           std::cout << "pad "<< p.first << " min eta " << (p.second).first << " max eta " << (p.second).second << std::endl;
         }
     }
-  }
-
+    
   // loop on all wiregroups to create a LUT <WG,rollMin,rollMax>
-  int numberOfWG(cscChamber->layer(1)->geometry()->numberOfWireGroups());
-  std::cout <<"detId " << cscChamber->id() << std::endl;
-  for (int i = 0; i< numberOfWG; ++i){
-    // find low-eta of WG
-    auto length(cscChamber->layer(1)->geometry()->lengthOfWireGroup(i));
-//     auto gp(cscChamber->layer(1)->centerOfWireGroup(i));
-    auto lpc(cscChamber->layer(1)->geometry()->localCenterOfWireGroup(i));
-    auto wireEnds(cscChamber->layer(1)->geometry()->wireTopology()->wireEnds(i));
-    auto gpMin(cscChamber->layer(1)->toGlobal(wireEnds.first));
-    auto gpMax(cscChamber->layer(1)->toGlobal(wireEnds.second));
-    auto etaMin(gpMin.eta());
-    auto etaMax(gpMax.eta());
-    if (etaMax < etaMin)
-      std::swap(etaMin,etaMax);
-    //print the eta min and eta max
-    //    std::cout << i << " " << etaMin << " " << etaMax << std::endl;
-    auto x1(lpc.x() + cos(cscChamber->layer(1)->geometry()->wireAngle())*length/2.);
-    auto x2(lpc.x() - cos(cscChamber->layer(1)->geometry()->wireAngle())*length/2.);
-    auto z(lpc.z());
-    auto y1(cscChamber->layer(1)->geometry()->yOfWireGroup(i,x1));
-    auto y2(cscChamber->layer(1)->geometry()->yOfWireGroup(i,x2));
-    auto lp1(LocalPoint(x1,y1,z));
-    auto lp2(LocalPoint(x2,y2,z));
-    auto gp1(cscChamber->layer(1)->toGlobal(lp1));
-    auto gp2(cscChamber->layer(1)->toGlobal(lp2));
-    auto eta1(gp1.eta());
-    auto eta2(gp2.eta());
-    if (eta1 < eta2)
-      std::swap(eta1,eta2);
-    std::cout << "{" << i << ", " << eta1 << ", " << eta2 << "},"<< std::endl;
-    
-    
-//     Std ::cout << "WG "<< i << std::endl;
-//    wireGroupGEMRollMap_[i] = assignGEMRoll(gp.eta());
-  }
+    int numberOfWG(cscChamber->layer(1)->geometry()->numberOfWireGroups());
+    std::cout <<"detId " << cscChamber->id() << std::endl;
+    for (int i = 0; i< numberOfWG; ++i){
+      // find low-eta of WG
+      auto length(cscChamber->layer(1)->geometry()->lengthOfWireGroup(i));
+      //     auto gp(cscChamber->layer(1)->centerOfWireGroup(i));
+      auto lpc(cscChamber->layer(1)->geometry()->localCenterOfWireGroup(i));
+      auto wireEnds(cscChamber->layer(1)->geometry()->wireTopology()->wireEnds(i));
+      auto gpMin(cscChamber->layer(1)->toGlobal(wireEnds.first));
+      auto gpMax(cscChamber->layer(1)->toGlobal(wireEnds.second));
+      auto etaMin(gpMin.eta());
+      auto etaMax(gpMax.eta());
+      if (etaMax < etaMin)
+        std::swap(etaMin,etaMax);
+      //print the eta min and eta max
+      //    std::cout << i << " " << etaMin << " " << etaMax << std::endl;
+      auto x1(lpc.x() + cos(cscChamber->layer(1)->geometry()->wireAngle())*length/2.);
+      auto x2(lpc.x() - cos(cscChamber->layer(1)->geometry()->wireAngle())*length/2.);
+      auto z(lpc.z());
+      auto y1(cscChamber->layer(1)->geometry()->yOfWireGroup(i,x1));
+      auto y2(cscChamber->layer(1)->geometry()->yOfWireGroup(i,x2));
+      auto lp1(LocalPoint(x1,y1,z));
+      auto lp2(LocalPoint(x2,y2,z));
+      auto gp1(cscChamber->layer(1)->toGlobal(lp1));
+      auto gp2(cscChamber->layer(1)->toGlobal(lp2));
+      auto eta1(gp1.eta());
+      auto eta2(gp2.eta());
+      if (eta1 < eta2)
+        std::swap(eta1,eta2);
+      std::cout << "{" << i << ", " << eta1 << ", " << eta2 << "},"<< std::endl;
+      
+      //     Std ::cout << "WG "<< i << std::endl;
+      //    wireGroupGEMRollMap_[i] = assignGEMRoll(gp.eta());
+    }
 
-//   // print-out
-//   for(auto it = wireGroupGEMRollMap_.begin(); it != wireGroupGEMRollMap_.end(); it++) {
-//     std::cout << "WG "<< it->first << " GEM pad " << it->second << std::endl;
-//   }
+    //   // print-out
+    //   for(auto it = wireGroupGEMRollMap_.begin(); it != wireGroupGEMRollMap_.end(); it++) {
+    //     std::cout << "WG "<< it->first << " GEM pad " << it->second << std::endl;
+    //   }
 
-  // build coincidence pads
-  std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
-  if (runUpgradeME21_){
+    // pick any roll
+    auto randRoll(gemChamber->etaPartition(2));
+    const int nGEMPads(randRoll->npads());
+    for (int i = 0; i< nGEMPads; ++i){
+      const LocalPoint lpGEM(randRoll->centreOfPad(i));
+      const GlobalPoint gp(randRoll->toGlobal(lpGEM));
+      const LocalPoint lpCSCME1a(keyLayerME1a->toLocal(gp));
+      const LocalPoint lpCSCME1b(keyLayerME1b->toLocal(gp));
+      const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
+      const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
+      // HS are wrapped-around
+      gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
+      gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
+    }
+    debug = false;
+    if (debug){
+      std::cout << "detId " << me1bId << std::endl;
+      for(auto p : gemPadToCscHsME1a_) {
+        std::cout << "GEM Pad "<< p.first << " CSC HS ME1a: " << p.second << std::endl;
+      }
+      for(auto p : gemPadToCscHsME1b_) {
+        std::cout << "GEM Pad "<< p.first << " CSC HS ME1b: " << p.second << std::endl;
+      }
+    }
+
+
+    
+    // build coincidence pads
+    std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
     buildCoincidencePads(gemPads, *pCoPads);
+    
+    // retrieve pads and copads in a certain BX window for this CSC 
+    padsShort_.clear();
+    padsLong_.clear();
+    coPadsShort_.clear();
+    coPadsLong_.clear();
+    retrieveGEMPads(gemPads, gem_id_short);
+    retrieveGEMPads(gemPads, gem_id_long);
+    retrieveGEMPads(pCoPads.get(), gem_id_short, true);
+    retrieveGEMPads(pCoPads.get(), gem_id_long, true);
   }
-
-  // retrieve pads and copads in a certain BX window for this CSC 
-  if (runUpgradeME21_){
-    pads_.clear();
-    coPads_.clear();
-    retrieveGEMPads(gemPads, gem_id);
-    retrieveGEMPads(pCoPads.get(), gem_id, true);
-  }
-
-  /*
   
   int bx_clct_matched = 0; // bx of last matched CLCT
   for (int bx_clct = 0; bx_clct < CSCCathodeLCTProcessor::MAX_CLCT_BINS;
@@ -234,8 +308,6 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
     }
   }
 
-  */
-  
   if (infoV > 0) {
     for (int bx = 0; bx < MAX_LCT_BINS; bx++) {
       if (firstLCT[bx].isValid())
@@ -245,6 +317,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
     }
   }
 }
+
 /*
   
 void CSCMotherboardME21::correlateLCTs(CSCALCTDigi bestALCT,
