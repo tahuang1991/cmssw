@@ -27,8 +27,14 @@ def customise_L1Emulator(process):
     process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
     process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.me3141ILT = cms.untracked.PSet(
-        runUpgradeME3141 = cms.untracked.bool(False)
+    tmb.me3141ILT = cms.PSet(
+        runME3141ILT = cms.untracked.bool(True),
+        debugRPCMatching = cms.untracked.bool(True),
+        maxDeltaBXRPC = cms.untracked.int32(1),
+        maxDeltaRollRPC = cms.untracked.int32(0),
+        maxDeltaStripRPC = cms.untracked.int32(1),
+        dropLowQualityCLCTsNoRPC = cms.untracked.bool(True),
+        dropLowQualityALCTsNoRPCs = cms.untracked.bool(True),
     )
     return process
 

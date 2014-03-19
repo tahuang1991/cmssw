@@ -39,6 +39,9 @@ class CSCMotherboardME3141 : public CSCMotherboard
   void setCSCGeometry(const CSCGeometry *g) { csc_g = g; }
   void setRPCGeometry(const RPCGeometry *g) { rpc_g = g; }
 
+  // check that the RE31 and RE41 chambers are really there
+  bool hasRE31andRE41();
+
  private: 
 
   const CSCGeometry* csc_g;
@@ -47,9 +50,24 @@ class CSCMotherboardME3141 : public CSCMotherboard
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV;
 
-  // central LCT bx number
+  // central LCT bx number 
   int lct_central_bx;
 
-  bool runUpgradeME3141_;
+  bool drop_used_clcts;
+
+  // masterswitch
+  bool runME3141ILT_;
+
+  // debug rpc matching
+  bool debugRPCMatching_;
+
+  //  deltas used to match to RPC pads
+  int maxDeltaBXRPC_;
+  int maxDeltaRollRPC_;
+  int maxDeltaStripRPC_;
+
+  // drop low quality stubs if they don't have RPCs
+  bool dropLowQualityCLCTsNoRPC_;
+  bool dropLowQualityALCTsNoRPCs_;
 };
 #endif

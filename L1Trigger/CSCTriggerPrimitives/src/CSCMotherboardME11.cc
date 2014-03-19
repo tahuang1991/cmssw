@@ -458,6 +458,42 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
     // pick any roll
     auto randRoll(gemChamber->etaPartition(2));
+
+    // ME1a
+    auto nStripsME1a(keyLayerGeometryME1a->numberOfStrips());
+    for (float i = 0; i< nStripsME1a; i = i+0.5){
+      const LocalPoint lpCSC(keyLayerGeometryME1a->topology()->localPosition(i));
+      const GlobalPoint gp(keyLayerME1a->toGlobal(lpCSC));
+      const LocalPoint lpGEM(randRoll->toLocal(gp));
+      const int HS(i/0.5);
+      const bool edge(HS < 4 or HS > 93);
+      const float pad(edge ? -99 : randRoll->pad(lpGEM));
+      // HS are wrapped-around
+      cscHsToGemPadME1a_[nStripsME1a*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+    }
+    // ME1b
+    auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
+    for (float i = 0; i< nStripsME1b; i = i+0.5){
+      const LocalPoint lpCSC(keyLayerGeometryME1b->topology()->localPosition(i));
+      const GlobalPoint gp(keyLayerME1b->toGlobal(lpCSC));
+      const LocalPoint lpGEM(randRoll->toLocal(gp));
+      const int HS(i/0.5);
+      const bool edge(HS < 5 or HS > 124);
+      const float pad(edge ? -99 : randRoll->pad(lpGEM));
+      // HS are wrapped-around
+      cscHsToGemPadME1b_[nStripsME1b*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+    }
+    debug = false;
+    if (debug){
+      std::cout << "detId " << me1bId << std::endl;
+      for(auto p : cscHsToGemPadME1a_) {
+        std::cout << "CSC HS ME1a"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
+      }
+      for(auto p : cscHsToGemPadME1b_) {
+        std::cout << "CSC HS ME1b"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
+      }
+    }
+
     const int nGEMPads(randRoll->npads());
     for (int i = 0; i< nGEMPads; ++i){
       const LocalPoint lpGEM(randRoll->centreOfPad(i));
@@ -467,8 +503,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
       const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
       // HS are wrapped-around
-      gemPadToCscHsME1a_[i] = 96-(int) (stripME1a - 0.25)/0.5;
-      gemPadToCscHsME1b_[i] = 128-(int) (stripME1b - 0.25)/0.5;
+      gemPadToCscHsME1a_[i] = nStripsME1a*2-(int) (stripME1a - 0.25)/0.5;
+      gemPadToCscHsME1b_[i] = nStripsME1b*2-(int) (stripME1b - 0.25)/0.5;
     }
     debug = false;
     if (debug){
@@ -481,40 +517,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       }
     }
 
-    // ME1a
-    auto nStripsME1a(keyLayerGeometryME1a->numberOfStrips());
-    for (float i = 0; i< nStripsME1a; i = i+0.5){
-      const LocalPoint lpCSC(keyLayerGeometryME1a->topology()->localPosition(i));
-      const GlobalPoint gp(keyLayerME1a->toGlobal(lpCSC));
-      const LocalPoint lpGEM(randRoll->toLocal(gp));
-      const int HS(i/0.5);
-      const bool edge(HS < 4 or HS > 93);
-      const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      // HS are wrapped-around
-      cscHsToGemPadME1a_[96-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-    }
-    // ME1b
-    auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
-    for (float i = 0; i< nStripsME1b; i = i+0.5){
-      const LocalPoint lpCSC(keyLayerGeometryME1b->topology()->localPosition(i));
-      const GlobalPoint gp(keyLayerME1b->toGlobal(lpCSC));
-      const LocalPoint lpGEM(randRoll->toLocal(gp));
-      const int HS(i/0.5);
-      const bool edge(HS < 5 or HS > 124);
-      const float pad(edge ? -99 : randRoll->pad(lpGEM));
-      // HS are wrapped-around
-      cscHsToGemPadME1b_[128-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
-    }
-    debug = false;
-    if (debug){
-      std::cout << "detId " << me1bId << std::endl;
-      for(auto p : cscHsToGemPadME1a_) {
-        std::cout << "CSC HS ME1a"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
-      }
-      for(auto p : cscHsToGemPadME1b_) {
-        std::cout << "CSC HS ME1b"<< p.first << " GEM Pad low " << (p.second).first << " GEM Pad high " << (p.second).second << std::endl;
-      }
-    }
 
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
