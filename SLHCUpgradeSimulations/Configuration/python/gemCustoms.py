@@ -45,7 +45,7 @@ def customise_L1Emulator(process, ptdphi):
         runME11ILT = cms.untracked.bool(True)
     )
     tmb.me21ILT = cms.PSet(
-        runME21ILT = cms.untracked.bool(True)
+        runME21ILT = cms.untracked.bool(False)
     )
     """
     printAvailablePads = cms.untracked.bool(False),
