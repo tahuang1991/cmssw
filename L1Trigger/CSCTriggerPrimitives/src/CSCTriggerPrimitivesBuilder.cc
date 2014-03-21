@@ -57,9 +57,12 @@ CSCTriggerPrimitivesBuilder::CSCTriggerPrimitivesBuilder(const edm::ParameterSet
   checkBadChambers_ = conf.getUntrackedParameter<bool>("checkBadChambers", true);
 
   edm::ParameterSet tmbParams = conf.getParameter<edm::ParameterSet>("tmbSLHC");
+  edm::ParameterSet me21mbParams = tmbParams.getParameter<edm::ParameterSet>("me21ILT");
+  edm::ParameterSet me3141tmbParams = tmbParams.getParameter<edm::ParameterSet>("me3141ILT");
+
   runFactorizedModel_ = tmbParams.getUntrackedParameter<bool>("runFactorizedModel",true);
-  runUpgradeME21_ = tmbParams.getUntrackedParameter<bool>("runUpgradeME21",false);
-  runUpgradeME3141_ = tmbParams.getUntrackedParameter<bool>("runUpgradeME3141",false);
+  runME21ILT_ = me21mbParams.getUntrackedParameter<bool>("runME21ILT",false);
+  runME3141ILT_ = me3141tmbParams.getUntrackedParameter<bool>("runME3141ILT",false);
 
   // ORCA way of initializing boards.
   for (int endc = min_endcap; endc <= max_endcap; endc++)
@@ -91,9 +94,9 @@ CSCTriggerPrimitivesBuilder::CSCTriggerPrimitivesBuilder(const edm::ParameterSet
             // and CLCT processors.
             if (stat==1 && ring==1 && smartME1aME1b)
               tmb_[endc-1][stat-1][sect-1][subs-1][cham-1] = new CSCMotherboardME11(endc, stat, sect, subs, cham, conf);
-	    else if (stat==2 && ring==1 && runUpgradeME21_)
+	    else if (stat==2 && ring==1 && runME21ILT_)
               tmb_[endc-1][stat-1][sect-1][subs-1][cham-1] = new CSCMotherboardME21(endc, stat, sect, subs, cham, conf);
-	    else if ((stat==3 || stat==4) && ring==1 && runUpgradeME3141_)
+	    else if ((stat==3 || stat==4) && ring==1 && runME3141ILT_)
               tmb_[endc-1][stat-1][sect-1][subs-1][cham-1] = new CSCMotherboardME3141(endc, stat, sect, subs, cham, conf);
             else
               tmb_[endc-1][stat-1][sect-1][subs-1][cham-1] = new CSCMotherboard(endc, stat, sect, subs, cham, conf);
@@ -218,7 +221,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             if (checkBadChambers_ && badChambers->isInBadChamber(detid)) continue;
 
             // running upgraded ME2/1 TMBs
-            if (stat==2 && ring==1 && runUpgradeME21_)
+            if (stat==2 && ring==1 && runME21ILT_)
             {
               CSCMotherboardME21* tmb21 = static_cast<CSCMotherboardME21*>(tmb);
               tmb21->setCSCGeometry(csc_g);
@@ -268,7 +271,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             }
 
             // running upgraded ME2/1 TMBs
-            if ((stat==3 or stat==4) && ring==1 && runUpgradeME3141_)
+            if ((stat==3 or stat==4) && ring==1 && runME3141ILT_)
             {
               CSCMotherboardME3141* tmb3141 = static_cast<CSCMotherboardME3141*>(tmb);
               tmb3141->setCSCGeometry(csc_g);

@@ -96,10 +96,10 @@ class CSCTriggerPrimitivesBuilder
   bool runFactorizedModel_;
 
   /** SLHC: special switch for the upgrade ME2/1 TMB */
-  bool runUpgradeME21_;
+  bool runME21ILT_;
 
   /** SLHC: special switch for the upgrade ME3/1 and ME4/1 TMB */
-  bool runUpgradeME3141_;
+  bool runME3141ILT_;
 
   int m_minBX, m_maxBX; // min and max BX to sort.
 

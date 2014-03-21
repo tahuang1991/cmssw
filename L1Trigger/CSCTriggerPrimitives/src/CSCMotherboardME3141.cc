@@ -18,12 +18,35 @@ CSCMotherboardME3141::CSCMotherboardME3141(unsigned endcap, unsigned station,
   edm::ParameterSet alctParams = conf.getParameter<edm::ParameterSet>("alctSLHC");
   edm::ParameterSet clctParams = conf.getParameter<edm::ParameterSet>("clctSLHC");
   edm::ParameterSet tmbParams = conf.getParameter<edm::ParameterSet>("tmbSLHC");
+  edm::ParameterSet me3141tmbParams = tmbParams.getParameter<edm::ParameterSet>("me3141ILT");
 
   // central bx for LCT is 6 for simulation
   lct_central_bx = tmbParams.getUntrackedParameter<int>("lctCentralBX", 6);
 
-  // upgrade algorithm
-  runUpgradeME3141_ = tmbParams.getUntrackedParameter<bool>("runUpgradeME3141",false);
+  // whether to not reuse CLCTs that were used by previous matching ALCTs
+  // in ALCT-to-CLCT algorithm
+  drop_used_clcts = me3141tmbParams.getUntrackedParameter<bool>("tmbDropUsedClcts",true);
+
+  //----------------------------------------------------------------------------------------//
+
+  //       R P C  -  C S C   I N T E G R A T E D   L O C A L   A L G O R I T H M
+
+  //----------------------------------------------------------------------------------------//
+
+  // masterswitch
+  runME3141ILT_ = me3141tmbParams.getUntrackedParameter<bool>("runME3141ILT",false);
+
+  // debug rpc matching
+  debugRPCMatching_ = tmbParams.getUntrackedParameter<bool>("debugRPCMatching", false);
+
+  // deltas used to match to RPC pads
+  maxDeltaBXRPC_ = tmbParams.getUntrackedParameter<int>("maxDeltaBXRPC",1);
+  maxDeltaRollRPC_ = tmbParams.getUntrackedParameter<int>("maxDeltaRollRPC",0);
+  maxDeltaStripRPC_ = tmbParams.getUntrackedParameter<int>("maxDeltaRPC",0);
+
+  // drop low quality stubs if they don't have RPCs
+  dropLowQualityCLCTsNoRPC_ = tmbParams.getUntrackedParameter<bool>("dropLowQualityCLCTsNoRPCs",false);
+  dropLowQualityALCTsNoRPCs_ = tmbParams.getUntrackedParameter<bool>("dropLowQualityALCTsNoRPCs",false);
 }
 
 CSCMotherboardME3141::~CSCMotherboardME3141() 
@@ -38,7 +61,7 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
 {
   clear();
 
-  if (!( alct and clct and runUpgradeME3141_))
+  if (!( alct and clct and runME3141ILT_))
   {
     if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
       << "+++ run() called for non-existing ALCT/CLCT processor! +++ \n";
@@ -55,25 +78,53 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
     rpcGeometryAvailable = true;
   }
 
-  if (runUpgradeME3141_ and not rpcGeometryAvailable) {
-    if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
-      << "+++ run() called for RPC-CSC integrated trigger without valid RPC geometry! +++ \n";
-    return;
-  }
-
+  /*
   // retrieve CSCChamber geometry                                                                                                                                       
-  //CSCTriggerGeomManager* geo_manager(CSCTriggerGeometry::get());
-  //CSCChamber* cscChamber(geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber));
-  //CSCDetId csc_id(cscChamber->id());
-  //const CSCLayer* keyLayer(cscChamber->layer(3));
-  //const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
+  CSCTriggerGeomManager* geo_manager(CSCTriggerGeometry::get());
+  const CSCChamber* cscChamber(geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber));
+  const CSCDetId csc_id(cscChamber->id());
+  */
+  if (runME3141ILT_){
+    
+    // check for GE2/1 geometry
+    if ((not rpcGeometryAvailable) or (rpcGeometryAvailable and not hasRE31andRE41())) {
+      if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
+        << "+++ run() called for RPC-CSC integrated trigger without valid RPC geometry! +++ \n";
+      return;
+    }
+    /*
+    // trigger geometry
+    const CSCLayer* keyLayer(cscChamber->layer(3));
+    const CSCLayerGeometry* keyLayerGeometry(keyLayer->geometry());
+
+    const bool isEven(csc_id%2==0);
+    const int region((theEndcap == 1) ? 1: -1);
+    const int sector(csc_id.chamber()/6);
+    const int subsector(csc_id.chamber()%2);
+    */
+
+    
+    // LUT<roll,<etaMin,etaMax> >    
+//     rpcRollToEtaLimits_ = createRPCPadLUT(isEven);
+
+//     bool debug(false);
+//     if (debug){
+//       if (rpcPadToEtaLimitsShort_.size())
+//         for(auto p : rpcPadToEtaLimitsShort_) {
+//           std::cout << "pad "<< p.first << " min eta " << (p.second).first << " max eta " << (p.second).second << std::endl;
+//         }
+//       if (rpcPadToEtaLimitsLong_.size())
+//         for(auto p : rpcPadToEtaLimitsLong_) {
+//           std::cout << "pad "<< p.first << " min eta " << (p.second).first << " max eta " << (p.second).second << std::endl;
+//         }
+//     }
+  }
 
   int used_alct_mask[20];
   for (int a=0;a<20;++a) used_alct_mask[a]=0;
   
   int bx_alct_matched = 0; // bx of last matched ALCT
-  for (int bx_clct = 0; bx_clct < CSCCathodeLCTProcessor::MAX_CLCT_BINS;
-       bx_clct++) {
+  for (int bx_clct = 0; bx_clct < CSCCathodeLCTProcessor::MAX_CLCT_BINS; bx_clct++) {
     // There should be at least one valid ALCT or CLCT for a
     // correlated LCT to be formed.  Decision on whether to reject
     // non-complete LCTs (and if yes of which type) is made further
@@ -149,4 +200,14 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
 	LogDebug("CSCMotherboard") << secondLCT[bx];
     }
   }
+}
+
+// check that the RE31 and RE41 chambers are really there
+bool CSCMotherboardME3141::hasRE31andRE41()
+{
+  // select a
+  auto randomRE31(rpc_g->chamber(RPCDetId(1,1,3,2,1,1,0)));
+  auto randomRE41(rpc_g->chamber(RPCDetId(-1,1,4,4,1,2,0)));
+  
+  return randomRE31 and randomRE41;
 }
