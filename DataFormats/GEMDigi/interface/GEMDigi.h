@@ -22,6 +22,7 @@ public:
   GEMDigi ();
 
   bool operator==(const GEMDigi& digi) const;
+  bool operator!=(const GEMDigi& digi) const;
   bool operator<(const GEMDigi& digi) const;
 
   int strip() const { return strip_; }
