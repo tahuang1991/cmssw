@@ -74,8 +74,8 @@ def customise_L1Emulator(process, ptdphi):
         ## matching to pads in case absent CLCT
         maxDeltaBXCoPadEven = cms.untracked.int32(0),
         maxDeltaBXCoPadOdd = cms.untracked.int32(0),
-        maxDeltaPadCoPadEven = cms.untracked.int32(1),
-        maxDeltaPadCoPadOdd = cms.untracked.int32(2),
+        maxDeltaPadCoPadEven = cms.untracked.int32(2),
+        maxDeltaPadCoPadOdd = cms.untracked.int32(3),
 
         ## efficiency recovery switches
         dropLowQualityCLCTsNoGEMs_ME1a = cms.untracked.bool(True),
