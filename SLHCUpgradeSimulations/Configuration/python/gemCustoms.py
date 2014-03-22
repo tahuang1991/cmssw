@@ -37,8 +37,6 @@ def customise_Digi(process):
 
 def customise_L1Emulator(process, ptdphi):
     process.simCscTriggerPrimitiveDigis.gemPadProducer =  cms.untracked.InputTag("simMuonGEMCSCPadDigis","")
-    process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
-    process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
     ## GE1/1-ME1/1
     dphi_lct_pad98 = {
         'pt0'  : { 'odd' :  2.00000000 , 'even' :  2.00000000 },
@@ -94,7 +92,9 @@ def customise_L1Emulator(process, ptdphi):
     )
     if tmb.me11ILT.runME11ILT:
         process.simCscTriggerPrimitiveDigis.clctSLHC.clctNplanesHitPattern = 3
-        
+        process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
+        process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
+    
     ## GE2/1-ME2/1
     tmb.me21ILT = cms.PSet(
         runME21ILT = cms.untracked.bool(False),
