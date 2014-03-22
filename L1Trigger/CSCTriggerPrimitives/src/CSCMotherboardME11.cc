@@ -897,7 +897,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       // ALCT-to-GEM matching in ME1a
       nSuccesFulGEMMatches = 0;
       if (runME11ILT_ and nSuccesFulMatches==0 and buildLCTfromALCTandGEM_ME1a_){
-        if (print_available_pads) std::cout << "++No valid ALCT-CLCT matches in ME1b" << std::endl;
+        if (print_available_pads) std::cout << "++No valid ALCT-CLCT matches in ME1a" << std::endl;
         for (int bx_gem = bx_copad_start; bx_gem <= bx_copad_stop; bx_gem++) {
           lctProducer_->me1aValidAlctGemInBXWindow_++;
           if (not hasCoPads) {
