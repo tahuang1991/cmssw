@@ -757,9 +757,10 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
           if (runME11ILT_ and correctLCTtimingWithGEM_){
             auto matchingCoPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], coPads_[bx_clct], ME1B, false));
             int nFound(matchingCoPads.size());
-            if (nFound != 0 and bx_alct == 6 and bx_clct != 6)
+            if (nFound != 0 and bx_alct == 6 and bx_clct != 6){
               if (print_available_pads) std::cout << "\tInfo: CLCT with incorrect timing" << std::endl;
-            continue;
+              continue;
+            }
           }
           
           ++nSuccesFulMatches;
