@@ -54,6 +54,8 @@ class CSCMotherboardME11 : public CSCMotherboard
   /** Returns vectors of found correlated LCTs in ME1a and ME1b, if any. */
   std::vector<CSCCorrelatedLCTDigi> getLCTs1a();
   std::vector<CSCCorrelatedLCTDigi> getLCTs1b();
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQual(std::vector<CSCCorrelatedLCTDigi> tmpV);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi> tmpV);
 
   /** Returns vectors of found ALCTs in ME1a and ME1b, if any. */
   std::vector<CSCALCTDigi> getALCTs1b() {return alctV;}
@@ -185,6 +187,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   /// GEM-CSC integrated local algorithm
   bool runME11ILT_;
+  bool FirstTwoLCTsInME11_;
 
   /// Do GEM matching?
   bool do_gem_matching;
