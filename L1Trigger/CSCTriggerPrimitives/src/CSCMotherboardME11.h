@@ -54,8 +54,12 @@ class CSCMotherboardME11 : public CSCMotherboard
   /** Returns vectors of found correlated LCTs in ME1a and ME1b, if any. */
   std::vector<CSCCorrelatedLCTDigi> getLCTs1a();
   std::vector<CSCCorrelatedLCTDigi> getLCTs1b();
-  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQual(std::vector<CSCCorrelatedLCTDigi> tmpV);
-  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi> tmpV);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQual(int, int);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQual(int );
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQual(std::vector<CSCCorrelatedLCTDigi> );
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int, int);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int );
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi> );
 
   /** Returns vectors of found ALCTs in ME1a and ME1b, if any. */
   std::vector<CSCALCTDigi> getALCTs1b() {return alctV;}

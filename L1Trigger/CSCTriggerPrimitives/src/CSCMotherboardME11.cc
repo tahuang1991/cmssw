@@ -1159,7 +1159,7 @@ void CSCMotherboardME11::runNewAlgorithm(const CSCWireDigiCollection* wiredc,
 {
 }
 
-
+/*
 std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs1a()
 {
    //if use cross-bx-sorting, only two LCTs are left now 
@@ -1255,7 +1255,16 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs1b()
  
    }
 }
+*/
 
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs1a()
+{
+    return readoutLCTs(ME1A);
+}
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs1b()
+{
+    return readoutLCTs(ME1B);
+}
 
 // Returns vector of read-out correlated LCTs, if any.  Starts with
 // the vector of all found LCTs and selects the ones in the read-out
@@ -1288,9 +1297,9 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs(int me1ab)
 	      break;
       case 1: all_lcts = tmp_lcts; 
 	      break;
-      case 2: all_lcts = sortLCTsByQual(tmp_lcts); 
+      case 2: all_lcts = sortLCTsByQual(me1ab); 
 	      break;
-      case 3: all_lcts = sortLCTsByGEMDPhi(tmp_lcts);
+      case 3: all_lcts = sortLCTsByGEMDPhi(me1ab);
 	      break;
       default: std::cout<<"tmb_cross_bx_algo error" <<std::endl;
 	       break;
@@ -1316,7 +1325,6 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::readoutLCTs(int me1ab)
       if (bx_readout == -1) bx_readout = bx;
     }
     else tmpV.push_back(*plct);
-    if (tmpV.size() ==  max_me11_lcts and tmb_cross_bx_algo) break;
   }
   return tmpV;
 }
@@ -1354,11 +1362,18 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::getLCTs1a()
   return tmpV;
 }
 
-//sort LCTs by Quality
-std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByQual(std::vector<CSCCorrelatedLCTDigi> LCTs)
+//sort LCTs by Quality in each BX
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByQual(int bx, int me)
  {
-   
+  auto allLCTs(me==ME1A ? allLCTs1a : allLCTs1b); 
+  std::vector<CSCCorrelatedLCTDigi> LCTs;
   std::vector<CSCCorrelatedLCTDigi> tmpV;
+  tmpV.clear();
+  LCTs.clear();
+  for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++) 
+      for (int i=0;i<2;i++)
+        if (allLCTs[bx][mbx][i].isValid())  
+            LCTs.push_back(allLCTs[bx][mbx][i]);
   std::vector<CSCCorrelatedLCTDigi>::iterator plct = LCTs.begin();
   for (; plct != LCTs.end(); plct++)
   {
@@ -1373,17 +1388,95 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByQual(std::vector
   }
  // debug 
 //  std::cout << "sort LCTs by quality" << std::endl;
- // for (plct = tmpV.begin(); plct != tmpV.end(); plct++)
- //     std::cout << *plct << std::endl;
-   return  tmpV;
+  if (tmpV.size()> max_me11_lcts) tmpV.erase(tmpV.begin()+max_me11_lcts, tmpV.end());
+    return  tmpV;
+ }
+
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByQual(std::vector<CSCCorrelatedLCTDigi> LCTs)
+ {
+  std::vector<CSCCorrelatedLCTDigi> tmpV;
+  tmpV.clear();
+  std::vector<CSCCorrelatedLCTDigi>::iterator plct = LCTs.begin();
+  for (; plct != LCTs.end(); plct++)
+  {
+      if (!plct->isValid()) continue;
+      std::vector<CSCCorrelatedLCTDigi>::iterator itlct = tmpV.begin();
+      for (; itlct != tmpV.end(); itlct++)
+	  if((*itlct).getQuality() < (*plct).getQuality()) break;
+    
+     if(itlct==tmpV.end()) tmpV.push_back(*plct);
+     else tmpV.insert(itlct--, *plct);
+          
+  }
+ // debug 
+//  std::cout << "sort LCTs by quality" << std::endl;
+  if (tmpV.size()> max_me11_lcts) tmpV.erase(tmpV.begin()+max_me11_lcts, tmpV.end());
+    return  tmpV;
  }
 
 
-//sort LCTs by GEMDPhi
-std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi> LCTs)
+//sort LCTs in whole LCTs BX window
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByQual(int me)
+{
+   std::vector<CSCCorrelatedLCTDigi> LCTs_final;
+   LCTs_final.clear();
+    for (int bx = 0; bx < MAX_LCT_BINS; bx++)
+     {
+       std::vector<CSCCorrelatedLCTDigi> LCTs1a;
+       std::vector<CSCCorrelatedLCTDigi> LCTs1b;
+       std::vector<CSCCorrelatedLCTDigi> LCTs_tmp;
+       std::vector<CSCCorrelatedLCTDigi> LCTs_tmp1;
+       LCTs1a = sortLCTsByQual(bx, ME1A);
+       LCTs1b = sortLCTsByQual(bx, ME1B);
+      std::vector<CSCCorrelatedLCTDigi>::iterator it1a = LCTs1a.begin();
+      std::vector<CSCCorrelatedLCTDigi>::iterator it1b = LCTs1b.begin();
+      LCTs_tmp.insert(LCTs_tmp.begin(), LCTs1b.begin(), LCTs1b.end());
+      LCTs_tmp.insert(LCTs_tmp.end(), LCTs1a.begin(), LCTs1a.end());
+      LCTs_tmp1 = sortLCTsByQual(LCTs_tmp);//LCTs reduction per BX
+       if (FirstTwoLCTsInME11_)
+       {
+          std::vector<CSCCorrelatedLCTDigi>::iterator itp = LCTs_tmp1.begin();
+	   for ( ; itp != LCTs_tmp1.end(); itp++)
+	   {
+	       if (me==ME1A and it1a != LCTs1a.end() and *itp==*it1a ) 
+	       {
+		   LCTs_final.push_back(*it1a);
+	           it1a++;
+	       }
+	       if (me==ME1B and it1b != LCTs1b.end() and *itp==*it1b)
+	       {
+		   LCTs_final.push_back(*it1b);
+	           it1b++;
+	       }
+	   }
+       }	   
+      else {
+            if (LCTs1a.size() and LCTs1b.size() and me==ME1A)
+	           LCTs_final.push_back(*LCTs1a.begin());
+            else if (LCTs1a.size() and LCTs1b.size() and me==ME1B)
+	           LCTs_final.push_back(*LCTs1b.begin());
+	    else if (LCTs1a.size() and LCTs1b.size()==0 and me==ME1A)
+		LCTs_final.insert(LCTs_final.end(), LCTs1a.begin(), LCTs1a.end());
+	    else if (LCTs1b.size() and LCTs1a.size()==0 and me==ME1B)
+		LCTs_final.insert(LCTs_final.end(), LCTs1b.begin(), LCTs1b.end());
+      }
+      }
+   return LCTs_final;
+}
+
+//sort LCTs by GEMDPhi in each BX
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByGEMDPhi(int bx, int me)
  {
    
+  auto allLCTs(me==ME1A ? allLCTs1a : allLCTs1b); 
+  std::vector<CSCCorrelatedLCTDigi> LCTs;
   std::vector<CSCCorrelatedLCTDigi> tmpV;
+  tmpV.clear();
+  LCTs.clear();
+  for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++) 
+      for (int i=0;i<2;i++)
+        if (allLCTs[bx][mbx][i].isValid())  
+            LCTs.push_back(allLCTs[bx][mbx][i]);
   std::vector<CSCCorrelatedLCTDigi>::iterator plct = LCTs.begin();
   for (; plct != LCTs.end(); plct++)
   {
@@ -1400,8 +1493,86 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByGEMDPhi(std::vec
 //  std::cout << "sort LCTs  by GEMDPhi" << std::endl;
 //  for (plct = tmpV.begin(); plct != tmpV.end(); plct++)
  //     std::cout << *plct << std::endl;
+  if (tmpV.size() > max_me11_lcts) tmpV.erase(tmpV.begin()+max_me11_lcts, tmpV.end());
   return tmpV;
  }
+
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi> LCTs)
+ {
+   
+  std::vector<CSCCorrelatedLCTDigi> tmpV;
+  tmpV.clear();
+  std::vector<CSCCorrelatedLCTDigi>::iterator plct = LCTs.begin();
+  for (; plct != LCTs.end(); plct++)
+  {
+      if (!plct->isValid()) continue;
+      std::vector<CSCCorrelatedLCTDigi>::iterator itlct = tmpV.begin();
+      for (; itlct != tmpV.end(); itlct++)
+	  if(std::fabs((*itlct).getGEMDPhi()) > std::fabs((*plct).getGEMDPhi()) and std::fabs((*plct).getGEMDPhi())>0) break;
+    
+     if(itlct==tmpV.end()) tmpV.push_back(*plct);
+     else tmpV.insert(itlct--, *plct);
+  }
+ //for debug 
+//  std::cout << "sort LCTs  by GEMDPhi" << std::endl;
+//  for (plct = tmpV.begin(); plct != tmpV.end(); plct++)
+ //     std::cout << *plct << std::endl;
+  if (tmpV.size() > max_me11_lcts) tmpV.erase(tmpV.begin()+max_me11_lcts, tmpV.end());
+  return tmpV;
+ }
+
+
+//sort LCTs in whole LCTs BX window
+std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::sortLCTsByGEMDPhi(int me)
+{
+   std::vector<CSCCorrelatedLCTDigi> LCTs_final;
+   LCTs_final.clear();
+    for (int bx = 0; bx < MAX_LCT_BINS; bx++)
+     {
+       std::vector<CSCCorrelatedLCTDigi> LCTs1a;
+       std::vector<CSCCorrelatedLCTDigi> LCTs1b;
+       std::vector<CSCCorrelatedLCTDigi> LCTs_tmp;
+       std::vector<CSCCorrelatedLCTDigi> LCTs_tmp1;
+       LCTs1a = sortLCTsByGEMDPhi(bx, ME1A);
+       LCTs1b = sortLCTsByGEMDPhi(bx, ME1B);
+      std::vector<CSCCorrelatedLCTDigi>::iterator it1a = LCTs1a.begin();
+      std::vector<CSCCorrelatedLCTDigi>::iterator it1b = LCTs1b.begin();
+      LCTs_tmp.insert(LCTs_tmp.begin(), LCTs1b.begin(), LCTs1b.end());
+      LCTs_tmp.insert(LCTs_tmp.end(), LCTs1a.begin(), LCTs1a.end());
+      LCTs_tmp1 = sortLCTsByGEMDPhi(LCTs_tmp);//LCTs reduction per BX
+       if (FirstTwoLCTsInME11_)
+       {
+         std::vector<CSCCorrelatedLCTDigi>::iterator itp = LCTs_tmp1.begin();
+       	   while (itp != LCTs_tmp1.end())
+	       {
+		   if (me==ME1B and it1b != LCTs1b.end() and *itp==*it1b)
+		   {
+			  LCTs_final.push_back(*it1b);
+			  it1b++;
+		     }
+		   if (me==ME1A and it1a != LCTs1a.end() and *itp==*it1a) 
+		   {
+			  LCTs_final.push_back(*it1a);
+			  it1a++;
+	             }
+		   itp++;
+	       }
+       }
+      else {
+            if (LCTs1a.size() and LCTs1b.size() and me==ME1A)
+	           LCTs_final.push_back(*LCTs1a.begin());
+            else if (LCTs1a.size() and LCTs1b.size() and me==ME1B)
+	           LCTs_final.push_back(*LCTs1b.begin());
+	    else if (LCTs1a.size() and LCTs1b.size()==0 and me==ME1A)
+		LCTs_final.insert(LCTs_final.end(), LCTs1a.begin(), LCTs1a.end());
+	    else if (LCTs1b.size() and LCTs1a.size()==0 and me==ME1B)
+		LCTs_final.insert(LCTs_final.end(), LCTs1b.begin(), LCTs1b.end());
+      }
+      }
+   return LCTs_final;
+}
+
+
 bool CSCMotherboardME11::doesALCTCrossCLCT(CSCALCTDigi &a, CSCCLCTDigi &c, int me)
 {
   if ( !c.isValid() or !a.isValid() ) return false;
