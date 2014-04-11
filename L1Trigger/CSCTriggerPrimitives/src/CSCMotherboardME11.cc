@@ -970,7 +970,11 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   } // end of ALCT-centric matching
   
     // possibly use some discrimination from GEMs
-  if (gemGeometryAvailable and runME11ILT_ and do_gem_matching) matchGEMPads();
+  if (gemGeometryAvailable and runME11ILT_ and do_gem_matching) 
+  {
+      matchGEMPads(ME1B);
+      matchGEMPads(ME1A);
+  }
   
   if (hasLCTs and print_available_pads){
     std::cout << "========================================================================" << std::endl;
@@ -1889,17 +1893,18 @@ void CSCMotherboardME11::correlateLCTs(CSCALCTDigi bestALCT,
 }
 
 
-void CSCMotherboardME11::matchGEMPads()
+void CSCMotherboardME11::matchGEMPads(int ME)
 {
   using namespace std;
 
+  auto allLCTs(ME==ME1A ? allLCTs1a : allLCTs1b);
   // check if we have any LCTs at all
   int nlct = 0;
   for (int bx = 0; bx < MAX_LCT_BINS; bx++)
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<2;i++)
       {
-        CSCCorrelatedLCTDigi& lct = allLCTs1b[bx][mbx][i];
+        CSCCorrelatedLCTDigi& lct = allLCTs[bx][mbx][i];
         if (lct.isValid()) nlct++;
       }
   if (nlct == 0) return;
@@ -1909,13 +1914,16 @@ void CSCMotherboardME11::matchGEMPads()
   CSCChamber* cscChamber = geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber);
 
   auto me1bId = cscChamber->id();
-  int chamber = me1bId.chamber();
+  const CSCDetId me1aId(me1bId.endcap(), 1, 4, me1bId.chamber());
+  auto me1abId(ME==ME1A ? me1aId : me1bId);
+  int chamber = me1abId.chamber();
   bool is_odd = chamber & 1;
+  auto nhalfstrip(ME==ME1A ? 95 : 127);
 
-  if (debug_gem_matching) std::cout<<"++++++++  matchGEMPads "<< me1bId <<" +++++++++ "<<std::endl;
+  if (debug_gem_matching) std::cout<<"++++++++  matchGEMPads "<< me1abId <<" +++++++++ "<<std::endl;
 
   // "key" layer id is used to calculate global position of stub
-  CSCDetId key_id(me1bId.endcap(), me1bId.station(), me1bId.ring(), me1bId.chamber(), CSCConstants::KEY_CLCT_LAYER);
+  CSCDetId key_id(me1abId.endcap(), me1abId.station(), me1abId.ring(), me1abId.chamber(), CSCConstants::KEY_CLCT_LAYER);
 
   // check if there are any pads 
   if (pads_.empty()) {
@@ -1932,7 +1940,7 @@ void CSCMotherboardME11::matchGEMPads()
     for (unsigned int mbx = 0; mbx < match_trig_window_size; ++mbx)
       for (int i=0; i<2; ++i)
       {
-        CSCCorrelatedLCTDigi& lct = allLCTs1b[bx][mbx][i];
+        CSCCorrelatedLCTDigi& lct = allLCTs[bx][mbx][i];
         if (!lct.isValid() or fabs(lct.getGEMDPhi()) < 0.000001) continue;
         if (debug_gem_matching) std::cout<<"LCTbefore "<<bx<<" "<<mbx<<" "<<i<<" "<<lct;
 
@@ -1940,8 +1948,8 @@ void CSCMotherboardME11::matchGEMPads()
         lct.setGEMDPhi(-99.);
 
         // "strip" here is actually a half-strip in geometry's terms
-        // note that LCT::getStrip() starts from 0
-        float fractional_strip = 0.5 * (127-lct.getStrip() + 1) - 0.25;//flip half strip
+        // note that LCT::getStrip() starts from 0, flip the halfstrip
+        float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
         auto layer_geo = cscChamber->layer(CSCConstants::KEY_CLCT_LAYER)->geometry();
         // LCT::getKeyWG() also starts from 0
         float wire = layer_geo->middleWireOfGroup(lct.getKeyWG() + 1);
@@ -2036,7 +2044,7 @@ void CSCMotherboardME11::matchGEMPads()
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<2;i++)
       {
-        if (allLCTs1b[bx][mbx][i].isValid()) nlct_after++;
+        if (allLCTs[bx][mbx][i].isValid()) nlct_after++;
       }
   if (debug_gem_matching) std::cout<<"before "<<nlct<<"  after "<<nlct_after<<std::endl;
 }
