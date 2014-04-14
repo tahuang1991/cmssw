@@ -123,6 +123,12 @@ void CSCMotherboardME21::clear()
 {
   CSCMotherboard::clear();
 
+  for (int bx = 0; bx < MAX_LCT_BINS; bx++)
+  {
+    for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
+      for (int i=0;i<2;i++)
+        allLCTs[bx][mbx][i].clear();
+  }
   cscWgToGemRollShort_.clear();
   cscWgToGemRollLong_.clear();
   gemPadToCscHs_.clear();
@@ -336,10 +342,10 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
           
           ++nSuccesFulMatches;
           //	    if (infoV > 1) LogTrace("CSCMotherboard")
-	  //          int mbx = bx_clct-bx_clct_start;
+	  int mbx = bx_clct-bx_clct_start;
           correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
                         clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
-			allLCTs[bx_alct][bx_clct][0], allLCTs[bx_alct][bx_clct][1]);
+			allLCTs[bx_alct][mbx][0], allLCTs[bx_alct][mbx][1]);
 	  if (print_available_pads) {
 	    std::cout << "Successful ALCT-CLCT match in ME21: bx_alct = " << bx_alct
 		      << "; match window: [" << bx_clct_start << "; " << bx_clct_stop
@@ -350,10 +356,11 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
 	    clct->secondCLCT[bx_clct].print();
 	  }
           
-//           if (allLCTs1b[bx_alct][mbx][0].isValid()) {
+           if (allLCTs[bx_alct][mbx][0].isValid()) {
 //             used_clct_mask[bx_clct] += 1;
 //             if (match_earliest_clct_me11_only) break;
-//           }
+//	       std::cout << "Valid LCT" << allLCTs[bx_alct][mbx][0] << std::endl;
+           }
         } // end of CLCT loop
 
       // ALCT-to-GEM matching
@@ -365,15 +372,16 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
           // find the best matching copad - first one 
           try {
             auto copads_long(matchingGEMPads(alct->bestALCT[bx_alct], coPadsLong_[bx_gem],false,true));             
-            auto copads_short(matchingGEMPads(alct->bestALCT[bx_alct], coPadsShort_[bx_gem],false,true));             
+            auto copads_short(matchingGEMPads(alct->bestALCT[bx_alct], coPadsShort_[bx_gem],true,true));             
 	    int nFound(copads_long.size()!=0 ? copads_long.size() : copads_short.size());
 	    if (nFound == 0) continue;
 	    auto copads(copads_long.size()!=0 ? copads_long : copads_short);
             if (print_available_pads) std::cout << "\t++Number of matching GEM CoPads in BX " << bx_alct << " : "<< copads.size() << std::endl;
-            ++nSuccesFulGEMMatches;            
+            ++nSuccesFulGEMMatches;           
+	    int mbx = bx_gem-bx_gem_start; 
             correlateLCTsGEM(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
-                             *(copads.at(0)).second, allLCTs[bx_alct][bx_gem][0], allLCTs[bx_alct][bx_gem][1]);
-            if (allLCTs[bx_alct][bx_gem][0].isValid()) {
+                             *(copads.at(0)).second, allLCTs[bx_alct][mbx][0], allLCTs[bx_alct][mbx][1]);
+            if (allLCTs[bx_alct][mbx][0].isValid()) {
               if (match_earliest_clct_me21_only_) break;
             }
             if (print_available_pads) 
@@ -641,6 +649,7 @@ void CSCMotherboardME21::correlateLCTs(CSCALCTDigi bestALCT,
   {
     lct1 = constructLCTs(bestALCT, bestCLCT);
     lct1.setTrknmb(1);
+    lct1.print();
   }
 
   if (((secondALCT != bestALCT) or (secondCLCT != bestCLCT)) and
@@ -650,6 +659,7 @@ void CSCMotherboardME21::correlateLCTs(CSCALCTDigi bestALCT,
   {
     lct2 = constructLCTs(secondALCT, secondCLCT);
     lct2.setTrknmb(2);
+    lct2.print();
   }
 }
 
@@ -663,7 +673,7 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME21::readoutLCTs()
 std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME21::getLCTs()
 {
     std::vector<CSCCorrelatedLCTDigi> result;
-    for (int bx = 0; bx < 15; bx++ )
+    for (int bx = 0; bx < MAX_LCT_BINS; bx++ )
     {
       std::vector<CSCCorrelatedLCTDigi> tmpV = sortLCTsByQual(bx);
       result.insert(result.end(), tmpV.begin(), tmpV.end());
