@@ -207,7 +207,7 @@ CSCMotherboardME3141::run(const CSCWireDigiCollection* wiredc,
       // HS are wrapped-around
       cscHsToRpcStrip_[nStrips*2-HS] = std::make_pair(std::floor(strip),std::ceil(strip));
     }
-    debug = true;
+    debug = false;
     if (debug){
       std::cout << "detId " << csc_id << std::endl;
       std::cout << "CSCHSToRPCStrip LUT in" << std::endl;
