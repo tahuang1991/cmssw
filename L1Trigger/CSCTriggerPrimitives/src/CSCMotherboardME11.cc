@@ -235,6 +235,7 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
   // masterswitch
   runME11ILT_ = me11tmbParams.getUntrackedParameter<bool>("runME11ILT", false);
 
+  FirstTwoLCTsInME11_ = me11tmbParams.getUntrackedParameter<bool>("FirstTwoLCTsInME11", true);
   /// Do GEM matching?
   do_gem_matching = me11tmbParams.getUntrackedParameter<bool>("doGemMatching", false);
   
@@ -1056,7 +1057,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
     // Maximum 2 per whole ME11 per BX case:
     // (supposedly, now we should have max 2 per bx in each 1a and 1b)
-    if ( n1a+n1b > max_me11_lcts )
+    if ( n1a+n1b > max_me11_lcts and tmb_cross_bx_algo == 1)
     {
       // do it simple so far: take all low eta 1/b stubs
       unsigned int nLCT=n1b;
@@ -1074,46 +1075,40 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
   }// reduction per bx
   
+
+  std::vector<CSCCorrelatedLCTDigi> lcts_1b;
+  std::vector<CSCCorrelatedLCTDigi> lcts_1a;
+  lcts_1a =  readoutLCTs1a();
+  lcts_1b =  readoutLCTs1b();
   bool first = true;
-  for (int bx = 0; bx < MAX_LCT_BINS; bx++)
+  unsigned int n1b=0, n1a=0;
+  for (auto p : lcts_1b )
   {
-    // counting
-    unsigned int n1a=0, n1b=0;
-    for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
-      for (int i=0;i<2;i++)
-      {
-        int cbx = bx + mbx - match_trig_window_size/2;
-        if (allLCTs1b[bx][mbx][i].isValid())
-        {
           if (print_available_pads and first){
             std::cout << "========================================================================" << std::endl;
             std::cout << "Counting the final LCTs" << std::endl;
             std::cout << "========================================================================" << std::endl;
             first = false;
-          }
-
+	    std::cout << "tmb_cross_bx_algo: " << tmb_cross_bx_algo << std::endl;
+	    
+	  }
           n1b++;
-          //          if (infoV > 0) LogDebug("CSCMotherboard") 
           if (print_available_pads)
-            std::cout
-              << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1b[bx][mbx][i]<<std::endl;
-        }
-        if (allLCTs1a[bx][mbx][i].isValid())
-        {
+            std::cout << "1b LCT "<<n1b<<"  " << p <<std::endl;
+  }
+
+  for (auto p : lcts_1a )
+  {
           if (print_available_pads and first){
             std::cout << "========================================================================" << std::endl;
             std::cout << "Counting the final LCTs" << std::endl;
             std::cout << "========================================================================" << std::endl;
             first = false;
-          }
-
+	    std::cout << "tmb_cross_bx_algo: " << tmb_cross_bx_algo << std::endl;
+	  }
           n1a++;
-          //          if (infoV > 0) LogDebug("CSCMotherboard") 
           if (print_available_pads)
-            std::cout 
-              << "1a LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1a[bx][mbx][i]<<std::endl;
-        }
-      }
+            std::cout << "1a LCT "<<n1a<<"  " << p <<std::endl;
   }
 //   if (infoV > 1) LogTrace("CSCMotherboardME11")<<"clct_count E:"<<theEndcap<<"S:"<<theStation<<"R:"<<1<<"C:"
 // 					       <<CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector, theStation, theTrigChamber)
@@ -1817,7 +1812,8 @@ void CSCMotherboardME11::matchGEMPads(enum ME11Part ME)
 
         // "strip" here is actually a half-strip in geometry's terms
         // note that LCT::getStrip() starts from 0, flip the halfstrip
-        float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
+         float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
+   //     float fractional_strip = 0.5 * (lct.getStrip() + 1) - 0.25;
         auto layer_geo = cscChamber->layer(CSCConstants::KEY_CLCT_LAYER)->geometry();
         // LCT::getKeyWG() also starts from 0
         float wire = layer_geo->middleWireOfGroup(lct.getKeyWG() + 1);
