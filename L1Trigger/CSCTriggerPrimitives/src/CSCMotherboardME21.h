@@ -100,6 +100,22 @@ class CSCMotherboardME21 : public CSCMotherboard
   // masterswitch
   bool runME21ILT_;
 
+  void matchGEMPads();
+  /// Do GEM matching?
+  bool do_gem_matching;
+
+  /// GEM matching dphi and deta
+  double gem_match_delta_phi;
+  double gem_match_delta_eta;
+
+  /// delta BX for GEM pads matching
+  int gem_match_delta_bx;
+
+  /// min eta of LCT for which we require GEM match (we don't throw out LCTs below this min eta) 
+  double gem_match_min_eta;
+
+  /// whether to throw out GEM-fiducial LCTs that have no gem match
+  bool gem_clear_nomatch_lcts;
   // debug gem matching
   bool debug_gem_matching;
 
