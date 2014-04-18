@@ -459,13 +459,13 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
     std::cout << "========================================================================" << std::endl;
     std::cout << "Counting the LCTs" << std::endl;
     std::cout << "========================================================================" << std::endl;
-  }
-
   for (int bx = 0; bx < MAX_LCT_BINS; bx++) 
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<2;i++)
         if (allLCTs[bx][mbx][i].isValid())
 	    std::cout << " LCT  "<< allLCTs[bx][mbx][i] << std::endl;
+  }
+
 
   std::vector<CSCCorrelatedLCTDigi> lcts;
   lcts =  readoutLCTs();
