@@ -253,7 +253,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
       const int HS(i/0.5);
       const float pad(randRoll->pad(lpGEM));
       // HS are wrapped-around
-      cscHsToGemPad_[nStrips*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      cscHsToGemPad_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     debug = false;
     if (debug){
@@ -271,7 +271,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
       const LocalPoint lpCSC(keyLayer->toLocal(gp));
       const float strip(keyLayerGeometry->strip(lpCSC));
       // HS are wrapped-around
-      gemPadToCscHs_[i] = nStrips*2-(int) (strip - 0.25)/0.5;
+      gemPadToCscHs_[i] = (int) (strip - 0.25)/0.5;
     }
     debug = false;
     if (debug){
@@ -294,8 +294,10 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
 
 //  return;
 
-  const bool hasPads(padsShort_.size()!=0 or padsLong_.size()!=0);
-  const bool hasCoPads(coPadsShort_.size()!=0 or coPadsLong_.size()!=0);
+//  const bool hasPads(padsShort_.size()!=0 or padsLong_.size()!=0);
+//  const bool hasCoPads(coPadsShort_.size()!=0 or coPadsLong_.size()!=0);
+  const bool hasPads(padsLong_.size()!=0);
+  const bool hasCoPads(coPadsLong_.size()!=0);
 
   int used_clct_mask[20];
   for (int c=0;c<20;++c) used_clct_mask[c]=0;
@@ -319,8 +321,8 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
         std::cout << "+++ Second ALCT Details: ";
         alct->secondALCT[bx_alct].print();
         
-        printGEMTriggerPads(bx_clct_start, bx_clct_stop, true);      
-        printGEMTriggerPads(bx_clct_start, bx_clct_stop, true, true);      
+      //  printGEMTriggerPads(bx_clct_start, bx_clct_stop, true);      
+      //  printGEMTriggerPads(bx_clct_start, bx_clct_stop, true, true);      
         printGEMTriggerPads(bx_clct_start, bx_clct_stop, false);      
         printGEMTriggerPads(bx_clct_start, bx_clct_stop, false, true);      
         
@@ -734,7 +736,7 @@ void CSCMotherboardME21::buildCoincidencePads(const GEMCSCPadDigiCollection* out
   // build coincidences
   for (auto det_range = out_pads->begin(); det_range != out_pads->end(); ++det_range) {
     const GEMDetId& id = (*det_range).first;
-    if (id.station() != 1) continue;
+    if (id.station() != 3) continue; // comment out if we use short and Long chamber
     
     // all coincidences detIDs will have layer=1
     if (id.layer() != 1) continue;
@@ -887,11 +889,11 @@ void CSCMotherboardME21::matchGEMPads()
   // retrieve CSCChamber geometry
   CSCTriggerGeomManager* geo_manager = CSCTriggerGeometry::get();
   CSCChamber* cscChamber = geo_manager->chamber(theEndcap, theStation, theSector, theSubsector, theTrigChamber);
-  const CSCLayer* keyLayerME21(cscChamber->layer(3));
-  const CSCLayerGeometry* keyLayerGeometryME21(keyLayerME21->geometry());
+ // const CSCLayer* keyLayerME21(cscChamber->layer(3));
+ // const CSCLayerGeometry* keyLayerGeometryME21(keyLayerME21->geometry());
 
   const CSCDetId me21Id(cscChamber->id());
-  const int nhalfstrip = keyLayerGeometryME21->numberOfStrips() * 2;
+//  const int nhalfstrip = keyLayerGeometryME21->numberOfStrips() * 2;
 
   if (debug_gem_matching) std::cout<<"++++++++  matchGEMPads "<< me21Id <<" +++++++++ "<<std::endl;
 
@@ -922,7 +924,7 @@ void CSCMotherboardME21::matchGEMPads()
 
         // "strip" here is actually a half-strip in geometry's terms
         // note that LCT::getStrip() starts from 0, flip the halfstrip
-         float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
+         float fractional_strip = 0.5 * (lct.getStrip() + 1) - 0.25;
    //     float fractional_strip = 0.5 * (lct.getStrip() + 1) - 0.25;
         auto layer_geo = cscChamber->layer(CSCConstants::KEY_CLCT_LAYER)->geometry();
         // LCT::getKeyWG() also starts from 0
