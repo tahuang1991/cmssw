@@ -479,7 +479,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const bool edge(HS < 4 or HS > 93);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
       // HS are wrapped-around
-      cscHsToGemPadME1a_[nStripsME1a*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      cscHsToGemPadME1a_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     // ME1b
     auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
@@ -491,7 +491,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const bool edge(HS < 5 or HS > 124);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
       // HS are wrapped-around
-      cscHsToGemPadME1b_[nStripsME1b*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      cscHsToGemPadME1b_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     debug = false;
     if (debug){
@@ -1781,7 +1781,7 @@ void CSCMotherboardME11::matchGEMPads(enum ME11Part ME)
   const CSCDetId me1abId(ME==ME1A ? me1aId : me1bId);
   const int chamber(me1abId.chamber());
   const bool is_odd(chamber%2==1);
-  const int nhalfstrip(ME==ME1A ? 95 : 127);
+//  const int nhalfstrip(ME==ME1A ? 95 : 127);
 
   if (debug_gem_matching) std::cout<<"++++++++  matchGEMPads "<< me1abId <<" +++++++++ "<<std::endl;
 
@@ -1812,8 +1812,8 @@ void CSCMotherboardME11::matchGEMPads(enum ME11Part ME)
 
         // "strip" here is actually a half-strip in geometry's terms
         // note that LCT::getStrip() starts from 0, flip the halfstrip
-         float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
-   //     float fractional_strip = 0.5 * (lct.getStrip() + 1) - 0.25;
+   //      float fractional_strip = 0.5 * (nhalfstrip - lct.getStrip() + 1) - 0.25;
+        float fractional_strip = 0.5 * (lct.getStrip() + 1) - 0.25;
         auto layer_geo = cscChamber->layer(CSCConstants::KEY_CLCT_LAYER)->geometry();
         // LCT::getKeyWG() also starts from 0
         float wire = layer_geo->middleWireOfGroup(lct.getKeyWG() + 1);
@@ -1824,7 +1824,8 @@ void CSCMotherboardME11::matchGEMPads(enum ME11Part ME)
         // is LCT located in the high efficiency GEM eta range?
         bool gem_fid = ( std::abs(csc_gp.eta()) >= gem_match_min_eta );
 
-        if (debug_gem_matching) std::cout<<" lct eta "<<csc_gp.eta()<<" phi "<<csc_gp.phi()<<std::endl;
+        if (debug_gem_matching) std::cout<< "LCT wiregroup: " << wire << " strip:"<< fractional_strip
+	                                 <<" lct eta "<<csc_gp.eta()<<" phi "<<csc_gp.phi()<<std::endl;
 
         if (!gem_fid)
         {
@@ -1856,7 +1857,12 @@ void CSCMotherboardME11::matchGEMPads(enum ME11Part ME)
           GlobalPoint gem_gp = gem_g->idToDet(gem_id)->surface().toGlobal(gem_lp);
           float dphi = deltaPhi(csc_gp.phi(), gem_gp.phi());
           float deta = csc_gp.eta() - gem_gp.eta();
-          if (debug_gem_matching) std::cout<<"    gem with dphi "<< std::abs(dphi) <<" deta "<< std::abs(deta) <<std::endl;
+	  if (debug_gem_matching) std::cout<<"GEMGeometry " << gem_g->etaPartition(gem_id)->pitch() 
+	                                 << " padpitch " <<gem_g->etaPartition(gem_id)->padPitch() 
+					 << "  localpitch" <<gem_g->etaPartition(gem_id)->localPitch(gem_lp)<<std::endl;
+          if (debug_gem_matching) std::cout<<" GEMDetId: " << gem_id << "  Pad" << id_pad.second->pad()
+	                          << " GEMstrip:" <<gem_g->etaPartition(gem_id)->strip(gem_lp) 
+	                          <<"    gem with dphi "<< std::abs(dphi) <<" deta "<< std::abs(deta) <<std::endl;
 
           if( (              std::abs(deta) <= gem_match_delta_eta        ) and // within delta_eta
               ( (  is_odd and std::abs(dphi) <= gem_match_delta_phi_odd ) or
