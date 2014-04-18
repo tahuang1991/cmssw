@@ -298,6 +298,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
 //  const bool hasCoPads(coPadsShort_.size()!=0 or coPadsLong_.size()!=0);
   const bool hasPads(padsLong_.size()!=0);
   const bool hasCoPads(coPadsLong_.size()!=0);
+  bool hasLCT(false);
 
   int used_clct_mask[20];
   for (int c=0;c<20;++c) used_clct_mask[c]=0;
@@ -380,7 +381,8 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
 	    clct->secondCLCT[bx_clct].print();
 	  }
           
-//           if (allLCTs[bx_alct][mbx][0].isValid()) {
+           if (allLCTs[bx_alct][mbx][0].isValid()) 
+	         hasLCT = true;
 //             used_clct_mask[bx_clct] += 1;
 //             if (match_earliest_clct_me21_only) break;
 //	       std::cout << "Valid LCT" << allLCTs[bx_alct][mbx][0] << std::endl;
@@ -407,7 +409,8 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
             correlateLCTsGEM(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
                              *(copads_long.at(0)).second, allLCTs[bx_alct][mbx][0], allLCTs[bx_alct][mbx][1]);
             if (allLCTs[bx_alct][mbx][0].isValid()) {
-              if (match_earliest_clct_me21_only_) break;
+                hasLCT = true;
+	       	if (match_earliest_clct_me21_only_) break;
             }
             if (print_available_pads) 
               std::cout << "Successful ALCT-GEM CoPad match in ME21: bx_alct = " << bx_alct << std::endl << std::endl;
@@ -455,7 +458,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
   if (gemGeometryAvailable and runME21ILT_ and do_gem_matching)  matchGEMPads();
 
    // count initial LCTs
-  if (print_available_pads){
+  if (print_available_pads and hasLCT){
     std::cout << "========================================================================" << std::endl;
     std::cout << "Counting the LCTs" << std::endl;
     std::cout << "========================================================================" << std::endl;
