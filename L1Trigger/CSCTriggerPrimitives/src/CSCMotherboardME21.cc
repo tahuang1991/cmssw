@@ -577,7 +577,6 @@ void CSCMotherboardME21::correlateLCTs(CSCALCTDigi bestALCT,
   {
     lct1 = constructLCTs(bestALCT, bestCLCT);
     lct1.setTrknmb(1);
-    lct1.print();
   }
 
   if (((secondALCT != bestALCT) or (secondCLCT != bestCLCT)) and
@@ -587,7 +586,6 @@ void CSCMotherboardME21::correlateLCTs(CSCALCTDigi bestALCT,
   {
     lct2 = constructLCTs(secondALCT, secondCLCT);
     lct2.setTrknmb(2);
-    lct2.print();
   }
 }
 
