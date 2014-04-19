@@ -91,10 +91,12 @@ class CSCMotherboardME21 : public CSCMotherboard
 
   /** Methods to sort the LCTs */
   std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(int bx);
-  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(std::vector<CSCCorrelatedLCTDigi>);
-  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int bx);
-  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi>);
+//  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(std::vector<CSCCorrelatedLCTDigi>);
+//  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int bx);
+ // std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi>);
 
+  std::vector<CSCCorrelatedLCTDigi> getLCTs();
+  std::vector<CSCCorrelatedLCTDigi> readoutLCTs();
 
  private: 
 
@@ -117,9 +119,9 @@ class CSCMotherboardME21 : public CSCMotherboard
 
   bool match_earliest_clct_me21_only;
 
+  unsigned int max_me21_lcts;
   // central LCT bx number
   int lct_central_bx;
-
   /** whether to not reuse CLCTs that were used by previous matching ALCTs
       in ALCT-to-CLCT algorithm */
   bool drop_used_clcts;
@@ -192,6 +194,7 @@ class CSCMotherboardME21 : public CSCMotherboard
 
   // promote ALCT-GEM quality
   bool promoteALCTGEMquality_;
+
 
   std::map<int,std::pair<double,double> > gemRollToEtaLimitsShort_;
   std::map<int,std::pair<double,double> > gemRollToEtaLimitsLong_;
