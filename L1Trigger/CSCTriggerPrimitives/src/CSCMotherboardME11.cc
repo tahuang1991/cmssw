@@ -235,6 +235,7 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
   // masterswitch
   runME11ILT_ = me11tmbParams.getUntrackedParameter<bool>("runME11ILT", false);
 
+  FirstTwoLCTsInME11_ = me11tmbParams.getUntrackedParameter<bool>("FirstTwoLCTsInME11", true);
   /// Do GEM matching?
   do_gem_matching = me11tmbParams.getUntrackedParameter<bool>("doGemMatching", false);
   
@@ -484,7 +485,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const bool edge(HS < 4 or HS > 93);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
       // HS are wrapped-around
-      cscHsToGemPadME1a_[nStripsME1a*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      cscHsToGemPadME1a_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     // ME1b
     auto nStripsME1b(keyLayerGeometryME1b->numberOfStrips());
@@ -496,7 +497,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const bool edge(HS < 5 or HS > 124);
       const float pad(edge ? -99 : randRoll->pad(lpGEM));
       // HS are wrapped-around
-      cscHsToGemPadME1b_[nStripsME1b*2-HS] = std::make_pair(std::floor(pad),std::ceil(pad));
+      cscHsToGemPadME1b_[HS] = std::make_pair(std::floor(pad),std::ceil(pad));
     }
     if (debug_luts){
       std::cout << "detId " << me1bId << std::endl;
@@ -520,8 +521,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
       const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
       // HS are wrapped-around
-      gemPadToCscHsME1a_[i] = nStripsME1a*2-(int) (stripME1a - 0.25)/0.5;
-      gemPadToCscHsME1b_[i] = nStripsME1b*2-(int) (stripME1b - 0.25)/0.5;
+      gemPadToCscHsME1a_[i] = (int) (stripME1a - 0.25)/0.5;
+      gemPadToCscHsME1b_[i] = (int) (stripME1b - 0.25)/0.5;
     }
     if (debug_luts){
       std::cout << "detId " << me1bId << std::endl;
@@ -1038,7 +1039,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
     // Maximum 2 per whole ME11 per BX case:
     // (supposedly, now we should have max 2 per bx in each 1a and 1b)
-    if ( n1a+n1b > max_me11_lcts )
+    if ( n1a+n1b > max_me11_lcts and tmb_cross_bx_algo == 1)
     {
       // do it simple so far: take all low eta 1/b stubs
       unsigned int nLCT=n1b;
@@ -1056,49 +1057,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     }
   }// reduction per bx
   
-  /*
-  bool first = true;
-  for (int bx = 0; bx < MAX_LCT_BINS; bx++)
-  {
-    // counting
-    unsigned int n1a=0, n1b=0;
-    for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
-      for (int i=0;i<2;i++)
-      {
-        int cbx = bx + mbx - match_trig_window_size/2;
-        if (allLCTs1b[bx][mbx][i].isValid())
-        {
-          if (debug_gem_matching and first){
-            std::cout << "========================================================================" << std::endl;
-            std::cout << "Counting the final LCTs" << std::endl;
-            std::cout << "========================================================================" << std::endl;
-            first = false;
-          }
-
-          n1b++;
-          //          if (infoV > 0) LogDebug("CSCMotherboard") 
-          if (debug_gem_matching)
-            std::cout
-              << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1b[bx][mbx][i]<<std::endl;
-        }
-        if (allLCTs1a[bx][mbx][i].isValid())
-        {
-          if (debug_gem_matching and first){
-            std::cout << "========================================================================" << std::endl;
-            std::cout << "Counting the final LCTs" << std::endl;
-            std::cout << "========================================================================" << std::endl;
-            first = false;
-          }
-
-          n1a++;
-          //          if (infoV > 0) LogDebug("CSCMotherboard") 
-          if (debug_gem_matching)
-            std::cout 
-              << "1a LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1a[bx][mbx][i]<<std::endl;
-        }
-      }
-  }
-  */
 
   bool first = true;
   unsigned int n1b=0, n1a=0;
