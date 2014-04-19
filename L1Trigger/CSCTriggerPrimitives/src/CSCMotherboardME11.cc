@@ -516,8 +516,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       const float stripME1a(keyLayerGeometryME1a->strip(lpCSCME1a));
       const float stripME1b(keyLayerGeometryME1b->strip(lpCSCME1b));
       // HS are wrapped-around
-      gemPadToCscHsME1a_[i] = nStripsME1a*2-(int) (stripME1a - 0.25)/0.5;
-      gemPadToCscHsME1b_[i] = nStripsME1b*2-(int) (stripME1b - 0.25)/0.5;
+      gemPadToCscHsME1a_[i] = (int) (stripME1a - 0.25)/0.5;
+      gemPadToCscHsME1b_[i] = (int) (stripME1b - 0.25)/0.5;
     }
     debug = false;
     if (debug){
