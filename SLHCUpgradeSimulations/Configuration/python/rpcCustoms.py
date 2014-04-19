@@ -24,18 +24,28 @@ def customise_Digi(process):
 
 def customise_L1Emulator(process):
     process.simCscTriggerPrimitiveDigis.rpcDigiProducer =  cms.untracked.InputTag("simMuonRPCDigis","")
-    process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
-    process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
     tmb = process.simCscTriggerPrimitiveDigis.tmbSLHC
-    tmb.me3141ILT = cms.PSet(
-        runME3141ILT = cms.untracked.bool(True),
-        debugRPCMatching = cms.untracked.bool(True),
+    tmb.me3141ILT = cms.untracked.PSet(
+        ## run the upgrade algorithm
+        runME3141ILT = cms.untracked.bool(False),
+        
+        ## run in debug mode
+        debugLUTs = cms.untracked.bool(False),
+        debugMatching = cms.untracked.bool(False),
+
+        ## matching to digis in case LowQ CLCT
         maxDeltaBXRPC = cms.untracked.int32(0),
         maxDeltaRollRPC = cms.untracked.int32(0),
         maxDeltaStripRPC = cms.untracked.int32(1),
+
+        ## efficiency recovery switches
         dropLowQualityCLCTsNoRPC = cms.untracked.bool(True),
-        dropLowQualityALCTsNoRPCs = cms.untracked.bool(True),
     )
+    if tmb.me3141ILT.runME3141ILT:
+        process.simCscTriggerPrimitiveDigis.clctSLHC.clctNplanesHitPattern = 3
+        process.simCscTriggerPrimitiveDigis.clctSLHC.clctPidThreshPretrig = 2
+        process.simCscTriggerPrimitiveDigis.clctParam07.clctPidThreshPretrig = 2
+
     return process
 
 def customise_DigiToRaw(process):
