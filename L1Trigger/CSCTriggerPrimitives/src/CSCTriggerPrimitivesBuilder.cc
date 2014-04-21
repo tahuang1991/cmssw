@@ -271,7 +271,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             }
 
             // running upgraded ME2/1 TMBs
-            if ((stat==3 or stat==4) && ring==1 && runME3141ILT_)
+	    else if ((stat==3 or stat==4) && ring==1 && runME3141ILT_)
             {
               CSCMotherboardME3141* tmb3141 = static_cast<CSCMotherboardME3141*>(tmb);
               tmb3141->setCSCGeometry(csc_g);
@@ -321,7 +321,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             }
             
             // running upgraded ME1/1 TMBs
-            if (stat==1 && ring==1 && smartME1aME1b)
+	    else if (stat==1 && ring==1 && smartME1aME1b)
             {
               CSCMotherboardME11* tmb11 = static_cast<CSCMotherboardME11*>(tmb);
 
