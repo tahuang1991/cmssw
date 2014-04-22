@@ -362,7 +362,7 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
             // pick the pad that corresponds 
             auto matchingPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], padsLong_[bx_clct], false));
             int nFound(matchingPads.size());
-            const bool clctInEdge(clct->bestCLCT[bx_clct].getKeyStrip() < 5 or clct->bestCLCT[bx_clct].getKeyStrip() > 124);
+            const bool clctInEdge(clct->bestCLCT[bx_clct].getKeyStrip() < 5 or clct->bestCLCT[bx_clct].getKeyStrip() > 155);
             if (clctInEdge){
               if (debug_gem_matching) std::cout << "\tInfo: low quality CLCT in CSC chamber edge, don't care about GEM pads" << std::endl;
             }
