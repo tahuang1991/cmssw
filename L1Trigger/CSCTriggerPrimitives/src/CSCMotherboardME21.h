@@ -68,6 +68,9 @@ class CSCMotherboardME21 : public CSCMotherboard
   GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), 
                             bool isCopad = false, bool first = true);  
 
+  unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const CSCCLCTDigi& cLCT, 
+			      bool hasPad, bool hasCoPad);
+
   void correlateLCTs(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
              		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
                      CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2,
@@ -83,20 +86,24 @@ class CSCMotherboardME21 : public CSCMotherboard
 			GEMCSCPadDigi gemPad,
 			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
+  void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
+			CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2,
+			const GEMPadsBX& pads = GEMPadsBX(), const GEMPadsBX& copads = GEMPadsBX());
+
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct, const GEMCSCPadDigi& gem,
                                         bool oldDataFormat = false); 
-  
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct, const GEMCSCPadDigi& gem,
                                         bool oldDataFormat = true); 
+  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct, const CSCCLCTDigi& clct, 
+					bool hasPad, bool hasCoPad); 
 
   /** Methods to sort the LCTs */
   std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(int bx);
-//  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(std::vector<CSCCorrelatedLCTDigi>);
-//  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int bx);
- // std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi>);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByQuality(std::vector<CSCCorrelatedLCTDigi>);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(int bx);
+  std::vector<CSCCorrelatedLCTDigi> sortLCTsByGEMDPhi(std::vector<CSCCorrelatedLCTDigi>);
 
-  std::vector<CSCCorrelatedLCTDigi> getLCTs();
-  std::vector<CSCCorrelatedLCTDigi> readoutLCTs();
 
  private: 
 
@@ -119,9 +126,9 @@ class CSCMotherboardME21 : public CSCMotherboard
 
   bool match_earliest_clct_me21_only;
 
-  unsigned int max_me21_lcts;
   // central LCT bx number
   int lct_central_bx;
+
   /** whether to not reuse CLCTs that were used by previous matching ALCTs
       in ALCT-to-CLCT algorithm */
   bool drop_used_clcts;
@@ -187,14 +194,13 @@ class CSCMotherboardME21 : public CSCMotherboard
   bool useOldLCTDataFormatCLCTGEM_;
 
   // send only first 2 lcts
-  bool FirstTwoLCTsInME11_;
+  bool firstTwoLCTsInChamber_;
 
   // promote ALCT-GEM pattern
   bool promoteALCTGEMpattern_;
 
   // promote ALCT-GEM quality
   bool promoteALCTGEMquality_;
-
 
   std::map<int,std::pair<double,double> > gemRollToEtaLimitsShort_;
   std::map<int,std::pair<double,double> > gemRollToEtaLimitsLong_;
@@ -206,21 +212,10 @@ class CSCMotherboardME21 : public CSCMotherboard
   std::map<int,int> gemPadToCscHs_;
   std::map<int,std::pair<int,int>> cscHsToGemPad_;
 
-/*   void correlateLCTs(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT, */
-/*                      CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT); */
-
-/*   CSCCorrelatedLCTDigi constructLCTs(const CSCALCTDigi& aLCT, */
-/*                                      const CSCCLCTDigi& cLCT); */
-
-/*   unsigned int encodePattern(const int ptn, const int highPt); */
-
-/*   unsigned int findQuality(const CSCALCTDigi& aLCT, const CSCCLCTDigi& cLCT); */
-
   // map< bx , vector<gemid, pad> >
   GEMPads padsShort_;
   GEMPads padsLong_;
   GEMPads coPadsShort_;
   GEMPads coPadsLong_;
-
 };
 #endif

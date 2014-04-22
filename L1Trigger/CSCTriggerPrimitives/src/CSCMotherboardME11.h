@@ -119,10 +119,10 @@ class CSCMotherboardME11 : public CSCMotherboard
 		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
 		     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2);
 
-  void correlateLCTs(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
-		     CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
-                     CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me,
-                     const GEMPadsBX& pads = GEMPadsBX(), const GEMPadsBX& copads = GEMPadsBX());
+  void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT,
+			CSCCLCTDigi bestCLCT, CSCCLCTDigi secondCLCT,
+			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me,
+			const GEMPadsBX& pads = GEMPadsBX(), const GEMPadsBX& copads = GEMPadsBX());
 
   void correlateLCTsGEM(CSCALCTDigi bestALCT, CSCALCTDigi secondALCT, GEMCSCPadDigi gemPad,
 			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2, int me);
@@ -148,20 +148,16 @@ class CSCMotherboardME11 : public CSCMotherboard
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCCLCTDigi& clct, const GEMCSCPadDigi& gem,
                                         int me, bool oldDataFormat = true); 
   CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct, const CSCCLCTDigi& clct, 
-					const GEMCSCPadDigi& pad, const GEMCSCPadDigi& copad,
-                                        int me, bool oldDataFormat = true); 
-  CSCCorrelatedLCTDigi constructLCTsGEM(const CSCALCTDigi& alct, const CSCCLCTDigi& clct, 
-					int me, bool haspad = false, bool hascopad = false,
-                                        bool oldDataFormat = true); 
-
+					bool hasPad, bool hasCoPad); 
+  
   unsigned int encodePatternGEM(const int ptn, const int highPt);
   unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const GEMCSCPadDigi& gem);
   unsigned int findQualityGEM(const CSCCLCTDigi& cLCT, const GEMCSCPadDigi& gem);
   unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const CSCCLCTDigi& cLCT, 
-			      bool haspad = false, bool hascopad = false);
-
+			      bool hasPad, bool hasCoPad);
+  
   void printGEMTriggerPads(int minBX, int maxBx, bool iscopad = false);
-
+  
   bool isPadInOverlap(int roll);
   
   GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const GEMPadsBX& pads = GEMPadsBX(), 
@@ -170,7 +166,7 @@ class CSCMotherboardME11 : public CSCMotherboard
                             enum ME11Part = ME1B, bool isCopad = false, bool first = true);  
   GEMPadsBX matchingGEMPads(const CSCCLCTDigi& cLCT, const CSCALCTDigi& aLCT, const GEMPadsBX& pads = GEMPadsBX(), 
                             enum ME11Part = ME1B, bool isCopad = false, bool first = true);  
-
+  
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
   std::vector<CSCCLCTDigi> clctV1a;
@@ -270,7 +266,7 @@ class CSCMotherboardME11 : public CSCMotherboard
   bool useOldLCTDataFormatCLCTGEM_;
 
   // send only first 2 lcts
-  bool FirstTwoLCTsInME11_;
+  bool firstTwoLCTsInChamber_;
 
   // promote ALCT-GEM pattern
   bool promoteALCTGEMpattern_;
