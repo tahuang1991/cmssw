@@ -356,12 +356,14 @@ CSCMotherboardME21::run(const CSCWireDigiCollection* wiredc,
         if (clct->bestCLCT[bx_clct].isValid())
         {
           const int quality(clct->bestCLCT[bx_clct].getQuality());
+	  const bool lowQ(quality<4 or alct->bestALCT[bx_alct].getQuality() == 4);
           if (debug_gem_matching) std::cout << "++Valid ME21 CLCT: " << clct->bestCLCT[bx_clct] << std::endl;
 
-          if (runME21ILT_ and dropLowQualityCLCTsNoGEMs_ and quality < 4 and hasPads){
+          if (runME21ILT_ and dropLowQualityCLCTsNoGEMs_ and lowQ and hasPads){
             // pick the pad that corresponds 
             auto matchingPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], padsLong_[bx_clct], false));
             int nFound(matchingPads.size());
+	   // std::cout <<"found matching GEM nFound" << nFound << std::endl;
             const bool clctInEdge(clct->bestCLCT[bx_clct].getKeyStrip() < 5 or clct->bestCLCT[bx_clct].getKeyStrip() > 155);
             if (clctInEdge){
               if (debug_gem_matching) std::cout << "\tInfo: low quality CLCT in CSC chamber edge, don't care about GEM pads" << std::endl;
@@ -733,7 +735,6 @@ void CSCMotherboardME21::correlateLCTsGEM(CSCALCTDigi bestALCT,
   {
     lct1 = constructLCTsGEM(bestALCT, bestCLCT, hasPads, hasCoPads);
     lct1.setTrknmb(1);
-    lct1.setGEMDPhi(0.0);
   }
 
   if (((secondALCT != bestALCT) or (secondCLCT != bestCLCT)) and
@@ -743,7 +744,6 @@ void CSCMotherboardME21::correlateLCTsGEM(CSCALCTDigi bestALCT,
   {
     lct2 = constructLCTsGEM(secondALCT, secondCLCT, hasPads, hasCoPads);
     lct2.setTrknmb(2);
-    lct2.setGEMDPhi(0.0);
   }
 }
 

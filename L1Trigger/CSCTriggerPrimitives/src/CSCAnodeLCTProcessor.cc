@@ -969,6 +969,7 @@ bool CSCAnodeLCTProcessor::patternDetection(const int key_wire) {
         // Quality definition changed on 22 June 2007: it no longer depends
         // on pattern_thresh.
         if (temp_quality > 3) temp_quality -= 3;
+	else if (temp_quality == 3) temp_quality = 4;
         else                  temp_quality  = 0; // quality code 0 is valid!
       }
 
