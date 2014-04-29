@@ -1230,7 +1230,7 @@ void CSCAnodeLCTProcessor::lctSearch() {
 
       // Store any valid collision pattern LCTs.
       if (quality[i_wire][1] > 0) {
-        int qual = (quality[i_wire][1] & 0x03); // 2 LSBs
+        int qual = (quality[i_wire][1]); // 2 LSBs
         CSCALCTDigi lct_info(1, qual, 0, quality[i_wire][2], i_wire, bx);
         //lct_info.setFullBX(fbx); // uncomment if one wants, e.g., to keep corrected time here
         lct_list.push_back(lct_info);
