@@ -1483,7 +1483,7 @@ void CSCMotherboardME11GEM::correlateLCTsGEM(CSCALCTDigi bestALCT,
   const bool hasPads(nPads!=0);
   const bool hasCoPads(nCoPads!=0);
   
-  if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][0] == 22) and hasPads and (me==ME1B)){
+  if (doLCTGhostBustingWithGEMs_ and (lut[code][0] == 11) and (lut[code][1] == 22) and hasPads and (me==ME1B)){
 
     if (debug_gem_matching) std::cout << "++Info: 2 valid ALCTs-CLCTs pairs with trigger pads. Call the GHOSTBUSTERS!!!" << std::endl;    
     // first check if there are any copads
