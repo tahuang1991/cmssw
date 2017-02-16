@@ -13,11 +13,11 @@
 #include "IOMC/ParticleGuns/interface/FlatRandomOneOverPtGunProducer.h"
 #include "IOMC/ParticleGuns/interface/ExpoRandomPtGunProducer.h"
 #include "IOMC/ParticleGuns/interface/MultiParticleInConeGunProducer.h"
-
+#include "IOMC/ParticleGuns/interface/FlatRandomPtAndDxyGunProducer.h"
 // particle gun prototypes
 //
-  
-  
+
+
 /*
 using edm::FlatEGunASCIIWriter;
 DEFINE_FWK_MODULE(FlatEGunASCIIWriter);
@@ -39,3 +39,5 @@ using edm::ExpoRandomPtGunProducer;
 DEFINE_FWK_MODULE(ExpoRandomPtGunProducer);
 using edm::MultiParticleInConeGunProducer;
 DEFINE_FWK_MODULE(MultiParticleInConeGunProducer);
+using edm::FlatRandomPtAndDxyGunProducer;
+DEFINE_FWK_MODULE(FlatRandomPtAndDxyGunProducer);
