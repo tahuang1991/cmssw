@@ -9,10 +9,10 @@ generator = cms.EDProducer("FlatRandomPtAndDxyGunProducer",
         MaxEta = cms.double(3.0),
         MinPhi = cms.double(-3.14159265359),
         MaxPhi = cms.double(3.14159265359),
-        LzMin  = cms.double(-500.0),#in cm
-        LzMax  = cms.double(500.0),#in cm
+        #LzMin  = cms.double(-500.0),#in mm
+        LzWidth  = cms.double(5000.0),#in mm
         dxyMin = cms.double(0.0),
-        dxyMax = cms.double(50.0)
+        dxyMax = cms.double(500.0)
     ),
     Verbosity = cms.untracked.int32(0), ## set to 1 (or greater)  for printouts
     psethack = cms.string('displaced muon'),

@@ -8,6 +8,7 @@
  ***************************************/
 
 #include "IOMC/ParticleGuns/interface/BaseFlatGunProducer.h"
+#include "CLHEP/Random/RandGauss.h"
 
 namespace edm
 {
@@ -27,10 +28,12 @@ namespace edm
 
         double            fMinPt   ;
         double            fMaxPt   ;
-        double            LzMin_   ;
-        double            LzMax_   ;
+	//double            LzMin_   ;
+        double            LzWidth_   ;
         double            dxyMin_   ;
         double            dxyMax_   ;
+
+	CLHEP::RandGauss *fRandomGaussGenerator;
 
     };
 }

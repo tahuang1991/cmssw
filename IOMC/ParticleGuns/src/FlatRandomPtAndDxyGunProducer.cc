@@ -27,8 +27,10 @@ BaseFlatGunProducer(pset)
   fMaxPt = pgun_params.getParameter<double>("MaxPt");
   dxyMin_ = pgun_params.getParameter<double>("dxyMin");
   dxyMax_ = pgun_params.getParameter<double>("dxyMax");
-  LzMin_ = pgun_params.getParameter<double>("LzMin");
-  LzMax_ = pgun_params.getParameter<double>("LzMax");
+  //LzMin_ = pgun_params.getParameter<double>("LzMin");
+  LzWidth_ = pgun_params.getParameter<double>("LzWidth");
+
+  fRandomGaussGenerator = new CLHEP::RandGauss(fRandomEngine);
 
   produces<HepMCProduct>();
   produces<GenEventInfoProduct>();
@@ -88,7 +90,9 @@ void FlatRandomPtAndDxyGunProducer::produce(Event &e, const EventSetup& es)
       }
       eta = fRandomGenerator->fire(fMinEta, fMaxEta);
       pz = pt * sinh(eta);
-      vz = fRandomGenerator->fire(-LzMin_, LzMax_);
+      vz = fabs(fRandomGaussGenerator->fire(0.0, LzWidth_/2.0));
+      if (pz<0)
+	  vz = -vz;
 
       if (passLxy)
         break;
