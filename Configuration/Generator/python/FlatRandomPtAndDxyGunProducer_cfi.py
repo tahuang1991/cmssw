@@ -10,7 +10,7 @@ generator = cms.EDProducer("FlatRandomPtAndDxyGunProducer",
         MinPhi = cms.double(-3.14159265359),
         MaxPhi = cms.double(3.14159265359),
         #LzMin  = cms.double(-500.0),#in mm
-        LzWidth  = cms.double(5000.0),#in mm
+        LzWidth = cms.double(3000.0),#make sure most muons generated before Muon system, Gauss distribution
         dxyMin = cms.double(0.0),
         dxyMax = cms.double(500.0)
     ),
