@@ -27,10 +27,13 @@ BaseFlatGunProducer(pset)
   fMaxPt = pgun_params.getParameter<double>("MaxPt");
   dxyMin_ = pgun_params.getParameter<double>("dxyMin");
   dxyMax_ = pgun_params.getParameter<double>("dxyMax");
-  //LzMin_ = pgun_params.getParameter<double>("LzMin");
-  LzWidth_ = pgun_params.getParameter<double>("LzWidth");
+  lxyMax_ = pgun_params.getParameter<double>("LxyMax");
+  lzMax_ = pgun_params.getParameter<double>("LzMax");
+  ConeRadius_ = pgun_params.getParameter<double>("ConeRadius");
+  ConeH_ = pgun_params.getParameter<double>("ConeH");
+  DistanceToAPEX_ = pgun_params.getParameter<double>("DistanceToAPEX");
 
-  fRandomGaussGenerator = new CLHEP::RandGauss(fRandomEngine);
+  //fRandomGaussGenerator = new CLHEP::RandGauss(fRandomEngine);
 
   produces<HepMCProduct>();
   produces<GenEventInfoProduct>();
@@ -71,30 +74,47 @@ void FlatRandomPtAndDxyGunProducer::produce(Event &e, const EventSetup& es)
     double vz = 0;
     double lxy = 0;
 
-    bool passLxy = false;
-    while (not passLxy) {
+    bool passLoop = false;
+    while (not passLoop) {
 
+      bool passLxy = false;
+      bool passLz = false;
       phi_vtx = fRandomGenerator->fire(fMinPhi, fMaxPhi);
       dxy = fRandomGenerator->fire(dxyMin_, dxyMax_);
+      float dxysign = fRandomGenerator->fire(-1, 1);
+      if (dxysign < 0)
+	  dxy = -dxy;
       pt = fRandomGenerator->fire(fMinPt, fMaxPt);
       px = pt*cos(phi_vtx);
       py = pt*sin(phi_vtx);
       for (int i=0; i<10000; i++){
-        vx = fRandomGenerator->fire(-dxyMax_, dxyMax_);
+        vx = fRandomGenerator->fire(-lxyMax_, lxyMax_);
         vy = (pt*dxy + vx * py)/px;
         lxy = sqrt(vx*vx + vy*vy);
-        if (lxy<abs(dxyMax_)){
+        if (lxy<abs(lxyMax_) and (vx*px + vy*py)>0){
           passLxy = true;
           break;
         }
       }
       eta = fRandomGenerator->fire(fMinEta, fMaxEta);
       pz = pt * sinh(eta);
-      vz = fabs(fRandomGaussGenerator->fire(0.0, LzWidth_/2.0));
+      //vz = fabs(fRandomGaussGenerator->fire(0.0, LzWidth_/2.0));
+      float ConeTheta = ConeRadius_/ConeH_;
+      for (int j=0; j<100; j++){
+	  vz = fRandomGenerator->fire(0.0, lzMax_);// this is abs(vz)
+	  float v0 = vz - DistanceToAPEX_;
+	  if (v0>0 and lxy*lxy/(ConeTheta*ConeTheta)<=(v0*v0))
+	     continue;
+	  else{
+	     passLz = true;
+	     break;
+	  }
+      }
       if (pz<0)
 	  vz = -vz;
+      passLoop = (passLxy and passLz);
 
-      if (passLxy)
+      if (passLoop)
         break;
     }
 
