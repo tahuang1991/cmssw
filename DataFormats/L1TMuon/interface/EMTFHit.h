@@ -6,7 +6,7 @@
 #define __l1t_EMTFHit_h__
 
 #include <vector>
-#include <boost/cstdint.hpp> 
+#include <boost/cstdint.hpp>
 #include <cmath>
 #include <iostream>
 
@@ -17,28 +17,28 @@
 #include "DataFormats/L1TMuon/interface/EMTF/ME.h"
 
 namespace l1t {
-  
+
   class EMTFHit {
   public:
-    
+
   EMTFHit() :
-    
+
     // Using -999 instead of -99 b/c this seems most common in the emulator.  Unfortunate. - AWB 17.03.16
-    endcap(-999), station(-999), ring(-999), sector(-999), sector_index(-999), subsector(-999), 
-      chamber(-999), csc_ID(-999), roll(-999), rpc_layer(-999), neighbor(-999), mpc_link(-999), 
-      wire(-999), strip(-999), strip_hi(-999), strip_low(-999), track_num(-999), quality(-999), 
-      pattern(-999), bend(-999), valid(-999), sync_err(-999), bc0(-999), bx(-999), stub_num(-999), 
+    endcap(-999), station(-999), ring(-999), sector(-999), sector_index(-999), subsector(-999),
+      chamber(-999), csc_ID(-999), roll(-999), rpc_layer(-999), neighbor(-999), mpc_link(-999),
+      wire(-999), strip(-999), strip_hi(-999), strip_low(-999), track_num(-999), quality(-999),
+      pattern(-999), bend(-999), valid(-999), sync_err(-999), bc0(-999), bx(-999), stub_num(-999),
       is_CSC_hit(-999), is_RPC_hit(-999)
       {};
-    
+
     virtual ~EMTFHit() {};
 
     void ImportCSCDetId (const CSCDetId& _detId);
-    CSCDetId CreateCSCDetId();
+    CSCDetId CreateCSCDetId() const;
     void ImportRPCDetId (const RPCDetId& _detId);
     RPCDetId CreateRPCDetId();
     void ImportCSCCorrelatedLCTDigi (const CSCCorrelatedLCTDigi& _digi);
-    CSCCorrelatedLCTDigi CreateCSCCorrelatedLCTDigi();
+    CSCCorrelatedLCTDigi CreateCSCCorrelatedLCTDigi() const;
     void ImportRPCDigi (const RPCDigi& _digi);
     RPCDigi CreateRPCDigi();
     void ImportME (const emtf::ME _ME );
@@ -50,7 +50,7 @@ namespace l1t {
     void SetRPCDetId         (RPCDetId id)                 { rpc_DetId         = id;        }
     void SetCSCLCTDigi       (CSCCorrelatedLCTDigi digi)   { csc_LCTDigi       = digi;      }
     void SetRPCDigi          (RPCDigi digi)                { rpc_Digi          = digi;      }
-    
+
     CSCDetId CSC_DetId                          () const { return csc_DetId;    }
     RPCDetId RPC_DetId                          () const { return rpc_DetId;    }
     CSCCorrelatedLCTDigi CSC_LCTDigi            () const { return csc_LCTDigi;  }
@@ -118,12 +118,12 @@ namespace l1t {
 
 
   private:
-    
+
     CSCDetId csc_DetId;
     RPCDetId rpc_DetId;
     CSCCorrelatedLCTDigi csc_LCTDigi;
     RPCDigi rpc_Digi;
-    
+
     int   endcap;       // -1 or 1.  Filled in EMTFHit.cc from CSCDetId, modified
     int   station;      //  1 -  4.  Filled in EMTFHit.cc from CSCDetId
     int   ring;         //  1 -  3.  Filled in EMTFHit.cc from CSCDetId
@@ -134,13 +134,13 @@ namespace l1t {
     int   csc_ID;       //  1 -  9.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi or emulator from CSCData
     int   roll;         //  Sub-division of ring for RPC hits
     int   rpc_layer;    //  Forward-backward bit for RPC hits
-    int   neighbor;     //  0 or 1.  Filled in EMTFBlockME.cc 
+    int   neighbor;     //  0 or 1.  Filled in EMTFBlockME.cc
     int   mpc_link;     //  1 -  3.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
     int   wire;         //  1 -  ?.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
     int   strip;        //  1 -  ?.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
     int   strip_hi;     //  Highest strip number in an RPC cluster
     int   strip_low;    //  Lowest strip number in an RPC cluster
-    int   track_num;    //  ? -  ?.  Filled in emulator from CSCData 
+    int   track_num;    //  ? -  ?.  Filled in emulator from CSCData
     int   quality;      //  0 - 15.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
     int   pattern;      //  0 - 10.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
     int   bend;         //  0 or 1.  Filled in EMTFHit.cc from CSCCorrelatedLCTDigi
@@ -153,10 +153,10 @@ namespace l1t {
     int   is_RPC_hit;   //  0 or 1.  Filled in EMTFHit.cc
 
   }; // End of class EMTFHit
-  
+
   // Define a vector of EMTFHit
   typedef std::vector<EMTFHit> EMTFHitCollection;
-  
+
 } // End of namespace l1t
 
 #endif /* define __l1t_EMTFHit_h__ */
