@@ -18,13 +18,15 @@ process.source = cms.Source("PoolSource",
 from  InputFileHelpers import *
 #Inputdir = ['/eos/uscms/store/user/tahuang/SingleMuon/SingleMuon_2015D_v1_256734/161101_170853/0000/']
 Inputdir = ['/eos/uscms/store/user/tahuang/SingleMuon/SingleMuon_2016H_v1_281976/161012_220915/0000/']
+#Inputdir = ['/eos/uscms/store/user/tahuang/SingleMuon_Run2MC_GEN_SIM_DIGI_L1_DIGI2RAW/SingleMuonPt100_MC_GEN_SIM_DIGI_L1_DIGI2RAW_updatetimeBitForBxZero/161103_024426/0000/']
+Inputdir = ['/eos/uscms/store/user/tahuang/SingleMuon_Run2MC_GEN_SIM_DIGI_L1_DIGI2RAW/L1REPACK_RAW2DIGI_0919/160920_153918/0000/']
 process = useInputDir(process, Inputdir)
 #process.PoolSource.fileNames = ['/store/relval/CMSSW_3_1_0_pre7/RelValSingleMuPt100/GEN-SIM-DIGI-RAW-HLTDEBUG/IDEAL_31X_v1/0004/EE15A7EC-E641-DE11-A279-001D09F29321.root']
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10000)
+    input = cms.untracked.int32(100000)
 )
-
+"""
 # For LogTrace to take an effect, compile using
 # > scram b -j8 USER_CXXFLAGS="-DEDM_ML_DEBUG"
 process.MessageLogger = cms.Service("MessageLogger",
@@ -45,11 +47,13 @@ process.MessageLogger = cms.Service("MessageLogger",
     ),
     debugModules = cms.untracked.vstring("lctreader")
 )
+"""
 
 process.load('Configuration.StandardSequences.GeometryDB_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v11', '')
+#process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v11', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '80X_mcRun2_asymptotic_v14', '')
 
 
 # Enable floating point exceptions
@@ -58,7 +62,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v11', '')
 
 process.TFileService = cms.Service("TFileService",
     #fileName = cms.string('TPEHists_run2015D_v1_256734.root')
-    fileName = cms.string('TPEHists_run2016H_v1_281976_20170327.root')
+    fileName = cms.string('TPEHists_80x_MC.root')
 )
 
 process.load("CSCTriggerPrimitivesReader_cfi")
@@ -66,5 +70,9 @@ process.lctreader.debug = True
 #process.lctreader.dataLctsIn = False
 #- For official RelVal samples
 #process.lctreader.CSCLCTProducerEmul = "simCscTriggerPrimitiveDigis"
+#process.lctreader.CSCComparatorDigiProducer = cms.InputTag("muonCSCDigis","MuonCSCComparatorDigi")
+#process.lctreader.CSCWireDigiProducer = cms.InputTag("simMuonCSCDigis","MuonCSCWireDigi")
+#process.lctreader.CSCLCTProducerData = cms.untracked.string("simMuonCSCDigis")
+#
 
 process.p = cms.Path(process.lctreader)

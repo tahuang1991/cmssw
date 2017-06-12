@@ -7,7 +7,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("CSCTPEmulator")
 
 process.maxEvents = cms.untracked.PSet(
-  input = cms.untracked.int32(10000)
+  input = cms.untracked.int32(-1)
 )
 
 # Hack to add "test" directory to the python path.
@@ -29,7 +29,8 @@ process.source = cms.Source("PoolSource",
      fileNames = cms.untracked.vstring(
 #         '/store/data/Commissioning12/MinimumBias/RAW/v1/000/189/778/FC9A951F-977A-E111-9385-001D09F2B30B.root'
 #         '/store/data/Run2012C/SingleMu/RAW/v1/000/199/703/6401E77F-05D7-E111-A310-BCAEC518FF41.root'
-         'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+         #'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+	 '/store/data/Run2015D/SingleMuon/RAW/v1/000/256/734/00000/8200C0B8-0F5E-E511-80B2-02163E014415.root'
      )
 ##        untracked uint32 debugVebosity = 10
 ##        untracked bool   debugFlag     = false
@@ -67,7 +68,10 @@ process.load("Geometry.CSCGeometry.cscGeometry_cfi")
 
 process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
 #process.GlobalTag.globaltag = 'MC_38Y_V8::All'
-process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+#process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+# Other statements
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, '80X_dataRun2_Prompt_v11', '')
 #process.prefer("GlobalTag")
 
 # magnetic field (do I need it?)
@@ -133,3 +137,4 @@ process.TFileService = cms.Service("TFileService",
 #process.p = cms.Path(process.myfilter*process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
 process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
 #process.ep = cms.EndPath(process.output)
+#process.schedule = cms.Schedule(process.p, process.ep)

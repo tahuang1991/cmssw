@@ -20,7 +20,7 @@
 #include <FWCore/Utilities/interface/InputTag.h>
 
 #include <L1Trigger/CSCCommonTrigger/interface/CSCConstants.h>
-
+#include <DataFormats/GeometryVector/interface/GlobalPoint.h>
 #include <DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h>
 #include <DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h>
 #include <DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h>
@@ -33,10 +33,60 @@
 
 #include <TH1.h>
 #include <TH2.h>
+#include <TTree.h>
+#include <sstream>
 
 class CSCGeometry;
 class CSCBadChambers;
 class TFile;
+
+
+struct MyStubComparison
+{
+
+
+  void init(); // initialize to default values
+  TTree *bookTree(TTree *t, const std::string & name = "Stub_compare");
+
+
+  Int_t nEvents;
+  Int_t totStubs_data;
+  Int_t totStubs_emul;
+  Int_t nStub_data;
+  Int_t nStub_emul;
+  Int_t chamber;
+  Int_t ring;
+  Int_t endcap;
+  Int_t station;
+  Bool_t has_data;
+  Bool_t has_emul;
+
+  Int_t quality_data;
+  Int_t bend_data;
+  Int_t bx_data;
+  Int_t quality_emul;
+  Int_t bend_emul;
+  Int_t bx_emul;
+  Int_t bx_corr_emul;//corrected
+  Int_t fullbx_data;
+  Int_t fullbx_emul;
+  Int_t pattern_data;
+  Int_t pattern_emul;
+  Int_t key_WG_data;
+  Int_t key_WG_emul;  
+  Int_t key_hs_data;
+  Int_t key_hs_emul;  
+  Float_t dphi_data;
+  Float_t dphi_emul;
+  Float_t eta_data;
+  Float_t eta_emul;
+  Float_t phi_data; 
+  Float_t phi_emul; 
+};
+
+
+
+
 
 class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
 {
@@ -88,6 +138,7 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
 
   // Producer's labels
   std::string   lctProducerData_;
+  std::string   mpclctProducerData_;
   std::string   lctProducerEmul_;
   edm::InputTag simHitProducer_;
   edm::InputTag wireDigiProducer_;
@@ -100,6 +151,7 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
   edm::EDGetTokenT<CSCALCTDigiCollection> alcts_d_token_;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clcts_d_token_;
   edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> lcts_tmb_d_token_;
+  edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> lcts_mpc_d_token_;
   edm::EDGetTokenT<CSCALCTDigiCollection> alcts_e_token_;
   edm::EDGetTokenT<CSCCLCTDigiCollection> clcts_e_token_;
   edm::EDGetTokenT<CSCCorrelatedLCTDigiCollection> lcts_tmb_e_token_;
@@ -172,7 +224,8 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
   void bookEfficHistos();
   void drawEfficHistos();
   void drawHistosForTalks();
-
+  
+  GlobalPoint getGlobalPosition(unsigned int rawId, int keWg, int keyHS) const;
   int    getCSCType(const CSCDetId& id);
   double getHsPerRad(const int idh);
 
@@ -181,13 +234,19 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
 	       const CSCCLCTDigiCollection* clcts_data,
 	       const CSCCLCTDigiCollection* clcts_emul,
 	       const CSCCorrelatedLCTDigiCollection* lcts_data,
-	       const CSCCorrelatedLCTDigiCollection* lcts_emul);
+	       const CSCCorrelatedLCTDigiCollection* lcts_emul,
+	       const CSCCorrelatedLCTDigiCollection* mpclcts_data,
+	       const CSCCorrelatedLCTDigiCollection* mpclcts_emul);
   void bookCompHistos();
   void compareALCTs(const CSCALCTDigiCollection* alcts_data,
 		    const CSCALCTDigiCollection* alcts_emul);
   void compareCLCTs(const CSCCLCTDigiCollection* clcts_data,
 		    const CSCCLCTDigiCollection* clcts_emul);
   void compareLCTs(const CSCCorrelatedLCTDigiCollection* lcts_data,
+		   const CSCCorrelatedLCTDigiCollection* lcts_emul,
+		   const CSCALCTDigiCollection* alcts_data,
+		   const CSCCLCTDigiCollection* clcts_data);
+  void compareMPCLCTs(const CSCCorrelatedLCTDigiCollection* lcts_data,
 		   const CSCCorrelatedLCTDigiCollection* lcts_emul,
 		   const CSCALCTDigiCollection* alcts_data,
 		   const CSCCLCTDigiCollection* clcts_data);
@@ -213,10 +272,14 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
   int maxRing(int station);
 
 
+  //fill 3 Trees
+  MyStubComparison stubs_comparison[4];
+  TTree *stub_tree[4];
   // Histograms
   //Hot wires
   TH1F *hHotWire1, *hHotCham1;
-  // ALCTs
+
+  // ALCTs, data
   TH1F *hAlctPerEvent, *hAlctPerChamber, *hAlctPerCSC;
   TH1F *hAlctCsc[MAX_ENDCAPS][CSC_TYPES];
   TH1F *hAlctValid, *hAlctQuality, *hAlctAccel, *hAlctCollis, *hAlctKeyGroup;

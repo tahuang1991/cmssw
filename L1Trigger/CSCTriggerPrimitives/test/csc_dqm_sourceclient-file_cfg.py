@@ -39,8 +39,8 @@ process.source = cms.Source("PoolSource",
   fileNames  = cms.untracked.vstring(
 
     #'file:/tmp/valdo/0E746464-1D16-DF11-913D-000423D6CAF2.root'
-
-    '/store/data/Commissioning10/Cosmics/RAW/v4/000/132/601/4218B1F6-5940-DF11-BA79-0030487CD178.root'
+    '/store/data/Run2015D/SingleMuon/RAW/v1/000/256/734/00000/8200C0B8-0F5E-E511-80B2-02163E014415.root'
+    #'/store/data/Commissioning10/Cosmics/RAW/v4/000/132/601/4218B1F6-5940-DF11-BA79-0030487CD178.root'
     #'/store/data/Commissioning10/Cosmics/RAW/v4/000/132/601/F0BEA43D-8440-DF11-BD1B-000423D6C8E6.root',
 
     #'/store/data/Commissioning10/Cosmics/RAW/v4/000/132/440/72DAEFC2-1A3C-DF11-A352-0030487A195C.root',
