@@ -20,7 +20,7 @@ namespace l1t {
   // TriggerPrimitive::TriggerPrimitive(const CSCDetId& detid, const CSCCorrelatedLCTDigi& digi)
   void EMTFHit::ImportCSCDetId( const CSCDetId& _detId) {
 
-    EMTFHit::SetCSCDetId ( _detId ); 
+    EMTFHit::SetCSCDetId ( _detId );
     // It appears the following function *actually does literally nothing* - AWB 17.03.16
     // calculateCSCGlobalSector(detid,_globalsector,_subsector);
 
@@ -36,7 +36,7 @@ namespace l1t {
 
   } // End EMTFHit::ImportCSCDetId
 
-  CSCDetId EMTFHit::CreateCSCDetId() {
+  CSCDetId EMTFHit::CreateCSCDetId() const {
 
     return CSCDetId( (endcap == 1) ? 1 : 2, station,    // For now, leave "layer" unfilled, defaults to 0.
   		     (ring == 4) ? 1 : ring, chamber ); // Not sure if this is correct, or what "layer" does. - AWB 27.04.16
@@ -44,11 +44,11 @@ namespace l1t {
 
   void EMTFHit::ImportRPCDetId( const RPCDetId& _detId) {
 
-    EMTFHit::SetRPCDetId ( _detId ); 
-    
+    EMTFHit::SetRPCDetId ( _detId );
+
     EMTFHit::set_endcap    ( _detId.region()    ); // 0 for barrel, +/-1 for +/- endcap
     EMTFHit::set_station   ( _detId.station()   ); // Same as in CSCs (?)
-    EMTFHit::set_sector    ( _detId.sector()    ); // Same as in CSCs (?)  
+    EMTFHit::set_sector    ( _detId.sector()    ); // Same as in CSCs (?)
     EMTFHit::set_subsector ( _detId.subsector() ); // Same as in CSCs (?)
     EMTFHit::set_ring      ( _detId.ring()      ); // Ring number in endcap (from 1 to 3, but only 2 and 3 exist currently)
     EMTFHit::set_roll      ( _detId.roll()      ); // AKA eta "partition" or "segment": subdivision of ring into 3 parts, noted "C-B-A" in-to-out
@@ -59,9 +59,9 @@ namespace l1t {
   } // End EMTFHit::ImportCSCDetId
 
   RPCDetId EMTFHit::CreateRPCDetId() {
-    
+
     return RPCDetId( endcap, ring, station, sector, rpc_layer, subsector, roll );
-    
+
   }
 
   // Based on L1Trigger/L1TMuon/src/MuonTriggerPrimitive.cc
@@ -84,22 +84,22 @@ namespace l1t {
     EMTFHit::set_sync_err  ( _digi.getSyncErr() );
     EMTFHit::set_csc_ID    ( _digi.getCSCID()   );
 
-    EMTFHit::set_subsector ( calc_subsector( station, chamber ) ); 
+    EMTFHit::set_subsector ( calc_subsector( station, chamber ) );
 
   } // End EMTFHit::ImportCSCCorrelatedLCTDigi
 
-  void EMTFHitExtra::ImportCSCCorrelatedLCTDigi( const CSCCorrelatedLCTDigi& _digi ) { 
+  void EMTFHitExtra::ImportCSCCorrelatedLCTDigi( const CSCCorrelatedLCTDigi& _digi ) {
 
     EMTFHit::ImportCSCCorrelatedLCTDigi ( _digi );
     EMTFHitExtra::set_bx0  ( _digi.getBX0()     );
 
   } // End EMTFHitExtra::ImportCSCCorrelatedLCTDigi
 
-  CSCCorrelatedLCTDigi EMTFHit::CreateCSCCorrelatedLCTDigi() {
+  CSCCorrelatedLCTDigi EMTFHit::CreateCSCCorrelatedLCTDigi() const {
 
-    return CSCCorrelatedLCTDigi( 1, valid, quality, wire, strip, 
-  				 pattern, (bend == 1) ? 1 : 0,   
-  				 bx + 6, 0, 0, sync_err, csc_ID );  
+    return CSCCorrelatedLCTDigi( 1, valid, quality, wire, strip,
+  				 pattern, (bend == 1) ? 1 : 0,
+  				 bx + 6, 0, 0, sync_err, csc_ID );
     // Unsure of how to fill "trknmb" or "bx0" - for now filling with 1 and 0. - AWB 27.04.16
     // Appear to be unused in the emulator code. mpclink = 0 (after bx) indicates unsorted.
   }
@@ -127,7 +127,7 @@ namespace l1t {
     EMTFHit::set_valid      ( _ME.VP() );
     EMTFHit::set_sync_err   ( _ME.SE() );
     EMTFHit::set_bx         ( _ME.TBIN() - 3 );
-    EMTFHit::set_bc0        ( _ME.BC0() ); 
+    EMTFHit::set_bc0        ( _ME.BC0() );
     EMTFHit::set_is_CSC_hit ( true  );
     EMTFHit::set_is_RPC_hit ( false );
 
@@ -162,7 +162,7 @@ namespace l1t {
       if (_subsector == 2)  tmp_chamber += 3;
       if (tmp_chamber > 36) tmp_chamber -= 36;
     }
-    else if (_ring == 1) { 
+    else if (_ring == 1) {
       tmp_chamber = ((_sector-1) * 3) + _csc_ID + 1; // Chamber offset of 1: First chamber in sector 1 is chamber 2
       if (tmp_chamber > 18) tmp_chamber -= 18;
     }
@@ -203,5 +203,5 @@ namespace l1t {
     return thisHit;
   } // End EMTFHitExtra::CreateEMTFHit
 
-    
+
 } // End namespace l1t
