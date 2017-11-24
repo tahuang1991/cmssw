@@ -10,16 +10,19 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 
 process = cms.Process("L1TVertexFinder")
 
-process.load('Configuration.Geometry.GeometryExtended2023D4Reco_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
-
+process.load('Configuration.Geometry.GeometryExtended2023D17Reco_cff')
+process.load('Configuration.Geometry.GeometryExtended2023D17_cff')
+process.load('Configuration.StandardSequences.MagneticField_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 
 
 options = VarParsing.VarParsing ('analysis')
 
 #--- Specify input MC
-options.register('inputMC','ttbar_NoPU.txt', VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.string, "Files to be processed")
+options.register('inputMC','TMTrackTrigger/l1VertexFinder/Samples/DavidePhaseIIFall/Zjet/PU200_L1tracksSLR.txt', VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.string, "Files to be processed")
 
 #--- Specify number of events to process.
 options.register('Events',-1,VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int,"Number of Events to analyze")
@@ -50,21 +53,21 @@ process.source = cms.Source ("PoolSource",
                             )
 
 
-process.out = cms.OutputModule("PoolOutputModule",
-    fileName = cms.untracked.string(options.outputFile),
-    outputCommands = cms.untracked.vstring(
-    	"keep *",
-    	"keep *_producer_*_*",
-    	"keep *_VertexProducer_*_*"
-    	)
-)
+# process.out = cms.OutputModule("PoolOutputModule",
+#     fileName = cms.untracked.string(options.outputFile),
+#     outputCommands = cms.untracked.vstring(
+#     	"keep *",
+#     	"keep *_producer_*_*",
+#     	"keep *_VertexProducer_*_*"
+#     	)
+# )
 
 
 process.Timing = cms.Service("Timing", summaryOnly = cms.untracked.bool(True))
 
 
 #--- Load config fragment that configures vertex producer
-process.load('TMTrackTrigger.VertexFinder.VertexProducer_cff')
+process.load('TMTrackTrigger.l1VertexFinder.VertexProducer_cff')
 
 process.p = cms.Path(process.VertexProducer)
-process.e = cms.EndPath(process.out)
+# process.e = cms.EndPath(process.out)

@@ -4,8 +4,8 @@
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 
-#include "TMTrackTrigger/VertexFinder/interface/L1fittedTrack.h"
-#include "TMTrackTrigger/VertexFinder/interface/RecoVertex.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/RecoVertex.h"
 
 #include <vector>
 
@@ -58,6 +58,8 @@ public:
   FitTrackCollection TDRPileUpTracks()      const { return tdr_pileup_tracks_;}
   /// Find the primary vertex
   void  FindPrimaryVertex();
+  /// Associate the primary vertex with the real one
+  void  AssociatePrimaryVertex(double trueZ0);
   /// Gap Clustering Algorithm
   void GapClustering();
   /// Find maximum distance in two clusters of tracks

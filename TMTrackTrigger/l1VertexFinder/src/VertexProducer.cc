@@ -1,11 +1,11 @@
-#include <TMTrackTrigger/VertexFinder/interface/VertexProducer.h>
+#include <TMTrackTrigger/l1VertexFinder/interface/VertexProducer.h>
 
 
-#include <TMTrackTrigger/VertexFinder/interface/InputData.h>
-#include <TMTrackTrigger/VertexFinder/interface/Settings.h>
-#include <TMTrackTrigger/VertexFinder/interface/Histos.h>
-#include "TMTrackTrigger/VertexFinder/interface/VertexFinder.h"
-#include "TMTrackTrigger/VertexFinder/interface/L1fittedTrack.h"
+#include <TMTrackTrigger/l1VertexFinder/interface/InputData.h>
+#include <TMTrackTrigger/l1VertexFinder/interface/Settings.h>
+#include <TMTrackTrigger/l1VertexFinder/interface/Histos.h>
+#include "TMTrackTrigger/l1VertexFinder/interface/VertexFinder.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -158,8 +158,13 @@ void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   vf.TDRalgorithm();
   vf.SortVerticesInZ0();
-  vf.FindPrimaryVertex();
-
+  
+  if(settings_->vx_keepOnlyPV()){
+    vf.FindPrimaryVertex();
+  } else{
+    vf.AssociatePrimaryVertex(inputData.getPrimaryVertex().z0());
+  }
+  
   if(settings_->debug()==7 and vf.numVertices() > 0){
     cout << "Num Found Vertices " << vf.numVertices() << endl;
     cout << "Reconstructed Primary Vertex z0 "<<vf.PrimaryVertex().z0() << " pT "<< vf.PrimaryVertex().pT() << endl;
