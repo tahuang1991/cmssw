@@ -1,15 +1,15 @@
 #ifndef __TMTrackTrigger_VertexFinder_Settings_h__
 #define __TMTrackTrigger_VertexFinder_Settings_h__
  
+
+#include <vector>
+
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/Exception.h"
-#include <vector>
-#include <iostream>
  
-using namespace std;
  
 
-namespace vertexFinder {
+namespace l1tVertexFinder {
 
 // Stores all configuration parameters + some hard-wired constants.
  
@@ -25,7 +25,7 @@ public:
   double               genMaxAbsEta()            const   {return genMaxAbsEta_;}
   double               genMaxVertR()             const   {return genMaxVertR_;}
   double               genMaxVertZ()             const   {return genMaxVertZ_;}
-  vector<int>          genPdgIds()               const   {return genPdgIds_;}
+  std::vector<int>          genPdgIds()               const   {return genPdgIds_;}
   // Additional cut on MC truth tracks for algorithmic tracking efficiency measurements.
   unsigned int         genMinStubLayers()        const   {return genMinStubLayers_;} // Min. number of layers TP made stub in.
 
@@ -97,11 +97,6 @@ public:
   double               trackerHalfLength()       const   {return 270.;}  // half-length  of tracker. 
   double               layerIDfromRadiusBin()    const   {return 6.;}    // When counting stubs in layers, actually histogram stubs in distance from beam-line with this bin size.
  
-  //=== Set and get B-field value in Tesla.
-  // N.B. This must bet set for each event, and can't be initialized at the beginning of the job.
-  void                 setBfield(float bField)           {bField_ = bField;}
-  float                getBfield()               const   {if (bField_ == 0.) throw cms::Exception("Settings.h:You attempted to access the B field before it was initialized"); return bField_;}
- 
 private:
  
   // Parameter sets for differents types of configuration parameter.
@@ -115,7 +110,7 @@ private:
   double               genMaxAbsEta_;
   double               genMaxVertR_;
   double               genMaxVertZ_;
-  vector<int>          genPdgIds_;
+  std::vector<int>     genPdgIds_;
   unsigned int         genMinStubLayers_;
 
   // Rules for deciding when the track-finding has found an L1 track candidate
@@ -130,7 +125,7 @@ private:
   bool                 stubMatchStrict_;
  
   // Track Fitting Settings
-  vector<string>       trackFitters_;
+  std::vector<std::string> trackFitters_;
   double               chi2OverNdfCut_;
   bool                 detailedFitOutput_;
   unsigned int         numTrackFitIterations_;
@@ -161,11 +156,8 @@ private:
   
   // Debug printout
   unsigned int         debug_;
-
-  // B-field in Tesla
-  float                bField_;
 };
 
-} // end namespace vertexFinder
+} // end namespace l1tVertexFinder
 
 #endif

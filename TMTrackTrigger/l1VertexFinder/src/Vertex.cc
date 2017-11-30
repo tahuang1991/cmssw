@@ -2,7 +2,8 @@
 #include "TMTrackTrigger/l1VertexFinder/interface/Vertex.h"
 
 
-namespace vertexFinder {
+
+namespace l1tVertexFinder {
 
 void Vertex::computeParameters(){
 	pT_ = 0.;
@@ -24,4 +25,4 @@ void Vertex::computeParameters(){
 	z0width_ = sqrt(fabs(z0_*z0_ - z0square));
 }
 
-} // end namespace vertexFinder
+} // end namespace l1tVertexFinder

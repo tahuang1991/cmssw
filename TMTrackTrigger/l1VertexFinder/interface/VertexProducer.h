@@ -1,9 +1,15 @@
 #ifndef __TMTrackTrigger_VertexFinder_VertexProducer_h__
 #define __TMTrackTrigger_VertexFinder_VertexProducer_h__
 
+
+#include <map>
+#include <string>
+#include <vector>
+
 #include "FWCore/Framework/interface/EDProducer.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 #include "DataFormats/Phase2TrackerDigi/interface/Phase2TrackerDigi.h"
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
@@ -11,15 +17,8 @@
 #include "SimTracker/TrackTriggerAssociation/interface/TTStubAssociationMap.h"
 
 
-#include <vector>
-#include <map>
-#include <string>
 
-
-using namespace std;
-
-
-namespace vertexFinder {
+namespace l1tVertexFinder {
   class Histos;
   class Settings;
 }
@@ -48,8 +47,8 @@ private:
   const edm::EDGetTokenT<TTClusterAssMap> clusterTruthInputTag;
   const edm::EDGetTokenT<TTTrackCollection> l1TracksToken_;
 
-  vertexFinder::Settings *settings_;
-  vertexFinder::Histos   *hists_;
+  l1tVertexFinder::Settings *settings_;
+  l1tVertexFinder::Histos   *hists_;
 };
 
 #endif

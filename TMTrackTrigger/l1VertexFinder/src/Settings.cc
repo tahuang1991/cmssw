@@ -1,8 +1,12 @@
-#include <TMTrackTrigger/l1VertexFinder/interface/Settings.h>
+
+#include "TMTrackTrigger/l1VertexFinder/interface/Settings.h"
+
+
 #include "FWCore/Utilities/interface/Exception.h"
  
 
-namespace vertexFinder {
+
+namespace l1tVertexFinder {
 
 ///=== Get configuration parameters
 
@@ -56,14 +60,10 @@ Settings::Settings(const edm::ParameterSet& iConfig) :
   vx_kmeans_iterations_   (vertex_.getParameter<unsigned int>                 ( "KmeansIterations")),
   vx_kmeans_nclusters_    (vertex_.getParameter<unsigned int>                 ( "KmeansNumClusters")),
   // Debug printout
-  debug_                  ( iConfig.getParameter<unsigned int>                ( "Debug"                  ) ),
-
-  // Bfield in Tesla. (Unknown at job initiation. Set to true value for each event
-  bField_                 (0.)
- 
+  debug_                  ( iConfig.getParameter<unsigned int>                ( "Debug"                  ) )
 {
   // If user didn't specify any PDG codes, use e,mu,pi,K,p, to avoid picking up unstable particles like Xi-.
-  vector<unsigned int> genPdgIdsUnsigned( genCuts_.getParameter<std::vector<unsigned int> >   ( "GenPdgIds" ) ); 
+  std::vector<unsigned int> genPdgIdsUnsigned( genCuts_.getParameter<std::vector<unsigned int> >   ( "GenPdgIds" ) ); 
   if (genPdgIdsUnsigned.empty()) {
     genPdgIdsUnsigned = {11, 13, 211, 321, 2212};  
   }
@@ -82,4 +82,4 @@ Settings::Settings(const edm::ParameterSet& iConfig) :
   
 }
 
-} // end namespace vertexFinder
+} // end namespace l1tVertexFinder

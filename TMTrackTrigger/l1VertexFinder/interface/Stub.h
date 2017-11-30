@@ -2,6 +2,10 @@
 #define __TMTrackTrigger_VertexFinder_Stub_h__
 
 
+#include <array>
+#include <map>
+#include <set>
+
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 #include "DataFormats/L1TrackTrigger/interface/TTStub.h"
 #include "DataFormats/Phase2TrackerDigi/interface/Phase2TrackerDigi.h"
@@ -11,13 +15,11 @@
 #include "SimTracker/TrackTriggerAssociation/interface/TTClusterAssociationMap.h"
 #include "SimTracker/TrackTriggerAssociation/interface/TTStubAssociationMap.h"
 
-#include <array>
-#include <map>
-#include <set>
+
 
 class TrackerGeometry;
 
-namespace vertexFinder {
+namespace l1tVertexFinder {
 
 class Settings;
 class TP;
@@ -108,6 +110,6 @@ private:
   std::array<const TP*, 2>        assocTPofCluster_;
 };
 
-} // end namespace vertexFinder
+} // end namespace l1tVertexFinder
 
 #endif

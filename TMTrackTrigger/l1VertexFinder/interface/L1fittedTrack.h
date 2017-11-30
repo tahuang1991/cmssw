@@ -2,6 +2,8 @@
 #define __TMTrackTrigger_VertexFinder_L1fittedTrack_h__
 
 
+#include <vector>
+
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 
 // TTStubAssociationMap.h forgets to two needed files, so must include them here ...
@@ -9,14 +11,13 @@
 #include "SimTracker/TrackTriggerAssociation/interface/TTClusterAssociationMap.h"
 #include "SimTracker/TrackTriggerAssociation/interface/TTStubAssociationMap.h"
 
-#include <vector>
+
 
 
 class TrackerGeometry;
 class TrackerTopology;
 
-
-namespace vertexFinder {
+namespace l1tVertexFinder {
 
 class Settings;
 class Stub;
@@ -52,7 +53,7 @@ private:
   unsigned int          numStubs;
 };
 
-} // end ns vertexFinder
+} // end ns l1tVertexFinder
 
 
 #endif

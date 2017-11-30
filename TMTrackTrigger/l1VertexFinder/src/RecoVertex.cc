@@ -1,7 +1,9 @@
+
 #include "TMTrackTrigger/l1VertexFinder/interface/RecoVertex.h"
 
 
-namespace vertexFinder {
+
+namespace l1tVertexFinder {
 
 void RecoVertex::computeParameters(bool weightedmean){
 	pT_ = 0.;
@@ -55,4 +57,4 @@ void RecoVertex::computeParameters(bool weightedmean){
 
 }
 
-}
+} // end ns l1tVertexFinder

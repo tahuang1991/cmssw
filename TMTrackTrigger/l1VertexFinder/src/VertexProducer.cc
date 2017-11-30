@@ -1,32 +1,28 @@
 #include <TMTrackTrigger/l1VertexFinder/interface/VertexProducer.h>
 
 
-#include <TMTrackTrigger/l1VertexFinder/interface/InputData.h>
-#include <TMTrackTrigger/l1VertexFinder/interface/Settings.h>
-#include <TMTrackTrigger/l1VertexFinder/interface/Histos.h>
-#include "TMTrackTrigger/l1VertexFinder/interface/VertexFinder.h"
-#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
-
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/EventSetup.h"
-#include "MagneticField/Engine/interface/MagneticField.h"
-#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-
-#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
-#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
-
-#include "boost/numeric/ublas/matrix.hpp"
 #include <iostream>
 #include <vector>
 #include <set>
 
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
 
+#include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
+
+#include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
+
+#include "TMTrackTrigger/l1VertexFinder/interface/InputData.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/Settings.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/Histos.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/VertexFinder.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
+
+
+
+using namespace l1tVertexFinder;
 using namespace std;
-using boost::numeric::ublas::matrix;
-
-using namespace vertexFinder;
-
 
 VertexProducer::VertexProducer(const edm::ParameterSet& iConfig):
   tpInputTag( consumes<TrackingParticleCollection>( iConfig.getParameter<edm::InputTag>("tpInputTag") ) ),
@@ -36,14 +32,14 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig):
   l1TracksToken_( consumes<TTTrackCollection>(iConfig.getParameter<edm::InputTag>("l1TracksInputTag")) )
 {
   // Get configuration parameters
-  settings_ = new vertexFinder::Settings(iConfig);
+  settings_ = new Settings(iConfig);
 
   // Tame debug printout.
   cout.setf(ios::fixed, ios::floatfield);
   cout.precision(4);
 
   // Book histograms.
-  hists_ = new vertexFinder::Histos( settings_ );
+  hists_ = new Histos( settings_ );
   hists_->book();
 
   //--- Define EDM output to be written to file (if required) 
@@ -55,16 +51,6 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig):
 
 void VertexProducer::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) 
 {
-  // Get the B-field and store its value in the Settings class.
-
-  edm::ESHandle<MagneticField> magneticFieldHandle;
-  iSetup.get<IdealMagneticFieldRecord>().get(magneticFieldHandle);
-  const MagneticField* theMagneticField = magneticFieldHandle.product();
-  float bField = theMagneticField->inTesla(GlobalPoint(0,0,0)).z(); // B field in Tesla.
-  cout<<endl<<"--- B field = "<<bField<<" Tesla ---"<<endl<<endl;
-
-  settings_->setBfield(bField);
-
 }
 
 void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
@@ -90,7 +76,7 @@ void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<TTTrackCollection> l1TracksHandle;
   iEvent.getByToken(l1TracksToken_, l1TracksHandle);
 
-  std::vector<vertexFinder::L1fittedTrack> l1Tracks;
+  std::vector<L1fittedTrack> l1Tracks;
   l1Tracks.reserve(l1TracksHandle->size());
 
   {
@@ -113,15 +99,16 @@ void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByToken(clusterTruthInputTag, mcTruthTTClusterHandle );
 
     for(const auto& track : *l1TracksHandle)
-      l1Tracks.push_back(vertexFinder::L1fittedTrack(track, *settings_, trackerGeometryHandle.product(), trackerTopologyHandle.product(), translateTP, mcTruthTTStubHandle, mcTruthTTClusterHandle));
+      l1Tracks.push_back(L1fittedTrack(track, *settings_, trackerGeometryHandle.product(), trackerTopologyHandle.product(), translateTP, mcTruthTTStubHandle, mcTruthTTClusterHandle));
   }
 
-  std::vector<const vertexFinder::L1fittedTrack*> l1TrackPtrs;
+  std::vector<const L1fittedTrack*> l1TrackPtrs;
   l1TrackPtrs.reserve(l1Tracks.size());
   for(const auto& track : l1Tracks){
-      if(track.pt() > settings_->vx_TrackMinPt() ){
-        if(track.pt() < 50 or track.getNumStubs() > 5 )       l1TrackPtrs.push_back(&track);
-      }
+    if(track.pt() > settings_->vx_TrackMinPt() ){
+      if(track.pt() < 50 or track.getNumStubs() > 5 )
+        l1TrackPtrs.push_back(&track);
+    }
   }
 
 

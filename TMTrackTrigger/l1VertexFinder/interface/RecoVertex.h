@@ -2,14 +2,15 @@
 #define __TMTrackTrigger_VertexFinder_RecoVertex_h__
 
 
-#include "TMTrackTrigger/l1VertexFinder/interface/TP.h"
-#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
-
 #include <set>
 #include <vector>
 
+#include "TMTrackTrigger/l1VertexFinder/interface/TP.h"
+#include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
 
-namespace vertexFinder {
+
+
+namespace l1tVertexFinder {
 
 class RecoVertex {
 
@@ -72,5 +73,6 @@ private:
   
 };
 
-}
+} // end ns l1tVertexFinder
+
 #endif

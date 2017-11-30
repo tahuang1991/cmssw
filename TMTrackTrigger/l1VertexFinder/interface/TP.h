@@ -2,13 +2,14 @@
 #define __TMTrackTrigger_VertexFinder_TP_h__
 
 
-#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 #include "DataFormats/Common/interface/Ptr.h"
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 
 #include "TMTrackTrigger/l1VertexFinder/interface/utility.h"
 
 
-namespace vertexFinder {
+
+namespace l1tVertexFinder {
 
 typedef edm::Ptr<TrackingParticle> TrackingParticlePtr;
 
@@ -103,6 +104,6 @@ private:
 };
 
 
-} // end namespace 
+} // end namespace l1tVertexFinder
 
 #endif

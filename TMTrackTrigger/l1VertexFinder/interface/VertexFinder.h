@@ -1,16 +1,18 @@
 #ifndef __TMTrackTrigger_VertexFinder_VertexFinder_h__
 #define __TMTrackTrigger_VertexFinder_VertexFinder_h__
 
+
+#include <vector>
+
 #include "DataFormats/Common/interface/Ptr.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 
 #include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
 #include "TMTrackTrigger/l1VertexFinder/interface/RecoVertex.h"
 
-#include <vector>
 
 
-namespace vertexFinder {
+namespace l1tVertexFinder {
 
 typedef std::vector<const L1fittedTrack*> FitTrackCollection;
 typedef std::vector<RecoVertex> RecoVertexCollection;
@@ -105,6 +107,6 @@ private:
 
 };
 
-} // end namespace vertexFinder
+} // end namespace l1tVertexFinder
 
 #endif
