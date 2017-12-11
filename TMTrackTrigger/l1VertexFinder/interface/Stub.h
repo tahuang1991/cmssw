@@ -38,7 +38,7 @@ class Stub : public TTStubRef {
 
 public:
   // Fill useful info about stub.
-  Stub(TTStubRef ttStubRef, unsigned int index_in_vStubs, const Settings* settings, const TrackerGeometry*  trackerGeometry, const TrackerTopology*  trackerTopology);
+  Stub(const TTStubRef& ttStubRef, unsigned int index_in_vStubs, const Settings* settings, const TrackerGeometry*  trackerGeometry, const TrackerTopology*  trackerTopology, const std::map<DetId, DetId>& geoDetIdMap);
   ~Stub(){}
 
   // Fill truth info with association from stub to tracking particles.
@@ -69,7 +69,7 @@ public:
   //--- Truth info
 
   // Association of stub to tracking particles
-  std::set<const TP*>               assocTPs() const { return        assocTPs_; } // Return TPs associated to this stub. (Whether only TPs contributing to both clusters are returned is determined by "StubMatchStrict" config param.)
+  const std::set<const TP*>&         assocTPs() const { return        assocTPs_; } // Return TPs associated to this stub. (Whether only TPs contributing to both clusters are returned is determined by "StubMatchStrict" config param.)
   const TP*                          assocTP() const { return         assocTP_; } // If only one TP contributed to both clusters, this tells you which TP it is. Returns nullptr if none.
 
 private:

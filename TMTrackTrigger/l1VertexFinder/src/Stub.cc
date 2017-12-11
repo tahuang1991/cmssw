@@ -16,26 +16,16 @@ namespace l1tVertexFinder {
 
 //=== Store useful info about this stub.
 
-Stub::Stub(TTStubRef ttStubRef, unsigned int index_in_vStubs, const Settings* settings, 
-           const TrackerGeometry*  trackerGeometry, const TrackerTopology*  trackerTopology) :
+Stub::Stub(const TTStubRef& ttStubRef, unsigned int index_in_vStubs, const Settings* settings, 
+           const TrackerGeometry*  trackerGeometry, const TrackerTopology*  trackerTopology, const std::map<DetId, DetId>& geoDetIdMap) :
   TTStubRef(ttStubRef),
   settings_(settings)
 {
   // Get coordinates of stub.
   const TTStub<Ref_Phase2TrackerDigi_> *ttStubP = ttStubRef.get(); 
 
-  DetId geoDetId = ttStubRef->getDetId();
-  for (auto gd=trackerGeometry->dets().begin(); gd != trackerGeometry->dets().end(); gd++) 
-  {
-    DetId detid = (*gd)->geographicalId();
-    if(detid.subdetId()!=StripSubdetector::TOB && detid.subdetId()!=StripSubdetector::TID ) continue; // only run on OT
-    if(!trackerTopology->isLower(detid) ) continue; // loop on the stacks: choose the lower arbitrarily
-    DetId stackDetid = trackerTopology->stack(detid); // Stub module detid
+  DetId geoDetId = geoDetIdMap.find(ttStubRef->getDetId())->second;
 
-    if ( ttStubRef->getDetId() != stackDetid ) continue;
-    geoDetId = detid;
-    break;
-  }
   const GeomDetUnit* det0 = trackerGeometry->idToDetUnit( geoDetId );
   // To get other module, can do this
   // const GeomDetUnit* det1 = trackerGeometry->idToDetUnit( trackerTopology->partnerDetId( geoDetId ) );
@@ -64,7 +54,7 @@ Stub::Stub(TTStubRef ttStubRef, unsigned int index_in_vStubs, const Settings* se
 
 void Stub::fillTruth(const std::map<edm::Ptr< TrackingParticle >, const TP* >& translateTP, edm::Handle<TTStubAssMap> mcTruthTTStubHandle, edm::Handle<TTClusterAssMap> mcTruthTTClusterHandle){
 
-  TTStubRef ttStubRef(*this); // Cast to base class
+  const TTStubRef& ttStubRef(*this); // Cast to base class
 
   //--- Fill assocTP_ info. If both clusters in this stub were produced by the same single tracking particle, find out which one it was.
 
@@ -97,11 +87,11 @@ void Stub::fillTruth(const std::map<edm::Ptr< TrackingParticle >, const TP* >& t
       // Now identify all TP's contributing to either cluster in stub.
       std::vector< edm::Ptr< TrackingParticle > > vecTpPtr = mcTruthTTClusterHandle->findTrackingParticlePtrs(ttClusterRef);
 
-      for (edm::Ptr< TrackingParticle> tpPtr : vecTpPtr) {
-  if (translateTP.find(tpPtr) != translateTP.end()) {
-    assocTPs_.insert( translateTP.at(tpPtr) );
-    // N.B. Since not all tracking particles are stored in InputData::vTPs_, sometimes no match will be found.
-  }
+      for (const edm::Ptr< TrackingParticle>& tpPtr : vecTpPtr) {
+        if (translateTP.find(tpPtr) != translateTP.end()) {
+          assocTPs_.insert( translateTP.at(tpPtr) );
+          // N.B. Since not all tracking particles are stored in InputData::vTPs_, sometimes no match will be found.
+        }
       }
     }
   }
@@ -119,8 +109,8 @@ void Stub::fillTruth(const std::map<edm::Ptr< TrackingParticle >, const TP* >& t
       edm::Ptr< TrackingParticle > tpPtr = mcTruthTTClusterHandle->findTrackingParticlePtr(ttClusterRef);
 
       if (translateTP.find(tpPtr) != translateTP.end()) {
-  assocTPofCluster_[iClus] = translateTP.at(tpPtr);
-  // N.B. Since not all tracking particles are stored in InputData::vTPs_, sometimes no match will be found.
+        assocTPofCluster_[iClus] = translateTP.at(tpPtr);
+        // N.B. Since not all tracking particles are stored in InputData::vTPs_, sometimes no match will be found.
       }
     }
   }
