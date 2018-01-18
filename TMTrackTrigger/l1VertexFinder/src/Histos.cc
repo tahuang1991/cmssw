@@ -234,14 +234,37 @@ void Histos::bookVertexReconstruction(){
 }
 
 
-void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFinder& vf){
+void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFinder& vf, std::vector<L1fittedTrack> l1Tracks){
   cout << "Input Tracks to L1 Correlator " << vf.numInputTracks() << endl;
 
   // noEvents++;
   const Vertex&     TruePrimaryVertex = inputData.getPrimaryVertex();
+
+  // create a map for associating fat reco tracks with their underlying
+  // TTTrack pointers
+  // std::map <const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, L1fittedTrack> trackAssociationMap;
+  std::map <const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1fittedTrack *> trackAssociationMap;
+
+  // unsigned int index = 0;
+  // get a list of reconstructed tracks with references to their TPs
+  for (const auto & trackIt: l1Tracks) {
+    trackAssociationMap.insert(std::pair<const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1fittedTrack *>(trackIt.getTTTrackPtr(), &trackIt));
+  }
+
   // Associate true primary vertex with the closest reconstructed vertex
-  const RecoVertex& RecoPrimaryVertex = vf.PrimaryVertex();
-  const RecoVertex& TDRVertex         = vf.TDRPrimaryVertex();
+  RecoVertex RecoPrimaryVertexBase = vf.PrimaryVertex();
+  RecoVertex TDRVertexBase         = vf.TDRPrimaryVertex();
+
+  RecoVertexWithTP * RecoPrimaryVertex = new RecoVertexWithTP(RecoPrimaryVertexBase, trackAssociationMap);
+  RecoVertexWithTP * TDRVertex = new RecoVertexWithTP(TDRVertexBase, trackAssociationMap);
+
+  RecoPrimaryVertex->computeParameters(settings_->vx_weightedmean());
+  TDRVertex->computeParameters(settings_->vx_weightedmean());
+
+  // update the primary vertex z0 if the algorithm is HPV, kmeans
+  if (settings_->vx_algoId() == 6 || settings_->vx_algoId() == 5)
+    RecoPrimaryVertex->setZ(RecoPrimaryVertexBase.z0());
+  TDRVertex->setZ(TDRVertexBase.z0());
 
   hisGenVertexPt_->Fill(inputData.GenPt());
   hisGenTkVertexPt_->Fill(TruePrimaryVertex.pT());
@@ -261,11 +284,11 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
     }
   }
 
-  if(RecoPrimaryVertex.pT() > 100.){
+  if(RecoPrimaryVertex->pT() > 100.){
     hisRecoVertexVsGenVertexPt_->Fill(inputData.GenPt());
   }
 
-  if(RecoPrimaryVertex.met() > 50.){
+  if(RecoPrimaryVertex->met() > 50.){
     hisRecoVertexVsGenMET_->Fill(inputData.GenMET());
   }
 
@@ -276,14 +299,18 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
     }
  
     cout << "True PrimaryVertex z0 "<< TruePrimaryVertex.z0() << " pT "<< TruePrimaryVertex.pT() << " met "<< TruePrimaryVertex.met() << endl;
-    cout << "Reco PrimaryVertex z0 "<< RecoPrimaryVertex.z0() << " pT "<< RecoPrimaryVertex.pT() << " met "<< RecoPrimaryVertex.met() << " nTracks "<< RecoPrimaryVertex.numTracks() << endl;
-    cout << "TP PrimaryVertex z0 "<< TDRVertex.z0() << " pT "<< TDRVertex.pT() << " met "<< RecoPrimaryVertex.met() << endl;
+    cout << "Reco PrimaryVertex z0 "<< RecoPrimaryVertex->z0() << " pT "<< RecoPrimaryVertex->pT() << " met "<< RecoPrimaryVertex->met() << " nTracks "<< RecoPrimaryVertex->numTracks() << endl;
+    cout << "TP PrimaryVertex z0 "<< TDRVertex->z0() << " pT "<< TDRVertex->pT() << " met "<< RecoPrimaryVertex->met() << endl;
   }
 
   unsigned int TrackRank = 0;
   for(unsigned int id = 0; id < vf.numVertices() ; ++id){
     if(id!=vf.PrimaryVertexId()){
-      if(vf.Vertices()[id].numTrueTracks() > RecoPrimaryVertex.numTrueTracks()) TrackRank++;
+      // this will not work since numTrueTracks() will return 0
+      // to fix this, one needs to use reference to RecoVertex from vf.Vertices()
+      // and use that to create a RecoVertexWithTP object that will have TP
+      // specific information
+      if(vf.Vertices()[id].numTrueTracks() > RecoPrimaryVertex->numTrueTracks()) TrackRank++;
     }
   }
 
@@ -297,8 +324,8 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
   
 
   hisTrkMETvsGenMET_->Fill(inputData.GenMET(), TruePrimaryVertex.met() );
-  hisRecoTrkMETvsGenMET_->Fill(inputData.GenMET(), RecoPrimaryVertex.met());
-  hisTDRTrkMETvsGenMET_->Fill(inputData.GenMET(), TDRVertex.met());
+  hisRecoTrkMETvsGenMET_->Fill(inputData.GenMET(), RecoPrimaryVertex->met());
+  hisTDRTrkMETvsGenMET_->Fill(inputData.GenMET(), TDRVertex->met());
 
   hisNoRecoVertices_->Fill(vf.numVertices());
   hisNoPileUpVertices_->Fill(inputData.getRecoPileUpVertices().size());
@@ -306,17 +333,17 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
   
   if(TruePrimaryVertex.numTracks() > 0) hisPrimaryVertexTrueZ0_->Fill(TruePrimaryVertex.z0());
 
-  float z0res = TruePrimaryVertex.z0() - RecoPrimaryVertex.z0();
-  float pTres = fabs(TruePrimaryVertex.pT() - RecoPrimaryVertex.pT());
+  float z0res = TruePrimaryVertex.z0() - RecoPrimaryVertex->z0();
+  float pTres = fabs(TruePrimaryVertex.pT() - RecoPrimaryVertex->pT());
   hisRecoVertexZ0Resolution_->Fill(fabs(z0res));
 
   // Vertex has been found
   if(fabs(z0res) < settings_->vx_resolution()) {
     float genMet[4] = {50, 100, 200, 300};
     for(unsigned int i = 0; i< 4 ;++i){
-      if(RecoPrimaryVertex.met()>genMet[i])
+      if(RecoPrimaryVertex->met()>genMet[i])
         hisRecoVertexVsGenTkMET_[i]->Fill(TruePrimaryVertex.met());
-      if(RecoPrimaryVertex.pT()>genMet[i]){
+      if(RecoPrimaryVertex->pT()>genMet[i]){
         hisRecoVertexVsGenTkVertexPt_[i]->Fill(TruePrimaryVertex.pT());
       }
     
@@ -327,23 +354,23 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
         hisPTevents_[i]->Fill(0.5); 
         for(unsigned int j = 0 ; j < 10 ; ++j){
           float cut = minThreshold + step*j;
-          if(RecoPrimaryVertex.pT() > cut) hisPTevents_[i]->Fill(1.5+j);
+          if(RecoPrimaryVertex->pT() > cut) hisPTevents_[i]->Fill(1.5+j);
         }
       } else{
         hisPTevents_[i]->Fill(11.5);
         for(unsigned int j = 0 ; j < 10 ; ++j){
           float cut = minThreshold + step*j;
-          if(RecoPrimaryVertex.pT() < cut) hisPTevents_[i]->Fill(12.5+j);
+          if(RecoPrimaryVertex->pT() < cut) hisPTevents_[i]->Fill(12.5+j);
         }
       }
 
     }
 
-    float METres = fabs(RecoPrimaryVertex.met() - TruePrimaryVertex.met())/TruePrimaryVertex.met();
+    float METres = fabs(RecoPrimaryVertex->met() - TruePrimaryVertex.met())/TruePrimaryVertex.met();
 
     if(settings_->debug() == 7 and METres > 0.2){
       cout << "** RECO TRACKS in PV**" << endl;
-      for(const L1fittedTrack* track : RecoPrimaryVertex.tracks() ){
+      for(const L1fittedTrack* track : RecoPrimaryVertex->tracks() ){
         if(track->getMatchedTP() != nullptr) cout << "matched TP "<< track->getMatchedTP()->index() ;
         cout << " pT "<< track->pt() << " phi0 "<< track->phi0() << " z0 "<< track->z0() << endl;
       }
@@ -356,11 +383,11 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
 
     hisRecoVertexMETResolution_->Fill(TruePrimaryVertex.met(), METres);
 
-    if(RecoPrimaryVertex.pT() > 100.){
+    if(RecoPrimaryVertex->pT() > 100.){
       hisRecoGenuineVertexVsGenTkVertexPt_->Fill(TruePrimaryVertex.pT());
     }
 
-    if(RecoPrimaryVertex.met() > 50.){
+    if(RecoPrimaryVertex->met() > 50.){
       hisRecoGenuineVertexVsGenMET_->Fill(inputData.GenMET());
       hisRecoGenuineVertexVsGenTkMET_->Fill(TruePrimaryVertex.met());
     }
@@ -374,20 +401,20 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
     hisRecoVertexPTResolution_->Fill(pTres/TruePrimaryVertex.pT());
     hisRecoVertexPTResolutionVsTruePt_->Fill(TruePrimaryVertex.pT(), pTres/TruePrimaryVertex.pT() );
   
-    hisRecoVertexPTVsTruePt_->Fill(RecoPrimaryVertex.pT(), TruePrimaryVertex.pT());
-    hisRecoVertexMETVsTrueMET_->Fill(RecoPrimaryVertex.met(), TruePrimaryVertex.met());
-    hisRecoVertexMET_->Fill(RecoPrimaryVertex.met());
-    hisNoTracksFromPrimaryVertex_->Fill(RecoPrimaryVertex.numTracks(),TruePrimaryVertex.numTracks());
-    hisNoTrueTracksFromPrimaryVertex_->Fill(RecoPrimaryVertex.numTrueTracks(),TruePrimaryVertex.numTracks());
-    hisRecoPrimaryVertexZ0width_->Fill(RecoPrimaryVertex.z0width());
-    hisRecoVertexPT_->Fill(RecoPrimaryVertex.pT());
+    hisRecoVertexPTVsTruePt_->Fill(RecoPrimaryVertex->pT(), TruePrimaryVertex.pT());
+    hisRecoVertexMETVsTrueMET_->Fill(RecoPrimaryVertex->met(), TruePrimaryVertex.met());
+    hisRecoVertexMET_->Fill(RecoPrimaryVertex->met());
+    hisNoTracksFromPrimaryVertex_->Fill(RecoPrimaryVertex->numTracks(),TruePrimaryVertex.numTracks());
+    hisNoTrueTracksFromPrimaryVertex_->Fill(RecoPrimaryVertex->numTrueTracks(),TruePrimaryVertex.numTracks());
+    hisRecoPrimaryVertexZ0width_->Fill(RecoPrimaryVertex->z0width());
+    hisRecoVertexPT_->Fill(RecoPrimaryVertex->pT());
     
-    float matchratio = float(RecoPrimaryVertex.numTrueTracks())/float(TruePrimaryVertex.numTracks());
+    float matchratio = float(RecoPrimaryVertex->numTrueTracks())/float(TruePrimaryVertex.numTracks());
     if(matchratio > 1.) matchratio = 1.;
     hisRatioMatchedTracksInPV_->Fill(matchratio);
-    float trueRate = float(RecoPrimaryVertex.numTrueTracks())/float(RecoPrimaryVertex.numTracks());
+    float trueRate = float(RecoPrimaryVertex->numTrueTracks())/float(RecoPrimaryVertex->numTracks());
     hisTrueTracksRateInPV_->Fill(trueRate);
-    float fakeRate = float(RecoPrimaryVertex.numTracks()-RecoPrimaryVertex.numTrueTracks())/float(RecoPrimaryVertex.numTracks());
+    float fakeRate = float(RecoPrimaryVertex->numTracks()-RecoPrimaryVertex->numTrueTracks())/float(RecoPrimaryVertex->numTracks());
     hisFakeTracksRateInPV_->Fill(fakeRate);
     hisRecoPrimaryVertexResolutionVsTrueZ0_->Fill(TruePrimaryVertex.z0(),fabs(z0res));
 
@@ -406,7 +433,7 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
       for(unsigned int j = 0; j < 10; ++j ){
         float cutmet = genmet*0.3 + j*met_steps;
 
-        if(RecoPrimaryVertex.met() > cutmet){
+        if(RecoPrimaryVertex->met() > cutmet){
           if(signal) noRecoSignalEvents[i][j]++;
         } else if(!signal){
           noRecoBackgroundEvents[i][j]++;
@@ -418,7 +445,7 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
   else{
     
 
-    hisRecoVertexOffPT_->Fill(RecoPrimaryVertex.pT());
+    hisRecoVertexOffPT_->Fill(RecoPrimaryVertex->pT());
     hisUnmatchedVertexZ0distance_->Fill(fabs(z0res));
     if(settings_->debug() == 7) {
       cout << "Vertex Reconstruction Algorithm doesn't find the correct the primary vertex (Delta Z = " << fabs(z0res) << ")"<<endl;
@@ -427,7 +454,7 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
   }
 
   if(settings_->debug() == 7){
-    for(const L1fittedTrack* l1track : RecoPrimaryVertex.tracks()){
+    for(const L1fittedTrack* l1track : RecoPrimaryVertex->tracks()){
       if(l1track->getMatchedTP() == nullptr){
         cout << "FAKE track assigned to PV. Track z0: "<< l1track->z0() << " track pT "<< l1track->pt() << " chi2/ndof " << l1track->chi2dof() << " numstubs "<< l1track->getNumStubs() << endl;
       } else if(l1track->getMatchedTP()->physicsCollision() == 0){
@@ -441,29 +468,29 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
 
 
   // ** Technical Proposal algorithm
-  float z0res_tdr = (TruePrimaryVertex.z0() - TDRVertex.z0());
-  float pTres_tdr = fabs(TruePrimaryVertex.pT() - TDRVertex.pT());
+  float z0res_tdr = (TruePrimaryVertex.z0() - TDRVertex->z0());
+  float pTres_tdr = fabs(TruePrimaryVertex.pT() - TDRVertex->pT());
   
   hisTDRVertexZ0Resolution_->Fill(fabs(z0res_tdr));
 
   if(fabs(z0res_tdr) < settings_->vx_resolution()){
     hisTDRPrimaryVertexVsTrueZ0_->Fill(TruePrimaryVertex.z0());
     hisTDRPrimaryVertexResolutionVsTrueZ0_->Fill(TruePrimaryVertex.z0(),fabs(z0res_tdr));
-    hisTDRVertexPT_->Fill(TDRVertex.pT());
-    hisTDRVertexMET_->Fill(TDRVertex.met());
+    hisTDRVertexPT_->Fill(TDRVertex->pT());
+    hisTDRVertexMET_->Fill(TDRVertex->met());
     hisTDRVertexPTResolution_->Fill(pTres_tdr/TruePrimaryVertex.pT());
     hisTDRVertexPTResolutionVsTruePt_->Fill(TruePrimaryVertex.pT(), pTres_tdr/TruePrimaryVertex.pT() );
-    hisTDRVertexPTVsTruePt_->Fill(TDRVertex.pT(), TruePrimaryVertex.pT());
-    hisTDRVertexMETVsTrueMET_->Fill(TDRVertex.met(), TruePrimaryVertex.met());
-    hisTDRNoTracksFromPrimaryVertex_->Fill(TDRVertex.numTracks(),TruePrimaryVertex.numTracks());
-    hisTDRNoTrueTracksFromPrimaryVertex_->Fill(TDRVertex.numTrueTracks(),TruePrimaryVertex.numTracks());
-    hisTDRPrimaryVertexZ0width_->Fill(TDRVertex.z0width());
+    hisTDRVertexPTVsTruePt_->Fill(TDRVertex->pT(), TruePrimaryVertex.pT());
+    hisTDRVertexMETVsTrueMET_->Fill(TDRVertex->met(), TruePrimaryVertex.met());
+    hisTDRNoTracksFromPrimaryVertex_->Fill(TDRVertex->numTracks(),TruePrimaryVertex.numTracks());
+    hisTDRNoTrueTracksFromPrimaryVertex_->Fill(TDRVertex->numTrueTracks(),TruePrimaryVertex.numTracks());
+    hisTDRPrimaryVertexZ0width_->Fill(TDRVertex->z0width());
   
-    float matchratio_res = float(TDRVertex.numTrueTracks())/float(TruePrimaryVertex.numTracks());
+    float matchratio_res = float(TDRVertex->numTrueTracks())/float(TruePrimaryVertex.numTracks());
     hisRatioMatchedTracksInTDRPV_->Fill(matchratio_res);
-    float trueRate_res = float(TDRVertex.numTrueTracks())/float(TDRVertex.numTracks());
+    float trueRate_res = float(TDRVertex->numTrueTracks())/float(TDRVertex->numTracks());
     hisTrueTracksRateInTDRPV_->Fill(trueRate_res);
-    float fakeRate_res = float(TDRVertex.numTracks()-TDRVertex.numTrueTracks())/float(TDRVertex.numTracks());
+    float fakeRate_res = float(TDRVertex->numTracks()-TDRVertex->numTrueTracks())/float(TDRVertex->numTracks());
     hisFakeTracksRateInTDRPV_->Fill(fakeRate_res);
 
     for(unsigned int i = 0; i < 3; ++i ){
@@ -481,7 +508,7 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
       for(unsigned int j = 0; j < 10; ++j ){
         float cutmet = 10. + j*met_steps;
 
-        if(TDRVertex.met() > cutmet){
+        if(TDRVertex->met() > cutmet){
           if(signal) noTDRSignalEvents[i][j]++;
         } else if(!signal){
           noTDRBackgroundEvents[i][j]++;
@@ -490,7 +517,7 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
     }
 
   } else{
-    hisTDRVertexOffPT_->Fill(TDRVertex.pT());
+    hisTDRVertexOffPT_->Fill(TDRVertex->pT());
     hisTDRUnmatchedVertexZ0distance_->Fill(fabs(z0res_tdr));
   }
 
@@ -503,52 +530,53 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
   for(const TP& tp : TruePrimaryVertex.tracks()){
     bool found = false;
     // cout << tp.index() << " "<< endl;
-    for(const L1fittedTrack* l1track : RecoPrimaryVertex.tracks()){
+    for(const L1fittedTrack* l1track : RecoPrimaryVertex->tracks()){
       if(l1track->getMatchedTP()!= nullptr){
         if(tp.index() == l1track->getMatchedTP()->index() ) {
           found = true;
           break;
         }
-      } 
+      }
     }
+
     if(!found){
       bool TrackIsReconstructed = false;
-      for(const L1fittedTrack* l1track: vf.FitTracks()){
+      for(const L1fittedTrackBase* l1trackIt: vf.FitTracks()){
+	const L1fittedTrack * l1track = trackAssociationMap[l1trackIt->getTTTrackPtr()];
         if(l1track->getMatchedTP()!= nullptr){
           if(tp.index() == l1track->getMatchedTP()->index() ){
             TrackIsReconstructed = true;
-            hisUnmatchZ0distance_->Fill(fabs(l1track->z0()-RecoPrimaryVertex.z0()));
+            hisUnmatchZ0distance_->Fill(fabs(l1track->z0()-RecoPrimaryVertex->z0()));
             hisUnmatchPt_->Fill(l1track->pt());
             hisUnmatchEta_->Fill(l1track->eta());
             hisUnmatchTruePt_->Fill(tp.pt());
             hisUnmatchTrueEta_->Fill(tp.eta());
 
             double mindistance = 999.;
-            for(const L1fittedTrack* vertexTrack : RecoPrimaryVertex.tracks()){
+            for(const L1fittedTrack* vertexTrack : RecoPrimaryVertex->tracks()){
               if( fabs(vertexTrack->z0()-l1track->z0()) < mindistance ) mindistance = fabs(vertexTrack->z0()-l1track->z0());
             }
             hisUnmatchZ0MinDistance_->Fill(mindistance);
-            
+
             if(settings_->debug()>5){
-              cout << "PV Track assigned to wrong vertex. Track z0: "<< l1track->z0() << " PV z0: "<< RecoPrimaryVertex.z0() << " tp z0 "<< tp.z0() << " track pT "<< l1track->pt() << " tp pT "<< tp.pt() << " tp d0 "<< tp.d0() << " track eta "<< l1track->eta() << endl;
+              cout << "PV Track assigned to wrong vertex. Track z0: "<< l1track->z0() << " PV z0: "<< RecoPrimaryVertex->z0() << " tp z0 "<< tp.z0() << " track pT "<< l1track->pt() << " tp pT "<< tp.pt() << " tp d0 "<< tp.d0() << " track eta "<< l1track->eta() << endl;
             }
-            break;  
+            break;
           }
         }
       }
-      
+
       if(!TrackIsReconstructed){
         lostTracks++;
       } else{
         misassignedTracks++;
       }
     }
-    
-    
-    
+
     found = false;
 
-    for(const L1fittedTrack* l1track : TDRVertex.tracks()){
+    for(const L1fittedTrackBase* l1trackIt : TDRVertex->tracks()){
+      const L1fittedTrack * l1track = trackAssociationMap[l1trackIt->getTTTrackPtr()];
       if(l1track->getMatchedTP()!= nullptr){
         // cout << l1track->getMatchedTP()->index() << " ";
         if(tp.index() == l1track->getMatchedTP()->index() ) {
@@ -559,22 +587,23 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
     }
 
     if(!found){
-      for(const L1fittedTrack* l1track: vf.FitTracks()){
+      for(const L1fittedTrackBase* l1trackIt: vf.FitTracks()){
+	const L1fittedTrack * l1track = trackAssociationMap[l1trackIt->getTTTrackPtr()];
         if(l1track->getMatchedTP()!= nullptr){
           if(tp.index() == l1track->getMatchedTP()->index() ){
-            hisTDRUnmatchZ0distance_->Fill(fabs(l1track->z0()-TDRVertex.z0()));
+            hisTDRUnmatchZ0distance_->Fill(fabs(l1track->z0()-TDRVertex->z0()));
             hisTDRUnmatchPt_->Fill(l1track->pt());
             hisTDRUnmatchEta_->Fill(l1track->eta());
             hisTDRUnmatchTruePt_->Fill(tp.pt());
             hisTDRUnmatchTrueEta_->Fill(tp.eta());
             misassignedTracks_tdr++;
             double mindistance = 999.;
-            for(const L1fittedTrack* vertexTrack : TDRVertex.tracks()){
+            for(const L1fittedTrackBase* vertexTrack : TDRVertex->tracks()){
               if( fabs(vertexTrack->z0()-l1track->z0()) < mindistance ) mindistance = fabs(vertexTrack->z0()-l1track->z0());
             }
             hisTDRUnmatchZ0MinDistance_->Fill(mindistance);
-            
-            break;  
+
+            break;
           }
         }
       }
@@ -620,6 +649,9 @@ void Histos::fillVertexReconstruction(const InputData& inputData, const VertexFi
 
 
   if(settings_->debug()==7) cout << "================ End of Event =============="<< endl;
+
+  delete RecoPrimaryVertex;
+  delete TDRVertex;
 
 }
 

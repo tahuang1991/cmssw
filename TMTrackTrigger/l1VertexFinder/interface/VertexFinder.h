@@ -14,7 +14,7 @@
 
 namespace l1tVertexFinder {
 
-typedef std::vector<const L1fittedTrack*> FitTrackCollection;
+typedef std::vector<const L1fittedTrackBase*> FitTrackCollection;
 typedef std::vector<RecoVertex> RecoVertexCollection;
 
 class VertexFinder {
@@ -25,13 +25,13 @@ public:
   ~VertexFinder(){}
 
   struct SortTracksByZ0{
-    inline bool operator() (const L1fittedTrack* track0, const L1fittedTrack* track1){
+    inline bool operator() (const L1fittedTrackBase* track0, const L1fittedTrackBase* track1){
       return(track0->z0() < track1->z0());
     }
   };
 
   struct SortTracksByPt{
-    inline bool operator() (const L1fittedTrack* track0, const L1fittedTrack* track1){
+    inline bool operator() (const L1fittedTrackBase* track0, const L1fittedTrackBase* track1){
       return(fabs(track0->pt()) > fabs(track1->pt()));
     }
   };
@@ -47,9 +47,9 @@ public:
   /// Number of reconstructed vertices
   unsigned int numVertices()                const {return vertices_.size();}
   /// Reconstructed Primary Vertex
-  RecoVertex  PrimaryVertex()               const {if(pv_index_ < vertices_.size()) return vertices_[pv_index_]; else{ std::cout << "No Primary Vertex has been found."; return RecoVertex();} }
+  RecoVertex  PrimaryVertex()               const {if(pv_index_ < vertices_.size()) return vertices_[pv_index_]; else{ std::cout << "No Primary Vertex has been found." << std::endl; return RecoVertex();} }
   /// Reconstructed Primary Vertex as in TDR
-  const RecoVertex& TDRPrimaryVertex()      const {return tdr_vertex_;}
+  RecoVertex TDRPrimaryVertex()      const {return tdr_vertex_;}
   /// Reconstructed Primary Vertex Id
   unsigned int PrimaryVertexId()            const { return pv_index_;}
   /// Storage for tracks out of the L1 Track finder
@@ -78,7 +78,7 @@ public:
   void DBSCAN();
   /// Principal Vertex Reconstructor algorithm
   void PVR();
-  /// Adaptive Vertex Reconstruction algorithm 
+  /// Adaptive Vertex Reconstruction algorithm
   void AdaptiveVertexReconstruction();
   /// High PT Vertex Algorithm
   void HPV();

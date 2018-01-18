@@ -1,5 +1,5 @@
-#ifndef __TMTrackTrigger_VertexFinder_RecoVertex_h__
-#define __TMTrackTrigger_VertexFinder_RecoVertex_h__
+#ifndef __TMTrackTrigger_VertexFinder_RecoVertexWithTP_h__
+#define __TMTrackTrigger_VertexFinder_RecoVertexWithTP_h__
 
 
 #include <set>
@@ -8,19 +8,20 @@
 #include "TMTrackTrigger/l1VertexFinder/interface/TP.h"
 #include "TMTrackTrigger/l1VertexFinder/interface/L1fittedTrack.h"
 
+#include "TMTrackTrigger/l1VertexFinder/interface/RecoVertex.h"
 
 
 namespace l1tVertexFinder {
 
-class RecoVertex {
+class RecoVertexWithTP {
 
 public:
   // Fill useful info about tracking particle.
-  RecoVertex(){z0_ = -999.; pT_ = -9999.; met_ = -999.;}
-  ~RecoVertex(){}
+  RecoVertexWithTP(RecoVertex & vertex, std::map <const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1fittedTrack *> trackAssociationMap);
+  ~RecoVertexWithTP(){}
 
   /// Tracking Particles in vertex    
-  const std::vector<const L1fittedTrackBase*>& tracks()    const { return    tracks_;    }
+  const std::vector<const L1fittedTrack *>& tracks()    const { return    tracks_;    }
   /// Tracking Particles in vertex    
   const std::set< const TP* >& trueTracks()    const { return    trueTracks_;    }
   /// Number of tracks originating from this vertex
@@ -28,7 +29,7 @@ public:
   /// Number of true particles assigned to this vertex
   unsigned int      numTrueTracks() const {return trueTracks_.size();}
   /// Assign fitted track to this vertex
-  void              insert(const L1fittedTrackBase* fitTrack)     {  tracks_.push_back(fitTrack); /* if(fitTrack->getMatchedTP()!= nullptr and fitTrack->getMatchedTP()->physicsCollision()) trueTracks_.insert(fitTrack->getMatchedTP()); */}
+  void              insert(const L1fittedTrack* fitTrack)     {  tracks_.push_back(fitTrack); if(fitTrack->getMatchedTP()!= nullptr and fitTrack->getMatchedTP()->physicsCollision()) trueTracks_.insert(fitTrack->getMatchedTP()); }
   /// Compute vertex parameters
   void              computeParameters(bool weightedmean = false);
   /// Set z0 position
@@ -65,7 +66,7 @@ private:
   double            metY_;
   double            highestPt_;
 
-  std::vector<const L1fittedTrackBase*>   tracks_;
+  std::vector<const L1fittedTrack*>   tracks_;
   std::set< const TP* >   trueTracks_;
   bool              pv_;
   bool              highPt_;
