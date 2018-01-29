@@ -135,7 +135,8 @@ CSCMotherboard::CSCMotherboard(unsigned endcap, unsigned station,
   tmb_l1a_window_size = // Common to CLCT and TMB
     tmbParams.getParameter<unsigned int>("tmbL1aWindowSize");
 
-  lct_central_bx = 6;
+  lct_central_bx =  tmbParams.getParameter<int>("lctCentralBX");//lct_central_bx = 6
+  clct_bxOffset  =  tmbParams.getParameter<int>("clctBXOffset");
 
   // configuration handle for number of early time bins
   early_tbins = tmbParams.getParameter<int>("tmbEarlyTbins");
@@ -375,8 +376,9 @@ CSCMotherboard::run(const CSCWireDigiCollection* wiredc,
         // need to access "full BX" words, which are not readily
         // available.
         bool is_matched = false;
-        int bx_alct_start = bx_clct - match_trig_window_size/2;
-        int bx_alct_stop  = bx_clct + match_trig_window_size/2;
+	//Add clct Bx offset
+        int bx_alct_start = bx_clct - match_trig_window_size/2 + clct_bxOffset;
+        int bx_alct_stop  = bx_clct + match_trig_window_size/2 + clct_bxOffset;
         // Empirical correction to match 2009 collision data (firmware change?)
         // (but don't do it for SLHC case, assume it would not be there)
         if (!isSLHC) bx_alct_stop += match_trig_window_size%2;

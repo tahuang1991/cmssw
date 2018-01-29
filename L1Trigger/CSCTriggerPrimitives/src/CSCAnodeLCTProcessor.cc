@@ -663,6 +663,10 @@ bool CSCAnodeLCTProcessor::getDigis(const CSCWireDigiCollection* wiredc) {
       }
     }
   }
+  /*if (noDigis and theStation == 1 and theRing == 1){
+      CSCDetId detid(theEndcap, theStation, theRing, theChamber, 0);
+      std::cout <<"CSCId "<< detid <<" no Wire digi found "<< std::endl;
+  }*/
 
   return noDigis;
 }
@@ -1683,6 +1687,8 @@ std::vector<CSCALCTDigi> CSCAnodeLCTProcessor::readoutALCTs() {
         << late_tbins;
       continue;
     }
+    if (infoV > 1)
+	LogTrace("CSCAnodeLCTProcessor") <<" readout ALCT "<< *plct ;
 
     tmpV.push_back(*plct);
   }

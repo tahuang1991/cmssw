@@ -4,10 +4,11 @@
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("CSCTPEmulator")
+process = cms.Process("CSCTPEmulatorEmulation")
 
 process.maxEvents = cms.untracked.PSet(
-  input = cms.untracked.int32(10000)
+  input = cms.untracked.int32(-1)
+  #input = cms.untracked.int32(100)
 )
 
 # Hack to add "test" directory to the python path.
@@ -29,7 +30,10 @@ process.source = cms.Source("PoolSource",
      fileNames = cms.untracked.vstring(
 #         '/store/data/Commissioning12/MinimumBias/RAW/v1/000/189/778/FC9A951F-977A-E111-9385-001D09F2B30B.root'
 #         '/store/data/Run2012C/SingleMu/RAW/v1/000/199/703/6401E77F-05D7-E111-A310-BCAEC518FF41.root'
-         'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+         #'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+	 #'file:/home/taohuang/CSCEmulation/CMSSW_6_2_0_SLHC28_patch1/src/L1Trigger/CSCTriggerPrimitives/test/cms904data_unpacked_test.root'
+	 #'file:lcts_CMS904data_unpacked.root'
+	 'file:/fdata/hepx/store/user/taohuang/CMS904Data/csc_00000001_EmuRUI01_Monitor_012_171213_193753_UTC.root'
      )
 ##        untracked uint32 debugVebosity = 10
 ##        untracked bool   debugFlag     = false
@@ -42,13 +46,14 @@ process.MessageLogger = cms.Service("MessageLogger",
     debug = cms.untracked.PSet(
         extension = cms.untracked.string(".txt"),
         threshold = cms.untracked.string("DEBUG"),
-        # threshold = cms.untracked.string("WARNING"),
+        #threshold = cms.untracked.string("WARNING"),
         lineLength = cms.untracked.int32(132),
         noLineBreaks = cms.untracked.bool(True)
     ),
-    # debugModules = cms.untracked.vstring("*")
-    debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis", 
-        "lctreader")
+    debugModules = cms.untracked.vstring("*")
+    #debugModules = cms.untracked.vstring("lctreader")
+    #debugModules = cms.untracked.vstring("cscTriggerPrimitiveDigis", 
+    #    "lctreader")
 )
 
 # es_source of ideal geometry
@@ -67,7 +72,9 @@ process.load("Geometry.CSCGeometry.cscGeometry_cfi")
 
 process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
 #process.GlobalTag.globaltag = 'MC_38Y_V8::All'
-process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+#process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v8'
+#process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_v12'
 #process.prefer("GlobalTag")
 
 # magnetic field (do I need it?)
@@ -78,6 +85,13 @@ process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 # =========================
 process.load("EventFilter.CSCRawToDigi.cscUnpacker_cfi")
 process.muonCSCDigis.InputObjects = "rawDataCollector"
+# Turn on lots of output
+process.muonCSCDigis.Debug = cms.untracked.bool(True)
+process.muonCSCDigis.PrintEventNumber = cms.untracked.bool(True)
+# Visualization of raw data in corrupted events
+process.muonCSCDigis.VisualFEDInspect = cms.untracked.bool(False)
+process.muonCSCDigis.VisualFEDShort = cms.untracked.bool(False)
+process.muonCSCDigis.FormatedEventDump = cms.untracked.bool(False)
 # InputObjects = cms.InputTag("cscpacker","CSCRawData")
 # for run 566 and 2008 data
 # ErrorMask = cms.untracked.uint32(0xDFCFEFFF)
@@ -97,9 +111,14 @@ process.muonCSCDigis.InputObjects = "rawDataCollector"
 # CSC Trigger Primitives emulator
 # ===============================
 process.load("L1Trigger.CSCTriggerPrimitives.cscTriggerPrimitiveDigis_cfi")
-process.cscTriggerPrimitiveDigis.alctParam07.verbosity = 2
-process.cscTriggerPrimitiveDigis.clctParam07.verbosity = 2
-process.cscTriggerPrimitiveDigis.tmbParam.verbosity = 2
+process.cscTriggerPrimitiveDigis.alctParam07.verbosity = 3
+process.cscTriggerPrimitiveDigis.clctParam07.verbosity = 3
+process.cscTriggerPrimitiveDigis.tmbParam.verbosity = 3
+process.cscTriggerPrimitiveDigis.tmbParam.tmbEarlyTbins = 1
+process.cscTriggerPrimitiveDigis.tmbParam.matchTrigWindowSize = 9
+process.cscTriggerPrimitiveDigis.tmbParam.tmbL1aWindowSize = 9
+process.cscTriggerPrimitiveDigis.checkBadChambers = False
+process.cscTriggerPrimitiveDigis.debugParameters  = True
 process.cscTriggerPrimitiveDigis.CSCComparatorDigiProducer = "muonCSCDigis:MuonCSCComparatorDigi"
 process.cscTriggerPrimitiveDigis.CSCWireDigiProducer = "muonCSCDigis:MuonCSCWireDigi"
 
@@ -107,6 +126,8 @@ process.cscTriggerPrimitiveDigis.CSCWireDigiProducer = "muonCSCDigis:MuonCSCWire
 # =============================
 process.load("CSCTriggerPrimitivesReader_cfi")
 process.lctreader.debug = True
+process.lctreader.checkBadChambers = False
+process.lctreader.CSCLCTProducerEmul = "cscTriggerPrimitiveDigis"
 
 # Auxiliary services
 # ==================
@@ -119,17 +140,20 @@ process.lctreader.debug = True
 # ======
 process.output = cms.OutputModule("PoolOutputModule",
     #fileName = cms.untracked.string("/data0/slava/test/lcts_run122909.root"),
-    fileName = cms.untracked.string("lcts_run200152.root"),
+    #fileName = cms.untracked.string("lcts_CMS904data_emulationonly.root"),
+    fileName = cms.untracked.string("/fdata/hepx/store/user/taohuang/CMS904Data/csc_00000001_EmuRUI01_Monitor_012_171213_193753_emulation.root"),
     outputCommands = cms.untracked.vstring("keep *", 
         "drop *_DaqSource_*_*")
 )
 
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string('TPEHists.root')
+    fileName = cms.string('TPEHists_Monitor_012_171213_193753_20170129.root')
 )
 
 # Scheduler path
 # ==============
 #process.p = cms.Path(process.myfilter*process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
-process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
+#process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis)
+process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis * process.lctreader)
+#process.p = cms.Path(process.muonCSCDigis)
 #process.ep = cms.EndPath(process.output)

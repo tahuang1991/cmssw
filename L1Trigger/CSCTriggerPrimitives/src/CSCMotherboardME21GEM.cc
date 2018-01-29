@@ -309,8 +309,8 @@ CSCMotherboardME21GEM::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
-      const int bx_clct_start(bx_alct - match_trig_window_size/2);
-      const int bx_clct_stop(bx_alct + match_trig_window_size/2);
+      const int bx_clct_start(bx_alct - match_trig_window_size/2 - clct_bxOffset);
+      const int bx_clct_stop(bx_alct + match_trig_window_size/2 - clct_bxOffset);
       const int bx_copad_start(bx_alct - maxDeltaBXCoPad_);
       const int bx_copad_stop(bx_alct + maxDeltaBXCoPad_);
 
@@ -323,7 +323,7 @@ CSCMotherboardME21GEM::run(const CSCWireDigiCollection* wiredc,
         std::cout << "+++ Second ALCT Details: ";
         alct->secondALCT[bx_alct].print();
         
-        printGEMTriggerPads(bx_clct_start, bx_clct_stop);      
+        printGEMTriggerPads(bx_clct_start + clct_bxOffset, bx_clct_stop + clct_bxOffset);      
         
         std::cout << "------------------------------------------------------------------------" << std::endl;
         std::cout << "Attempt ALCT-CLCT matching in ME2/1 in bx range: [" << bx_clct_start << "," << bx_clct_stop << "]" << std::endl;
@@ -337,6 +337,7 @@ CSCMotherboardME21GEM::run(const CSCWireDigiCollection* wiredc,
         if (drop_used_clcts and used_clct_mask[bx_clct]) continue;
         if (clct->bestCLCT[bx_clct].isValid())
         {
+	  int bx_gempad = bx_clct + clct_bxOffset;
           // clct quality
           const int quality(clct->bestCLCT[bx_clct].getQuality());
           // low quality ALCT
@@ -346,8 +347,8 @@ CSCMotherboardME21GEM::run(const CSCWireDigiCollection* wiredc,
           if (debug_gem_matching) std::cout << "++Valid ME21 CLCT: " << clct->bestCLCT[bx_clct] << std::endl;
 
             // pick the pad that corresponds 
-	  auto matchingPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], pads_[bx_clct], false));
-	  auto matchingCoPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], coPads_[bx_clct], true));
+	  auto matchingPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], pads_[bx_gempad], false));
+	  auto matchingCoPads(matchingGEMPads(clct->bestCLCT[bx_clct], alct->bestALCT[bx_alct], coPads_[bx_gempad], true));
           if (runME21ILT_ and dropLowQualityCLCTsNoGEMs_ and lowQuality and hasPads){
             int nFound(matchingPads.size());
             const bool clctInEdge(clct->bestCLCT[bx_clct].getKeyStrip() < 5 or clct->bestCLCT[bx_clct].getKeyStrip() > 155);

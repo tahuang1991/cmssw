@@ -164,6 +164,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 					const RPCDigiCollection* rpcDigis,
 					CSCALCTDigiCollection& oc_alct,
 					CSCCLCTDigiCollection& oc_clct,
+				        CSCPretriggerCollection& oc_pretrigger,
                                         CSCCLCTPreTriggerCollection & oc_pretrig,
 					CSCCorrelatedLCTDigiCollection& oc_lct,
 					CSCCorrelatedLCTDigiCollection& oc_sorted_lct,
@@ -219,8 +220,10 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               std::vector<CSCCLCTDigi> clctV = tmb11->clct->readoutCLCTs();
               std::vector<int> preTriggerBXs = tmb11->clct->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV = tmb11->clct->preTriggers();
               std::vector<CSCCLCTDigi> clctV1a = tmb11->clct1a->readoutCLCTs();
               std::vector<int> preTriggerBXs1a = tmb11->clct1a->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV1a = tmb11->clct1a->preTriggers();
 
               // perform simple separation of ALCTs into 1/a and 1/b
               // for 'smart' case. Some duplication occurs for WG [10,15]
@@ -264,6 +267,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
                   << ((clctV.size() > 1) ? "s " : " ") << "in collection\n";
                 oc_clct.put(std::make_pair(clctV.begin(),clctV.end()), detid);
               }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV.size() << " Pretriggger digi"
+                  << ((pretriggerV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV.begin(), pretriggerV.end()), detid);
+              }
 
               // Cathode LCTs pretriggers
               if (!preTriggerBXs.empty()) {
@@ -306,6 +320,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
                   << ((clctV1a.size() > 1) ? "s " : " ") << "in collection\n";
                 oc_clct.put(std::make_pair(clctV1a.begin(),clctV1a.end()), detid1a);
               }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV1a.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV1a.size() << " ME1a Pretriggger digi"
+                  << ((pretriggerV1a.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV1a.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV1a[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV1a.begin(), pretriggerV1a.end()), detid);
+              }
               
               // Cathode LCTs pretriggers
               if (!preTriggerBXs1a.empty()) {
@@ -333,8 +358,10 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 	      
 	      std::vector<CSCCLCTDigi> clctV = tmb11GEM->clct->readoutCLCTs();
 	      std::vector<int> preTriggerBXs = tmb11GEM->clct->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV = tmb11GEM->clct->preTriggers();
 	      std::vector<CSCCLCTDigi> clctV1a = tmb11GEM->clct1a->readoutCLCTs();
 	      std::vector<int> preTriggerBXs1a = tmb11GEM->clct1a->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV1a = tmb11GEM->clct1a->preTriggers();
 	      
 	      std::vector<GEMCoPadDigi> copads = tmb11GEM->readoutCoPads();
 	      
@@ -380,6 +407,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 		  << ((clctV.size() > 1) ? "s " : " ") << "in collection\n";
 		oc_clct.put(std::make_pair(clctV.begin(),clctV.end()), detid);
 	      }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV.size() << " Pretriggger digi"
+                  << ((pretriggerV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV.begin(), pretriggerV.end()), detid);
+              }
 	      
 	      // Cathode LCTs pretriggers
 	      if (!preTriggerBXs.empty()) {
@@ -432,6 +470,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 		  << ((clctV1a.size() > 1) ? "s " : " ") << "in collection\n";
 		oc_clct.put(std::make_pair(clctV1a.begin(),clctV1a.end()), detid1a);
 	      }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV1a.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV1a.size() << " ME1a Pretriggger digi"
+                  << ((pretriggerV1a.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV1a.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV1a[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV1a.begin(), pretriggerV1a.end()), detid);
+              }
 	      
 	      // Cathode LCTs pretriggers
 	      if (!preTriggerBXs1a.empty()) {
@@ -453,6 +502,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 	      std::vector<CSCALCTDigi> alctV = tmb21GEM->alct->readoutALCTs();
 	      std::vector<CSCCLCTDigi> clctV = tmb21GEM->clct->readoutCLCTs();
 	      std::vector<int> preTriggerBXs = tmb21GEM->clct->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV = tmb21GEM->clct->preTriggers();
 	      
 	      std::vector<GEMCoPadDigi> copads = tmb21GEM->readoutCoPads();
 	      
@@ -484,6 +534,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 		  << ((clctV.size() > 1) ? "s " : " ") << "in collection\n";
 		oc_clct.put(std::make_pair(clctV.begin(),clctV.end()), detid);
 	      }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV.size() << " Pretriggger digi"
+                  << ((pretriggerV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV.begin(), pretriggerV.end()), detid);
+              }
 	      
 	      // Cathode LCTs pretriggers
 	      if (!preTriggerBXs.empty()) {
@@ -515,6 +576,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 	      std::vector<CSCALCTDigi> alctV = tmb3141RPC->alct->readoutALCTs();
 	      std::vector<CSCCLCTDigi> clctV = tmb3141RPC->clct->readoutCLCTs();
 	      std::vector<int> preTriggerBXs = tmb3141RPC->clct->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV = tmb3141RPC->clct->preTriggers();
 	      
 	      if (!(alctV.empty() && clctV.empty() && lctV.empty())) {
 		LogTrace("L1CSCTrigger")
@@ -543,6 +605,17 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 		  << ((clctV.size() > 1) ? "s " : " ") << "in collection\n";
 		oc_clct.put(std::make_pair(clctV.begin(),clctV.end()), detid);
 	      }
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV.size() << " Pretriggger digi"
+                  << ((pretriggerV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV.begin(), pretriggerV.end()), detid);
+              }
 	      
 	      // Cathode LCTs pretriggers
 	      if (!preTriggerBXs.empty()) {
@@ -556,12 +629,15 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             // running non-upgraded TMB
             else
             {
+	      //if (stat == 1 && ring == 1)
+		  //std::cout <<"ME11 chamber debug, CSCId "<< detid << std::endl;
               tmb->run(wiredc,compdc);
 
               std::vector<CSCCorrelatedLCTDigi> lctV = tmb->readoutLCTs();
               std::vector<CSCALCTDigi> alctV = tmb->alct->readoutALCTs();
               std::vector<CSCCLCTDigi> clctV = tmb->clct->readoutCLCTs();
               std::vector<int> preTriggerBXs = tmb->clct->preTriggerBXs();
+	      std::vector<CSCPretrigger> pretriggerV = tmb->clct->preTriggers();
 
               if (!(alctV.empty() && clctV.empty() && lctV.empty())) {
                 LogTrace("L1CSCTrigger")
@@ -585,6 +661,10 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
                 LogTrace("L1CSCTrigger")
                   << "Put " << lctV.size() << " LCT digi"
                   << ((lctV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<lctV.size();t++)
+			std::cout <<"Valid LCT "<< lctV[t] << std::endl;
+		}
                 oc_lct.put(std::make_pair(lctV.begin(),lctV.end()), detid);
               }
 
@@ -593,6 +673,10 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
                 LogTrace("L1CSCTrigger")
                   << "Put " << alctV.size() << " ALCT digi"
                   << ((alctV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<alctV.size();t++)
+			std::cout <<"Valid ALCT "<< alctV[t] << std::endl;
+		}
                 oc_alct.put(std::make_pair(alctV.begin(),alctV.end()), detid);
               }
 
@@ -601,7 +685,23 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
                 LogTrace("L1CSCTrigger")
                   << "Put " << clctV.size() << " CLCT digi"
                   << ((clctV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<clctV.size();t++)
+			std::cout <<"Valid CLCT "<< clctV[t] << std::endl;
+		}
                 oc_clct.put(std::make_pair(clctV.begin(),clctV.end()), detid);
+              }
+
+              // Cathode LCTs Pretrigger .
+              if (!pretriggerV.empty()) {
+                LogTrace("L1CSCTrigger")
+                  << "Put " << pretriggerV.size() << " Pretriggger digi"
+                  << ((pretriggerV.size() > 1) ? "s " : " ") << "in collection\n";
+		if (stat==1 && ring==1){
+		    for (unsigned t=0;t<pretriggerV.size();t++)
+			std::cout <<"Valid Pretrigger "<< pretriggerV[t] << std::endl;
+		}
+                oc_pretrigger.put(std::make_pair(pretriggerV.begin(), pretriggerV.end()), detid);
               }
 
               // Cathode LCTs pretriggers

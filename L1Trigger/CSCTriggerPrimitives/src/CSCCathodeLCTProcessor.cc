@@ -317,6 +317,7 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor(unsigned endcap,
   checkConfigParameters();
   if ((infoV > 0 || isSLHC) && !config_dumped) {
     //std::cerr<<"**** CLCT constructor parameters dump ****"<<std::endl;
+    LogDebug("CSCCathodeLCTProcessor") << "****  CLCT constructor parameters dump ****";
     dumpConfigParams();
     config_dumped = true;
   }
@@ -349,6 +350,7 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor(unsigned endcap,
   ////  print out all the patterns to make sure we've got what we think we've got.
   //  printPatterns();
   //}
+  allPretrigggers.clear();
 }
 
 CSCCathodeLCTProcessor::CSCCathodeLCTProcessor() :
@@ -377,6 +379,7 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor() :
   checkConfigParameters();
   if (!config_dumped) {
     //std::cerr<<"**** CLCT default constructor parameters dump ****"<<std::endl;
+    LogDebug("CSCCathodeLCTProcessor") << "**** CLCT default constructor parameters dump ****";
     dumpConfigParams();
     config_dumped = true;
   }
@@ -390,6 +393,7 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor() :
   
   theRing = CSCTriggerNumbering::ringFromTriggerLabels(theStation, theTrigChamber);
   isME11 = (theStation == 1 && theRing == 1);
+  allPretrigggers.clear();
 }
 
 void CSCCathodeLCTProcessor::setDefaultConfigParameters() {
@@ -434,6 +438,7 @@ void CSCCathodeLCTProcessor::setConfigParameters(const CSCDBL1TPParameters* conf
   checkConfigParameters();
   if (!config_dumped) {
     //std::cerr<<"**** CLCT setConfigParams parameters dump ****"<<std::endl;
+    LogDebug("CSCCathodeLCTProcessor") << "**** CLCT setConfigParams (from DB) parameters dump  ****";
     dumpConfigParams();
     config_dumped = true;
   }
@@ -534,6 +539,7 @@ void CSCCathodeLCTProcessor::checkConfigParameters() {
 
 void CSCCathodeLCTProcessor::clear() {
   thePreTriggerBXs.clear();
+  allPretrigggers.clear();
   for (int bx = 0; bx < MAX_CLCT_BINS; bx++) {
     bestCLCT[bx].clear();
     secondCLCT[bx].clear();
@@ -550,7 +556,7 @@ CSCCathodeLCTProcessor::run(const CSCComparatorDigiCollection* compdc) {
 
   static std::atomic<bool> config_dumped{false};
   if ((infoV > 0 || isSLHC) && !config_dumped) {
-    //std::cerr<<"**** CLCT run parameters dump ****"<<std::endl;
+    LogDebug("CSCCathodeLCTProcessor") << "**** CLCT run parameters dump ****";
     dumpConfigParams();
     config_dumped = true;
   }
@@ -786,6 +792,10 @@ bool CSCCathodeLCTProcessor::getDigis(const CSCComparatorDigiCollection* compdc)
       }
     }
   }
+  /*if (noDigis and theStation == 1 and theRing == 1){
+      CSCDetId detid(theEndcap, theStation, theRing, theChamber, 0);
+      std::cout <<"CSCId "<< detid <<" no Comparator digi found "<< std::endl;
+  }*/
 
   return noDigis;
 }
@@ -2142,6 +2152,8 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::findLCTs(const std::vector<int>
 	    LogTrace("CSCCathodeLCTProcessor")
 	      << " 1st CLCT: halfstrip = " << std::setw(3) << hstrip
 	      << " quality = "             << std::setw(3) << quality[hstrip]
+	      << " nhits = " << std::setw(3) << nhits[hstrip]
+	      << " pid = " << std::setw(3) << best_pid[hstrip]
 	      << " best halfstrip = " << std::setw(3) << best_halfstrip[0]
 	      << " best quality = "   << std::setw(3) << best_quality[0];
 	  }
@@ -2164,6 +2176,8 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::findLCTs(const std::vector<int>
 	    LogTrace("CSCCathodeLCTProcessor")
 	      << " 2nd CLCT: halfstrip = " << std::setw(3) << hstrip
 	      << " quality = "             << std::setw(3) << quality[hstrip]
+	      << " nhits = " << std::setw(3) << nhits[hstrip]
+	      << " pid = " << std::setw(3) << best_pid[hstrip]
 	      << " best halfstrip = " << std::setw(3) << best_halfstrip[1]
 	      << " best quality = "   << std::setw(3) << best_quality[1];
 	  }
@@ -2182,6 +2196,7 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::findLCTs(const std::vector<int>
 	    keystrip_data[ilct][CLCT_STRIP]      =
 	      best_hs - stagger[CSCConstants::KEY_CLCT_LAYER-1];
 	    keystrip_data[ilct][CLCT_BX]         = first_bx;
+	    //if (first_bx <= 4) keystrip_data[ilct][CLCT_BX]         = first_bx+7;// a temperary fix for 904data emulation
 	    keystrip_data[ilct][CLCT_STRIP_TYPE] = 1;           // obsolete
 	    keystrip_data[ilct][CLCT_QUALITY]    = nhits[best_hs];
 	    keystrip_data[ilct][CLCT_CFEB]       =
@@ -2324,7 +2339,7 @@ bool CSCCathodeLCTProcessor::preTrigger(
 	if (infoV > 1) {
 	  if (nhits[hstrip] > 0) {
 	    LogTrace("CSCCathodeLCTProcessor")
-	      << " bx = " << std::setw(2) << bx_time << " --->"
+	      << "Pretrigger bx = " << std::setw(2) << bx_time << " --->"
 	      << " halfstrip = " << std::setw(3) << hstrip
 	      << " best pid = "  << std::setw(2) << best_pid[hstrip]
 	      << " nhits = "     << nhits[hstrip];
@@ -2335,6 +2350,13 @@ bool CSCCathodeLCTProcessor::preTrigger(
 	    best_pid[hstrip] >= pid_thresh_pretrig) {
 	  pre_trig = true;
 	  ispretrig[hstrip] = 1;
+
+	  int bend = pattern2007[best_pid[hstrip]][NUM_PATTERN_HALFSTRIPS];
+          //CSCPretrigger(const int valid, const int quality, const int pattern, const int striptype, const int bend, const int strip,
+	      //const int cfeb, const int bx, const int trknmb = 0, const int fullbx=0);
+	  allPretrigggers.push_back(CSCPretrigger(1, nhits[hstrip], best_pid[hstrip], 1, bend, hstrip%32, hstrip/32, bx_time, 0, 0));
+	  LogTrace("CSCCathodeLCTProcessor")
+	      <<"CLCT Pretrigger "<< allPretrigggers.back(); 
 	}
       }
 
@@ -2433,9 +2455,9 @@ bool CSCCathodeLCTProcessor::ptnFinding(
               times_sum += (double) first_bx_layer;
               num_pattern_hits += 1.;
               mset_for_median.insert(first_bx_layer);
-              if (infoV > 2)
-                LogTrace("CSCCathodeLCTProcessor") << " 1st bx in layer: " << first_bx_layer << " sum bx: " << times_sum
-                    << " #pat. hits: " << num_pattern_hits;
+              //if (infoV > 2)
+              //  LogTrace("CSCCathodeLCTProcessor") << " 1st bx in layer: " << first_bx_layer << " sum bx: " << times_sum
+              //      << " #pat. hits: " << num_pattern_hits;
 	    }
 	  }
 	}
@@ -2854,6 +2876,10 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::readoutCLCTs() {
   static std::atomic<int> late_tbins;
     late_tbins = early_tbins + lct_bins;
 
+  if (infoV >= 2)
+      LogDebug("CSCCathodeLCTProcessor")
+	  <<"CLCT readout +++ early_tbins =  "<< early_tbins <<" late_tbins = "<< late_tbins <<" +++\n";
+
   static std::atomic<int> ifois{0};
   if (ifois == 0) {
     if (infoV >= 0 && early_tbins < 0) {
@@ -2898,6 +2924,9 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::readoutCLCTs() {
 	<< late_tbins;
       continue;
     }
+
+    if (infoV > 1)
+	LogTrace("CSCCathodeLCTProcessor") <<" readout CLCT "<< *plct ;
 
     // If (readout_earliest_2) take only CLCTs in the earliest bx in the read-out window:
     // in digi->raw step, LCTs have to be packed into the TMB header, and
