@@ -271,7 +271,7 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor(unsigned endcap,
   // Flag for SLHC studies
   isSLHC       = comm.getParameter<bool>("isSLHC");
 
-  alctClctOffset = comm.getParameter<bool>("alctClctOffset");
+  alctClctOffset = comm.getParameter<unsigned int>("alctClctOffset");
 
   // special configuration parameters for ME11 treatment
   smartME1aME1b = comm.getParameter<bool>("smartME1aME1b");
