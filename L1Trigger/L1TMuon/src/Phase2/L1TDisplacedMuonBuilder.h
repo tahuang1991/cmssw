@@ -50,6 +50,25 @@ class RPCGeometry;
 class DTGeometry;
 class ME0Geometry;
 
+namespace{
+
+float getRegionalMuonCandPt(const l1t::RegionalMuonCand& cand)
+{
+  return cand.hwPt() * 0.5; // GeV
+}
+
+float getRegionalMuonCandEta(const l1t::RegionalMuonCand& cand)
+{
+  return cand.hwPt() * 0.010875;
+}
+
+float getRegionalMuonCandPhi(const l1t::RegionalMuonCand& cand)
+{
+  return cand.hwPt() * 2*M_PI/576.;
+}
+
+}
+
 namespace L1TMuon {
 
   class L1TDisplacedMuonBuilder {
@@ -142,8 +161,6 @@ namespace L1TMuon {
     std::map<int, std::vector<float>> cscFitPhiLayers_;
     std::map<int, std::vector<float>> cscFitZLayers_;
     std::map<int, float> cscFitRLayers_;
-
-    enum MuonType{Barrel, Overlap, EndcapLow, EndcapMedium, EndcapHigh};
   };
 }
 

@@ -14,24 +14,6 @@
 
 using namespace L1TMuon;
 
-namespace{
-
-float getRegionalMuonCandPt(const l1t::RegionalMuonCand& cand)
-{
-  return cand.hwPt() * 0.5; // GeV
-}
-
-float getRegionalMuonCandEta(const l1t::RegionalMuonCand& cand)
-{
-  return cand.hwPt() * 0.010875;
-}
-
-float getRegionalMuonCandPhi(const l1t::RegionalMuonCand& cand)
-{
-  return cand.hwPt() * 2*M_PI/576.;
-}
-
-}
 
 L1TDisplacedMuonBuilder::L1TDisplacedMuonBuilder(const edm::ParameterSet& iConfig)
 {
@@ -114,13 +96,14 @@ void L1TDisplacedMuonBuilder::buildBMTFMuon(const L1MuBMTrackCollection* bmtfTac
 {
 
 }
+
 void L1TDisplacedMuonBuilder::buildOMTFMuon(const l1t::RegionalMuonCand& omtfMuon,
                                            l1t::MuonPhase2& muon)
 {
 
 }
 
-void L1TDisplacedMuonBuilder::buildEMTFMuon(const CSCComparatorDigiCollection* comparators,
+void L1TDisplacedMuonBuilder::buildEMTFMuon(const CSCComparatorDigiCollection* comps,
                                            const CSCCorrelatedLCTDigiCollection* lcts,
                                            const GEMPadDigiCollection* pads,
                                            const GEMCoPadDigiCollection* copads,
@@ -128,149 +111,129 @@ void L1TDisplacedMuonBuilder::buildEMTFMuon(const CSCComparatorDigiCollection* c
                                            const l1t::RegionalMuonCand& emtfMuon,
                                            l1t::MuonPhase2& muon)
 {
+  // step 1: get the EMTF track associated to the regional track
+  l1t::EMTFTrack bestTrack;
+  float mindR = 999;
+  for (const auto& track : *emtfTracks){
+    const float emtf_eta = track.Eta();
+    const float emtf_phi = normalizedPhi(track.Phi_glob());
 
+    const float emtfMuon_eta = getRegionalMuonCandEta(emtfMuon);
+    const float emtfMuon_phi = getRegionalMuonCandPhi(emtfMuon);
+    float dr = reco::deltaR(emtf_eta, emtf_phi, emtfMuon_eta, emtfMuon_phi);
+    if (dr<mindR){
+      mindR = dr;
+      bestTrack = track;
+    }
+  }
+
+  // step 2: add the CSC/GEM stubs to the collection
+  for (const auto& p : bestTrack.Hits()){
+    if (p.Is_CSC()) {
+      lcts_.emplace_back(p.CSC_DetId(),p.CSC_LCTDigi());
+      const int station = p.CSC_DetId().station();
+      hasCSC_[station-1] = true;
+    }
+    if (p.Is_GEM()) {
+      pads_.emplace_back(p.GEM_DetId(),p.GEM_PadDigi());
+      const int station = p.GEM_DetId().station();
+      const int layer = p.GEM_DetId().layer();
+      const int index(2*(station-1) + layer);
+      hasGEM_[layer] = true;
+    }
+  }
+
+  // step 3: match the ME0 stub to the muon
+  recovery_->setME0Geometry(me0Geometry_);
+  ME0Segment bestSegment;
+  // recovery_->getBestMatchedME0(l1muon, segments, bestSegment);
+
+  /*  Step 4: In case there are CSCCorrelatedLCTDigis,
+   * first fit the comparator digis. This will be done with
+   * the class CSCComparatorDigisFitter.
+   */
+  fitter_->setGeometry(cscGeometry_);
+  for (const auto& stub: lcts_){
+    std::vector<float> fit_phi_layers;
+    std::vector<float> fit_z_layers;
+    float fitRadius;
+    const auto& detid(stub.first);
+
+    // do not fit stubs in the outer rings -- no place in FPGA anyway!
+    if (detid.ring()!=1 and detid.ring()!=4) continue;
+
+    fitter_->fit(detid, stub.second, *comps,
+                 fit_phi_layers, fit_z_layers, fitRadius);
+    const int station = stub.first.station();
+    if (station >= 1 and station <= 4) {
+      cscFitPhiLayers_[station-1] = fit_phi_layers;
+      cscFitZLayers_[station-1] = fit_z_layers;
+      cscFitRLayers_[station-1] = fitRadius;
+    }
+  }
+
+  // step 5
+  /*
+   * Then fit a straight line to them with the new class
+   * DisplacedL1MuStubFitter. This is to better determine
+   * the radius at each station.
+   */
+  // std::vector<float> xs;
+  // std::vector<float> ys;
+  // std::vector<float> zs;
+
+  // const float z1 = 600;
+  // const float z2 = 825;
+  // const float z3 = 935;
+  // const float z4 = 1020;
+
+  // std::vector<float> allxs;
+  // std::vector<float> allys;
+  // std::vector<float> allzs;
+
+  // xs.push_back(alpha_x + beta_x * z1*muon_sign);
+  // xs.push_back(alpha_x + beta_x * z2*muon_sign);
+  // xs.push_back(alpha_x + beta_x * z3*muon_sign);
+  // xs.push_back(alpha_x + beta_x * z4*muon_sign);
+
+  // ys.push_back(alpha_y + beta_y * z1*muon_sign);
+  // ys.push_back(alpha_y + beta_y * z2*muon_sign);
+  // ys.push_back(alpha_y + beta_y * z3*muon_sign);
+  // ys.push_back(alpha_y + beta_y * z4*muon_sign);
+
+  // int sign_z = int(event_.CSCTF_eta[j]/std::abs(event_.CSCTF_eta[j]));
+  //   getPositionsStations(alpha_x, beta_x, alpha_y, beta_y,
+  //                        allxs, allys, sign_z);
+
+  // Step 5: Do stub recovery. Declare a new class L1TDisplacedMuonStubRecovery.
+  if (!hasCSC_[0] or !hasCSC_[1] or !hasCSC_[2] or !hasCSC_[3]) {
+    for (int i=0; i<4; ++i){
+      if (!hasCSC_[i] and doStubRecovery_){
+        CSCCorrelatedLCTDigiId recoveredLCT;
+        recovery_->recoverCSCLCT(bestTrack, emtfTracks, lcts, i+1, recoveredLCT);
+        lcts_.emplace_back(recoveredLCT);
+      }
+    }
+  }
+
+  // Step 5 bis: fit the comparator digis to the newly found stubs.
+  for (const auto& stub: lcts_) {
+    std::vector<float> fit_phi_layers;
+    std::vector<float> fit_z_layers;
+    float fitRadius;
+    fitter_->fit(stub.first, stub.second, *comps,
+                 fit_phi_layers, fit_z_layers, fitRadius);
+    const int station = stub.first.station();
+    if (station >= 1 and station <= 4) {
+      cscFitPhiLayers_[station-1] = fit_phi_layers;
+      cscFitZLayers_[station-1] = fit_z_layers;
+      cscFitRLayers_[station-1] = fitRadius;
+    }
+  }
 }
 
-//       // Step 3: The DisplacedL1MuMatcher checks for stubs that are already
-//       // available through the BMTF, OMTF or EMTF tracks.
-//       /*
-//       l1t::EMTFTrack bestTrack;
-//       float mindR = 999;
-//       for (const auto& track : *emtfTracks){
-//         float emtf_eta = track.Eta();
-//         float emtf_phi = normalizedPhi(track.Phi_glob());
-//         float dr = reco::deltaR(emtf_eta, emtf_phi, muon_eta, muon_phi);
-//         if (dr<mindR){
-//           mindR = dr;
-//           bestTrack = track;
-//         }
-//       }
-//       */
-
-//       // for now...
-//       // continue;
-
-//       /*
-//       // add the CSC stubs to the collection
-//       if ((muon_type = L1TDisplacedMuonBuilder::Overlap) or
-//           (muon_type == L1TDisplacedMuonBuilder::EndcapLow) or
-//           (muon_type == L1TDisplacedMuonBuilder::EndcapHigh)){
-//         for (const auto& p : bestTrack.Hits()){
-//           if (p.Is_GEM()) {
-//             lcts_.emplace_back(p.CSC_DetId(),p.CSC_LCTDigi());
-//             const int station = p.CSC_DetId().station();
-//             hasCSC_[station-1] = true;
-//           }
-//         }
-//       }
-
-//       // add GEM pads to the collection
-//       if (muon_type == L1TDisplacedMuonBuilder::EndcapHigh){
-//         for (const auto& p : bestTrack.Hits()){
-//           if (p.Is_GEM()) {
-//             pads_.emplace_back(p.GEM_DetId(),p.GEM_PadDigi());
-//             const int station = p.GEM_DetId().station();
-//             const int layer = p.GEM_DetId().layer();
-//             const int index(2*(station-1) + layer);
-//             hasGEM_[layer] = true;
-//           }
-//         }
-//       }
-//       */
-//       // match the ME0 stub to the muon
-//       recovery_->setME0Geometry(me0Geometry_);
-//       ME0Segment bestSegment;
-//       /*
-//       recovery_->getBestMatchedME0(l1muon, segments, bestSegment);
-//       */
-
-//       /*
-//        *  Step 4: In case there are CSCCorrelatedLCTDigis,
-//        * first fit the comparator digis. This will be done with
-//        * the class CSCComparatorDigisFitter.
-//        */
-//       fitter_->setGeometry(cscGeometry_);
-//       for (const auto& stub: lcts_){
-//         std::vector<float> fit_phi_layers;
-//         std::vector<float> fit_z_layers;
-//         float fitRadius;
-//         const auto& detid(stub.first);
-
-//         // do not fit stubs in the outer rings -- no place in FPGA anyway!
-//         if (detid.ring()!=1 and detid.ring()!=4) continue;
-
-//         fitter_->fit(detid, stub.second, *comparators,
-//                      fit_phi_layers, fit_z_layers, fitRadius);
-//         const int station = stub.first.station();
-//         if (station >= 1 and station <= 4) {
-//           cscFitPhiLayers_[station-1] = fit_phi_layers;
-//           cscFitZLayers_[station-1] = fit_z_layers;
-//           cscFitRLayers_[station-1] = fitRadius;
-//         }
-//       }
-
-//       /*
-//        * Then fit a straight line to them with the new class
-//        * DisplacedL1MuStubFitter. This is to better determine
-//        * the radius at each station.
-//        */
-//       /*
-//       std::vector<float> xs;
-//       std::vector<float> ys;
-//       std::vector<float> zs;
 
 
-
-//       const float z1 = 600;
-//       const float z2 = 825;
-//       const float z3 = 935;
-//       const float z4 = 1020;
-
-//       std::vector<float> allxs;
-//       std::vector<float> allys;
-//       std::vector<float> allzs;
-
-//       xs.push_back(alpha_x + beta_x * z1*muon_sign);
-//       xs.push_back(alpha_x + beta_x * z2*muon_sign);
-//       xs.push_back(alpha_x + beta_x * z3*muon_sign);
-//       xs.push_back(alpha_x + beta_x * z4*muon_sign);
-
-//       ys.push_back(alpha_y + beta_y * z1*muon_sign);
-//       ys.push_back(alpha_y + beta_y * z2*muon_sign);
-//       ys.push_back(alpha_y + beta_y * z3*muon_sign);
-//       ys.push_back(alpha_y + beta_y * z4*muon_sign);
-//       */
-//       // int sign_z = int(event_.CSCTF_eta[j]/std::abs(event_.CSCTF_eta[j]));
-//       // getPositionsStations(alpha_x, beta_x, alpha_y, beta_y,
-//       //                      allxs, allys, sign_z);
-
-//       /*
-//       // Step 5: Do stub recovery. Declare a new class L1TDisplacedMuonStubRecovery.
-//       if (!hasCSC_[0] or !hasCSC_[1] or !hasCSC_[2] or !hasCSC_[3]){
-//         for (int i=0; i<4; ++i){
-//           if (!hasCSC_[i] and doStubRecovery_){
-//             CSCCorrelatedLCTDigiId recoveredLCT;
-//             recovery_->recoverCSCLCT(bestTrack, emtfTracks, lcts, i+1, recoveredLCT);
-//             lcts_.emplace_back(recoveredLCT);
-//           }
-//         }
-//       }
-//       */
-
-//       // Step 5 bis: fit the comparator digis to the newly found stubs.
-//       for (const auto& stub: lcts_){
-//         std::vector<float> fit_phi_layers;
-//         std::vector<float> fit_z_layers;
-//         float fitRadius;
-//         fitter_->fit(stub.first, stub.second, *comparators,
-//                      fit_phi_layers, fit_z_layers, fitRadius);
-//         const int station = stub.first.station();
-//         if (station >= 1 and station <= 4) {
-//           cscFitPhiLayers_[station-1] = fit_phi_layers;
-//           cscFitZLayers_[station-1] = fit_z_layers;
-//           cscFitRLayers_[station-1] = fitRadius;
-//         }
-//       }
 
 //       /*
 //         Step 6: Fit CSCCorrelatedLCTDigis again with the new stubs.
