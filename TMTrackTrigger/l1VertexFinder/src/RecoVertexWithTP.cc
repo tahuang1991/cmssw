@@ -19,6 +19,12 @@ namespace l1tVertexFinder {
     }
   }
 
+  void RecoVertexWithTP::insert(const L1fittedTrack* fitTrack) {
+    tracks_.push_back(fitTrack);
+    if(fitTrack->getMatchedTP()!= nullptr and fitTrack->getMatchedTP()->physicsCollision()) 
+      trueTracks_.insert(fitTrack->getMatchedTP());
+  }
+
   void RecoVertexWithTP::computeParameters(bool weightedmean){
     pT_ = 0.;
     z0_ = 0.;
@@ -29,7 +35,7 @@ namespace l1tVertexFinder {
     highPt_ = false;
     highestPt_ = 0.;
     numHighPtTracks_ = 0;
-    unsigned int overflows = 0;
+    // unsigned int overflows = 0;
     float SumZ_pT = 0.;
     float SumZ = 0.;
     for(const L1fittedTrack* track : tracks_){
