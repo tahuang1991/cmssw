@@ -6,24 +6,43 @@
 #include <iostream>
 #include <math.h>       /* atan */
 
-int EndcapTriggerPtAssignmentHelper::GetEtaPartition(float eta)
-{
-  int neta=-1;
-  if (fabs(eta)>=1.2 and fabs(eta)<1.4)
-    neta=0;
-  else if (fabs(eta)>=1.4 and fabs(eta)<1.6)
-    neta=1;
-  else if (fabs(eta)>=1.6 and fabs(eta)<1.8)
-    neta=2;
-  else if (fabs(eta)>=1.8 and fabs(eta)<2.0)
-    neta=3;
-  else if (fabs(eta)>=2.0 and fabs(eta)<2.2)
-    neta=4;
-  else if (fabs(eta)>=2.2 and fabs(eta)<2.4)
-    neta=5;
+template <size_t N>
+int EndcapTriggerPtAssignmentHelper::GetEtaPartition ( const double (& Etabins) [N], float eta){
 
-  return neta;
+    for (unsigned int ieta = 0; ieta < N; ieta++){
+	if (std::fabs(eta) < Etabins[ieta+1] and std::fabs(eta) >= Etabins[ieta])
+	    return int(ieta);
+    }
+    return -1;
 }
+
+int EndcapTriggerPtAssignmentHelper::GetEtaPartition_position(float eta){
+    return  EndcapTriggerPtAssignmentHelper::GetEtaPartition( EndcapTriggerPtAssignmentHelper::Etabins_position, eta);
+}
+int EndcapTriggerPtAssignmentHelper::GetEtaPartition_direction(float eta){
+    return EndcapTriggerPtAssignmentHelper::GetEtaPartition( EndcapTriggerPtAssignmentHelper::Etabins_direction, eta);
+}
+int EndcapTriggerPtAssignmentHelper::GetEtaPartition_hybrid(float eta){
+    return EndcapTriggerPtAssignmentHelper::GetEtaPartition( EndcapTriggerPtAssignmentHelper::Etabins_hybrid, eta);
+}
+//int EndcapTriggerPtAssignmentHelper::GetEtaPartition(float eta)
+//{
+//  int neta=-1;
+//  if (fabs(eta)>=1.2 and fabs(eta)<1.4)
+//    neta=0;
+//  else if (fabs(eta)>=1.4 and fabs(eta)<1.6)
+//    neta=1;
+//  else if (fabs(eta)>=1.6 and fabs(eta)<1.8)
+//    neta=2;
+//  else if (fabs(eta)>=1.8 and fabs(eta)<2.0)
+//    neta=3;
+//  else if (fabs(eta)>=2.0 and fabs(eta)<2.2)
+//    neta=4;
+//  else if (fabs(eta)>=2.2 and fabs(eta)<2.4)
+//    neta=5;
+//
+//  return neta;
+//}
 
 
 float EndcapTriggerPtAssignmentHelper::ellipse(float a, float b, float alpha, float x0, float y0, float x, float y)
@@ -60,7 +79,7 @@ float EndcapTriggerPtAssignmentHelper::deltadeltaYcalculation(const GlobalPoint&
   const float deltay23 = new_y_st3 - new_y_st2;
 
   // eta sector in which this muon was found
-  const int etaSector = EndcapTriggerPtAssignmentHelper::GetEtaPartition(eta);
+  const int etaSector = EndcapTriggerPtAssignmentHelper::GetEtaPartition_position(eta);
 
   //FIXME: uncomment these special cases
   // if (meRing_st1 == 1 and etaSector == 1) etaSector =2;
@@ -80,6 +99,7 @@ float EndcapTriggerPtAssignmentHelper::deltadeltaYcalculation(const GlobalPoint&
   return deltaDeltaY123;
 }
 
+/*
 float EndcapTriggerPtAssignmentHelper::Ptassign_Direction(float bending_12, float eta, int par){
   int neta = GetEtaPartition(eta);
     if (par<0 or par>3 or neta==-1 or fabs(bending_12) > M_PI) return -1;
@@ -89,7 +109,7 @@ float EndcapTriggerPtAssignmentHelper::Ptassign_Direction(float bending_12, floa
 
     return pt;
 }
-
+*/
 
 
 float EndcapTriggerPtAssignmentHelper::PhiMomentum(float dphi, float phi_position, int st, bool evenodd){

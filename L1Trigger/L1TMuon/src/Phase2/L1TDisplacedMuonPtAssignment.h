@@ -67,9 +67,10 @@ namespace L1TMuon
 
     void calculateDirectionPtBarrel();
     void calculateDirectionPtOverlap();
-    void calculateDirectionPtEndcapLow();
-    void calculateDirectionPtEndcapMedium();
-    void calculateDirectionPtEndcapHigh();
+    void calculateDirectionPtEndcap();
+    //void calculateDirectionPtEndcapLow();
+    //void calculateDirectionPtEndcapMedium();
+    //void calculateDirectionPtEndcapHigh();
 
     void calculateHybridPtBarrel();
     void calculateHybridPtOverlap();

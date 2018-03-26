@@ -37,16 +37,17 @@ void L1TDisplacedMuonPtAssignment::calculatePositionPtEndcap()
   if (parity == EvenOdd123::Invalid)
     return;
 
-  const float ddY123 = deltadeltaYcalculation(gp_st_layer3[0], gp_st_layer3[1], gp_st_layer3[2],
-                                              gp_st_layer3[1].eta(), parity);
+  //ddY123 available and also need to consider whether GE21 is used or not!!!  FIXME
+  const float ddY123 = EndcapTriggerPtAssignmentHelper::deltadeltaYcalculation(gp_st_layer3[0], gp_st_layer3[1], gp_st_layer3[2],
+										  gp_st_layer3[1].eta(), parity);
   // lowest pT assigned
   positionPt_ = 2.0;
 
   // walk through the DDY LUT and assign the pT that matches
-  const int etaSector = EndcapTriggerPtAssignmentHelper::GetEtaPartition(gp_ME[1].eta());
-  for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPt2; i++){
-    if (fabs(ddY123) <= EndcapTriggerPtAssignmentHelper::PositionPtDDYLUT[i][etaSector][int(parity)])
-      positionPt_ = float(EndcapTriggerPtAssignmentHelper::PtBins2[i]);
+  const int etaSector = EndcapTriggerPtAssignmentHelper::GetEtaPartition_position(gp_ME[1].eta());
+  for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPtbins; i++){
+    if (std::fabs(ddY123) <= EndcapTriggerPtAssignmentHelper::PositionPtDDYLUT[i][etaSector][int(parity)])
+      positionPt_ = float(EndcapTriggerPtAssignmentHelper::PtBins[i]);
     else
       break;
   }
@@ -103,12 +104,61 @@ void L1TDisplacedMuonPtAssignment::calculateDirectionPtBarrel()
 }
 
 void L1TDisplacedMuonPtAssignment::calculateDirectionPtOverlap(){}
-void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapLow(){}
-void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapHigh(){}
+//Low: eta<2.1, GE11 and GE21 are used 
+//high: eta>2.1, GE11 and GE21, ME0 are usd
+void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcap(){
+    EvenOdd123 parity = EndcapTriggerPtAssignmentHelper::getParity(isEven[0], isEven[1],//only first two station matters
+                                                                 isEven[1], isEven[1]);
+    float dPhi_dir_st1_st2 = 99;//add function to calculate dphiM_st1, dphiM_st2
+    //dPhi_dir_st1_st2 available, FIXME
+    directionPt_ = 2.0;
+    int neta = EndcapTriggerPtAssignmentHelper::GetEtaPartition_direction( gp_ME[1].eta() );
+    for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPtbins; i++){
+	if (std::fabs(dPhi_dir_st1_st2) <= EndcapTriggerPtAssignmentHelper::DirectionbasedLUT[i][neta][int(parity)])
+	    directionPt_ = float(EndcapTriggerPtAssignmentHelper::PtBins[i]);
+	else
+	    break;
+    }
+
+}
+//void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapHigh(){}
 
 void L1TDisplacedMuonPtAssignment::calculateHybridPtBarrel(){}
 void L1TDisplacedMuonPtAssignment::calculateHybridPtOverlap(){}
-void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapLow(){}
+//Low: eta<2.1, GE11 and GE21 are used 
+void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapLow(){
+    int neta = EndcapTriggerPtAssignmentHelper::GetEtaPartition_hybrid( gp_ME[1].eta() );
+    //ddY123, dPhi_dir_st1_st2 available, FIXME
+    float ddY123 = 99;
+    float dPhi_dir_st1_st2 = 99;
+    hybridPt_ = 2.0;
+    if (fabs(ddY123)>=40 or fabs(dPhi_dir_st1_st2)>=1.0){//rejected by hybrid
+	return;
+    }
+    int npar = int(EndcapTriggerPtAssignmentHelper::getParity(isEven[0], isEven[1],
+                                                                 isEven[2], isEven[3]));
+    //by defualt right now, GE21 is used, FIXME
+    for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPtbins; i++){
+       if(EndcapTriggerPtAssignmentHelper::ellipse(EndcapTriggerPtAssignmentHelper::HybridLUT[i][neta][npar][0],
+						   EndcapTriggerPtAssignmentHelper::HybridLUT[i][neta][npar][1],
+						   EndcapTriggerPtAssignmentHelper::HybridLUT[i][neta][npar][2],
+						   EndcapTriggerPtAssignmentHelper::HybridLUT[i][neta][npar][3],
+						   EndcapTriggerPtAssignmentHelper::HybridLUT[i][neta][npar][4], 
+						   ddY123, dPhi_dir_st1_st2) <=1)
+	    hybridPt_ = EndcapTriggerPtAssignmentHelper::PtBins[i];
+       /*else if(not(useGE21) and EndcapTriggerPtAssignmentHelper::ellipse(EndcapTriggerPtAssignmentHelper::HybridME21CSConly[i][neta][npar][0],
+				                            EndcapTriggerPtAssignmentHelper::HybridME21CSConly[i][neta][npar][1],
+				                            EndcapTriggerPtAssignmentHelper::HybridME21CSConly[i][neta][npar][2],
+				                            EndcapTriggerPtAssignmentHelper::HybridME21CSConly[i][neta][npar][3],
+				                            EndcapTriggerPtAssignmentHelper::HybridME21CSConly[i][neta][npar][4], 
+							    ddY123, dPhi_dir_st1_st2) <=1)
+	    hybrid_pt = EndcapTriggerPtAssignmentHelper::PtBins[i];
+	    */
+       else//make sure LUT is consitent
+	    break;
+    }
+}
+//high: eta>2.1, GE11 and GE21, ME0 are usd
 void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapHigh(){}
 
 int L1TDisplacedMuonPtAssignment::getBarrelStubCase(bool MB1, bool MB2, bool MB3, bool MB4)
