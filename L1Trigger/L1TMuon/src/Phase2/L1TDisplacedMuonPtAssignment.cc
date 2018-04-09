@@ -19,11 +19,76 @@ L1TDisplacedMuonPtAssignment::L1TDisplacedMuonPtAssignment(const edm::ParameterS
 
   // std::unique_ptr<EndcapTriggerPtAssignmentHelper> endcapHelper_;
   // std::unique_ptr<BarrelTriggerPtAssignmentHelper> barrelHelper_;
+  //
+  // FIXME
+  // steps to finish pt assignment in endcap
+  // step1: parameter assignment from config 
+  // step2: get stubs, GEMPads and ME0 segment 
+  // step3: get optimized CSC positioin by fitting comparator digis ?? how to do that at firmware level as L1 firmware can not talk with CFEB?
+  // step4: displaced pt assignment: low eta, 1.2-1.6, position only
+  // high eta: 1.6-2.1: position, direction, hybrid, and GE11, GE21 are used
+  // very high eta: 2.1-2.4: position, direction, hybrid, and ME0, GE21 are used
+  
+  float muoneta = muon_.eta();
+  if (fabs(muoneta) > 1.2)//Endcap
+  {
+
+    convertStubsIntoGlobalpoints();
+    if (fabs(muoneta) > 1.6)
+	convertGEMPadsIntoGlobalpoints();
+    if (fabs(muoneta) > 2.1)
+	convertME0SegIntoGlobalpoints();
+
+    //pt assignment 
+    //FIXME: how to make sure necessary segment available before pt assignment 
+    calculatePositionPtEndcap();
+    if (fabs(muoneta) > 1.6 and fabs(muoneta) < 2.1){
+	calculateDirectionPtEndcapMedium();
+	calculateHybridPtEndcapMedium();
+    }else if (fabs(muoneta) >= 2.1){
+	calculateDirectionPtEndcapHigh();
+	calculateHybridPtEndcapHigh();
+    }
+    
+  }
 }
+
 
 L1TDisplacedMuonPtAssignment::~L1TDisplacedMuonPtAssignment()
 {
 }
+
+void L1TDisplacedMuonPtAssignment::initVariables(){
+    meRing = -1;
+}
+
+void L1TDisplacedMuonPtAssignment::convertStubsIntoGlobalpoints()
+{
+    int keystation = 2;
+
+    for (auto idlct : lcts_){
+	CSCDetId chid(idlct.first);
+	hasCSC_[chid.station()-1] = true;
+	gp_ME[chid.station()-1] = GeometryHelpers::globalPositionOfCSCLCT(csc_g, idlct.second, chid);
+	if (chid.station() == keystation)
+	    meRing = chid.ring();
+    }
+
+}
+void L1TDisplacedMuonPtAssignment::convertGEMPadsIntoGlobalpoints(){
+    for (auto idpad : pads_){
+	GEMDetId gemid(idpad.first);
+	hasGEM_[gemid.station()-1] = true;
+	gp_GEM[gemid.station()-1] = GeometryHelpers::globalPositionOfGEMPad(gem_g, idpad.second, gemid);
+    }
+}
+
+void L1TDisplacedMuonPtAssignment::convertME0SegIntoGlobalpoints(){
+    //FIXME: what if ME0 segment is not found
+    gp_ME0 = GeometryHelpers::globalPositionOfME0LCT(me0_g, segment_);
+}
+
+
 
 void L1TDisplacedMuonPtAssignment::calculatePositionPtBarrel(){}
 void L1TDisplacedMuonPtAssignment::calculatePositionPtOverlap(){}
@@ -38,7 +103,7 @@ void L1TDisplacedMuonPtAssignment::calculatePositionPtEndcap()
     return;
 
   //ddY123 available and also need to consider whether GE21 is used or not!!!  FIXME
-  const float ddY123 = EndcapTriggerPtAssignmentHelper::deltadeltaYcalculation(gp_st_layer3[0], gp_st_layer3[1], gp_st_layer3[2],
+  ddY123 = EndcapTriggerPtAssignmentHelper::deltadeltaYcalculation(gp_st_layer3[0], gp_st_layer3[1], gp_st_layer3[2],
 										  gp_st_layer3[1].eta(), parity);
   // lowest pT assigned
   positionPt_ = 2.0;
@@ -104,13 +169,23 @@ void L1TDisplacedMuonPtAssignment::calculateDirectionPtBarrel()
 }
 
 void L1TDisplacedMuonPtAssignment::calculateDirectionPtOverlap(){}
-//Low: eta<2.1, GE11 and GE21 are used 
+//Medium: 1.6<eta<2.1, GE11 and GE21 are used 
 //high: eta>2.1, GE11 and GE21, ME0 are usd
-void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcap(){
+void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapMedium(){
     EvenOdd123 parity = EndcapTriggerPtAssignmentHelper::getParity(isEven[0], isEven[1],//only first two station matters
                                                                  isEven[1], isEven[1]);
-    float dPhi_dir_st1_st2 = 99;//add function to calculate dphiM_st1, dphiM_st2
-    //dPhi_dir_st1_st2 available, FIXME
+
+    if (not(hasGEM_[0] and hasGEM_[1])){
+	return;
+    }
+
+    float xfactor = (gp_st_layer3[1].perp()/gp_st_layer3[0].perp()-1.0)/fabs(gp_st_layer3[0].z()-gp_st_layer3[1].z());
+    float xfactor_st1 = xfactor*fabs(gp_GEM[0].z() - gp_st_layer3[0].z()); //use GE11
+    phiM_st1 = EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(gp_st_layer3[0].phi(), gp_GEM[0].phi(), xfactor_st1);
+    float xfactor_st2 = xfactor*fabs(gp_GEM[1].z() - gp_st_layer3[1].z())/(xfactor*fabs(gp_st_layer3[0].z() - gp_st_layer3[1].z())+1);
+    phiM_st2 = EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(gp_st_layer3[1].phi(), gp_GEM[1].phi(), xfactor_st2);
+    dPhi_dir_st1_st2  = EndcapTriggerPtAssignmentHelper::normalizePhi(phiM_st1 - phiM_st2);
+
     directionPt_ = 2.0;
     int neta = EndcapTriggerPtAssignmentHelper::GetEtaPartition_direction( gp_ME[1].eta() );
     for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPtbins; i++){
@@ -121,16 +196,44 @@ void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcap(){
     }
 
 }
-//void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapHigh(){}
+
+//high: eta>2.1, GE11 and GE21, ME0 are usd
+void L1TDisplacedMuonPtAssignment::calculateDirectionPtEndcapHigh(){
+    EvenOdd123 parity = EndcapTriggerPtAssignmentHelper::getParity(isEven[0], isEven[1],//only first two station matters
+                                                                 isEven[1], isEven[1]);
+
+    if (not(hasME0 and hasGEM_[1])){
+	return;
+    }
+
+    float xfactor = (gp_st_layer3[1].perp()/gp_st_layer3[0].perp()-1.0)/fabs(gp_st_layer3[0].z()-gp_st_layer3[1].z());
+    float xfactor_st1 = xfactor*fabs(gp_ME0.z() - gp_st_layer3[0].z());
+    phiM_st1 = EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(gp_st_layer3[0].phi(), gp_ME0.phi(), xfactor_st1);//use ME0
+    float xfactor_st2 = xfactor*fabs(gp_GEM[1].z() - gp_st_layer3[1].z())/(xfactor*fabs(gp_st_layer3[0].z() - gp_st_layer3[1].z())+1);
+    phiM_st2 = EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(gp_st_layer3[1].phi(), gp_GEM[1].phi(), xfactor_st2);
+    dPhi_dir_st1_st2  = EndcapTriggerPtAssignmentHelper::normalizePhi(phiM_st1 - phiM_st2);
+
+    directionPt_ = 2.0;
+    int neta = EndcapTriggerPtAssignmentHelper::GetEtaPartition_direction( gp_ME[1].eta() );
+    for (int i=0; i<EndcapTriggerPtAssignmentHelper::NPtbins; i++){
+	if (std::fabs(dPhi_dir_st1_st2) <= EndcapTriggerPtAssignmentHelper::DirectionbasedLUT[i][neta][int(parity)])
+	    directionPt_ = float(EndcapTriggerPtAssignmentHelper::PtBins[i]);
+	else
+	    break;
+    }
+
+}
 
 void L1TDisplacedMuonPtAssignment::calculateHybridPtBarrel(){}
 void L1TDisplacedMuonPtAssignment::calculateHybridPtOverlap(){}
-//Low: eta<2.1, GE11 and GE21 are used 
-void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapLow(){
+
+void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapLow() {}
+//Medium: eta<2.1, GE11 and GE21 are used 
+void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapMedium(){
     int neta = EndcapTriggerPtAssignmentHelper::GetEtaPartition_hybrid( gp_ME[1].eta() );
     //ddY123, dPhi_dir_st1_st2 available, FIXME
-    float ddY123 = 99;
-    float dPhi_dir_st1_st2 = 99;
+    //float ddY123 = 99;
+    //float dPhi_dir_st1_st2 = 99;
     hybridPt_ = 2.0;
     if (fabs(ddY123)>=40 or fabs(dPhi_dir_st1_st2)>=1.0){//rejected by hybrid
 	return;
@@ -158,7 +261,7 @@ void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapLow(){
 	    break;
     }
 }
-//high: eta>2.1, GE11 and GE21, ME0 are usd
+//high: eta>2.1, GE21, ME0 are usd
 void L1TDisplacedMuonPtAssignment::calculateHybridPtEndcapHigh(){}
 
 int L1TDisplacedMuonPtAssignment::getBarrelStubCase(bool MB1, bool MB2, bool MB3, bool MB4)

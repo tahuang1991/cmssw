@@ -146,10 +146,10 @@ float EndcapTriggerPtAssignmentHelper::PhiMomentum_Radius(float dphi, float phi_
 
 }
 
-
+/*
 //dphi: local bending, phi_position: phi of GEM position, X: "x_factor"
 //X: st1, X=D(GEM,CSC)*x_factor, st2: D(GEM,CSC)*x_factor/(D(ME11,ME21)*x+1)
-float EndcapTriggerPtAssignmentHelper::PhiMomentum_Xfactor(float dphi, float phi_position, float X)
+float EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(float dphi, float phi_position, float X)
 {
 
      if (fabs(dphi) > M_PI or fabs(phi_position) > M_PI) return -9;
@@ -166,16 +166,19 @@ float EndcapTriggerPtAssignmentHelper::PhiMomentum_Xfactor(float dphi, float phi
      if (phiM <= -M_PI) phiM = phiM+2*M_PI;
      else if (phiM > M_PI) phiM = phiM-2*M_PI;
 
-     //std::cout <<"PhiMomentum_Xfactor: dphi "<< dphi <<" phi_position "<< phi_position <<" X "<<X <<" phi_diff "<< phi_diff <<" phiM "<< phiM << std::endl;
+     //std::cout <<"phiMomentum_Xfactor: dphi "<< dphi <<" phi_position "<< phi_position <<" X "<<X <<" phi_diff "<< phi_diff <<" phiM "<< phiM << std::endl;
      return phiM;
 
-}
+}*/
 
 
 
-float EndcapTriggerPtAssignmentHelper::PhiMomentum_Xfactor_V2(float phi_CSC, float phi_GEM, float X)
+float EndcapTriggerPtAssignmentHelper::phiMomentum_Xfactor(float phi_CSC, float phi_GEM, float X)
 {
-     if (fabs(phi_CSC) > M_PI or fabs(phi_GEM) > M_PI) return -9;
+     if (fabs(phi_CSC) > M_PI or fabs(phi_GEM) > M_PI) {
+	 std::cout <<"warning phi is not vaild , phi_CSC "<< phi_CSC <<" phi_GEM "<< phi_GEM << std::endl;
+	 return -9;
+     }
      float dphi = deltaPhi(phi_CSC,phi_GEM);
      float y = 1.0-cos(dphi)- X;
 
@@ -190,7 +193,7 @@ float EndcapTriggerPtAssignmentHelper::PhiMomentum_Xfactor_V2(float phi_CSC, flo
      if (phiM <= -M_PI) phiM = phiM+2*M_PI;
      else if (phiM > M_PI) phiM = phiM-2*M_PI;
 
-     //std::cout <<"PhiMomentum_Xfactor: dphi "<< dphi <<" phi_poistion1 "<< phi_GEM <<" phi_position2 "<< phi_CSC <<" Xfactor "<<X <<" phi_diff "<< phi_diff <<" phiM "<< phiM << std::endl;
+     //std::cout <<"phiMomentum_Xfactor: dphi "<< dphi <<" phi_poistion1 "<< phi_GEM <<" phi_position2 "<< phi_CSC <<" Xfactor "<<X <<" phi_diff "<< phi_diff <<" phiM "<< phiM << std::endl;
 
      return phiM;
 

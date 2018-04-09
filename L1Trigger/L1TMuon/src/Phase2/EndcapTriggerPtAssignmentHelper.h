@@ -51,8 +51,8 @@ float deltadeltaYcalculation(const GlobalPoint& gp1, const GlobalPoint& gp2, con
 
 float PhiMomentum(float dphi, float phi_position, int st, bool evenodd);
 float PhiMomentum_Radius(float dphi, float phi_position, float radius_csc, float radius_gem);
-float PhiMomentum_Xfactor(float dphi, float phi_position, float x);
-float PhiMomentum_Xfactor_V2(float phi_CSC, float phi_GEM, float x);
+//float phiMomentum_Xfactor(float dphi, float phi_position, float x);
+float phiMomentum_Xfactor(float phi_CSC, float phi_GEM, float x);
 
 
 void calculateAlphaBeta(const std::vector<float>& v,
