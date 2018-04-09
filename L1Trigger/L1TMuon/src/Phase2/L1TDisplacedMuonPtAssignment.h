@@ -120,7 +120,7 @@ namespace L1TMuon
     bool hasRPC_[4] = {false, false, false, false};
     bool hasDT_[4] = {false, false, false, false};
     bool hasGEM_[4] = {false, false, false, false};
-    bool hasME0 = false;
+    bool hasME0_ = false;
 
     EndcapTriggerPtAssignmentHelper::EvenOdd isEven[4] = {EndcapTriggerPtAssignmentHelper::EvenOdd::Odd,
                                                           EndcapTriggerPtAssignmentHelper::EvenOdd::Odd,
@@ -136,9 +136,10 @@ namespace L1TMuon
     float ddY123, phiM_st1, phiM_st2, dPhi_dir_st1_st2;
 
     // pts
-    float positionPt_;
-    float directionPt_;
-    float hybridPt_;
+    // by defualt, 0 GeV
+    float positionPt_ = 0.0;
+    float directionPt_ = 0.0;
+    float hybridPt_ = 0.0;
   };
 }
 
