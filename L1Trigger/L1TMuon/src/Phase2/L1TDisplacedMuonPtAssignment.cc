@@ -72,6 +72,8 @@ void L1TDisplacedMuonPtAssignment::convertStubsIntoGlobalpoints()
 	CSCDetId chid(idlct.first);
 	hasCSC_[chid.station()-1] = true;
 	gp_ME[chid.station()-1] = GeometryHelpers::globalPositionOfCSCLCT(csc_g, idlct.second, chid);
+//FIXME here: gp_st_layer3 was from fitting comparator digis in old code but NOW it is just from stub
+	gp_st_layer3[chid.station()-1] = gp_ME[chid.station()-1];
 	if (chid.station() == keystation)
 	    meRing = chid.ring();
     }
