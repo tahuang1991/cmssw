@@ -23,6 +23,30 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig):
   // Get configuration parameters
   settings_ = new Settings(iConfig);
 
+  switch (settings_->vx_algo()) {
+    case Algorithm::GapClustering:
+      cout << "L1T vertex producer: Finding vertices using a gap clustering algorithm "<< endl;
+      break;
+    case Algorithm::AgglomerativeHierarchical:
+      cout << "L1T vertex producer: Finding vertices using a Simple Merge Clustering algorithm "<< endl;
+      break;
+    case Algorithm::DBSCAN:
+      cout << "L1T vertex producer: Finding vertices using a DBSCAN algorithm "<< endl;
+      break;
+    case Algorithm::PVR:
+      cout << "L1T vertex producer: Finding vertices using a PVR algorithm "<< endl;
+      break;
+    case Algorithm::AdaptiveVertexReconstruction:
+      cout << "L1T vertex producer: Finding vertices using an AdaptiveVertexReconstruction algorithm "<< endl;
+      break;
+    case Algorithm::HPV:
+      cout << "L1T vertex producer: Finding vertices using an Highest Pt Vertex algorithm "<< endl;
+      break;
+    case Algorithm::Kmeans:
+      cout << "L1T vertex producer: Finding vertices using a kmeans algorithm" << endl;
+      break;
+  }
+
   // Tame debug printout.
   cout.setf(ios::fixed, ios::floatfield);
   cout.precision(4);
@@ -40,13 +64,13 @@ void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   edm::Handle<TTTrackCollectionView> l1TracksHandle;
   iEvent.getByToken(l1TracksToken_, l1TracksHandle);
 
-  std::vector<L1fittedTrackBase> l1Tracks;
+  std::vector<L1Track> l1Tracks;
   l1Tracks.reserve(l1TracksHandle->size());
 
   for(const auto& track : l1TracksHandle->ptrs())
-    l1Tracks.push_back(L1fittedTrackBase(track));
+    l1Tracks.push_back(L1Track(track));
 
-  std::vector<const L1fittedTrackBase*> l1TrackPtrs;
+  std::vector<const L1Track*> l1TrackPtrs;
   l1TrackPtrs.reserve(l1Tracks.size());
   for(const auto& track : l1Tracks){
     if(track.pt() > settings_->vx_TrackMinPt() ){
@@ -59,31 +83,28 @@ void VertexProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   //   fittedTracks[i].second.accepted() and fittedTracks[i].second.chi2dof()< settings_->chi2OverNdfCut()
   VertexFinder vf(l1TrackPtrs, settings_);
 
-  if(settings_->vx_algoId() == 0){
-    cout << "Finding vertices using a gap clustering algorithm "<< endl;
-    vf.GapClustering();
-  } else if(settings_->vx_algoId() == 1){
-    cout << "Finding vertices using a Simple Merge Clustering algorithm "<< endl;
-    vf.AgglomerativeHierarchicalClustering();
-  } else if(settings_->vx_algoId() == 2){
-    cout << "Finding vertices using a DBSCAN algorithm "<< endl;
-    vf.DBSCAN();
-  } else if(settings_->vx_algoId() == 3){
-    cout << "Finding vertices using a PVR algorithm "<< endl;
-    vf.PVR();
-  } else if(settings_->vx_algoId() == 4){
-    cout << "Finding vertices using an AdaptiveVertexReconstruction algorithm "<< endl;
-    vf.AdaptiveVertexReconstruction();
-  } else if(settings_->vx_algoId() == 5){
-    cout << "Finding vertices using an Highest Pt Vertex algorithm "<< endl;
-    vf.HPV();
-  } else if(settings_->vx_algoId() == 6){
-    cout << "Finding vertices using a kmeans algorithm" << endl;
-    vf.Kmeans();
-  }
-  else{
-    cout << "No valid vertex reconstruction algorithm has been selected. Running a gap clustering algorithm "<< endl;
-    vf.GapClustering();
+  switch (settings_->vx_algo()) {
+    case Algorithm::GapClustering:
+      vf.GapClustering();
+      break;
+    case Algorithm::AgglomerativeHierarchical:
+      vf.AgglomerativeHierarchicalClustering();
+      break;
+    case Algorithm::DBSCAN:
+      vf.DBSCAN();
+      break;
+    case Algorithm::PVR:
+      vf.PVR();
+      break;
+    case Algorithm::AdaptiveVertexReconstruction:
+      vf.AdaptiveVertexReconstruction();
+      break;
+    case Algorithm::HPV:
+      vf.HPV();
+      break;
+    case Algorithm::Kmeans:
+      vf.Kmeans();
+      break;
   }
 
   vf.TDRalgorithm();

@@ -18,7 +18,7 @@
 #include "SimTracker/TrackTriggerAssociation/interface/TTStubAssociationMap.h"
 
 #include "L1Trigger/VertexFinder/interface/InputData.h"
-#include "L1Trigger/VertexFinder/interface/L1fittedTrack.h"
+#include "L1Trigger/VertexFinder/interface/L1TrackTruthMatched.h"
 #include "L1Trigger/VertexFinder/interface/RecoVertexWithTP.h"
 #include "L1Trigger/VertexFinder/interface/Settings.h"
 #include "L1Trigger/VertexFinder/interface/selection.h"
@@ -427,7 +427,7 @@ namespace l1tVertexFinder {
     edm::Handle<TTTrackCollectionView> l1TracksHandle;
     iEvent.getByToken(l1TracksToken_, l1TracksHandle);
 
-    std::vector<L1fittedTrack> l1Tracks;
+    std::vector<L1TrackTruthMatched> l1Tracks;
     l1Tracks.reserve(l1TracksHandle->size());
     {
       // Get the tracker geometry info needed to unpack the stub info.
@@ -448,10 +448,10 @@ namespace l1tVertexFinder {
       iEvent.getByToken(clusterTruthInputTag, mcTruthTTClusterHandle );
 
       for(const auto& track : l1TracksHandle->ptrs())
-        l1Tracks.push_back(L1fittedTrack(track, *settings_, trackerGeometryHandle.product(), trackerTopologyHandle.product(), translateTP, mcTruthTTStubHandle, mcTruthTTClusterHandle, inputData.getStubGeoDetIdMap()));
+        l1Tracks.push_back(L1TrackTruthMatched(track, *settings_, trackerGeometryHandle.product(), trackerTopologyHandle.product(), translateTP, mcTruthTTStubHandle, mcTruthTTClusterHandle, inputData.getStubGeoDetIdMap()));
     }
 
-    std::vector<const L1fittedTrack*> l1TrackPtrs;
+    std::vector<const L1TrackTruthMatched*> l1TrackPtrs;
     l1TrackPtrs.reserve(l1Tracks.size());
 
     // TODO: REVIEW. This check on tracks should ideally be done with an edm
@@ -498,11 +498,11 @@ namespace l1tVertexFinder {
 
     // create a map for associating fat reco tracks with their underlying
     // TTTrack pointers
-    std::map <const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1fittedTrack *> trackAssociationMap;
+    std::map <const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1TrackTruthMatched *> trackAssociationMap;
 
     // get a list of reconstructed tracks with references to their TPs
     for (const auto & trackIt: l1Tracks) {
-      trackAssociationMap.insert(std::pair<const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1fittedTrack *>(trackIt.getTTTrackPtr(), &trackIt));
+      trackAssociationMap.insert(std::pair<const edm::Ptr<TTTrack< Ref_Phase2TrackerDigi_ >>, const L1TrackTruthMatched *>(trackIt.getTTTrackPtr(), &trackIt));
     }
 
     // generate reconstructed vertices (starting at 1 avoids PV)
@@ -511,13 +511,13 @@ namespace l1tVertexFinder {
 
       // populate vertex with tracks
       for (const auto & track : l1VerticesHandle->at(i).tracks()) {
-        recoVertexBase.insert(new L1fittedTrackBase(track));
+        recoVertexBase.insert(new L1Track(track));
       }
 
       recoVertexBase.setZ(l1VerticesHandle->at(i).z0());
       RecoVertexWithTP * recoVertex = new RecoVertexWithTP(recoVertexBase, trackAssociationMap);
       recoVertex->computeParameters(settings_->vx_weightedmean());
-      if (settings_->vx_algoId() == 6 || settings_->vx_algoId() == 5)
+      if (settings_->vx_algo() == Algorithm::Kmeans || settings_->vx_algo() == Algorithm::HPV)
         recoVertex->setZ(recoVertexBase.z0());
 
       recoVertices.emplace_back(recoVertex);
@@ -529,7 +529,7 @@ namespace l1tVertexFinder {
     // populate RecoVertex version of TDR PV with information obtained
     // from l1t::Vertex
     for (const auto & track : tdrPVVertexFromEDM.tracks()) {
-      TDRVertexBase.insert(new L1fittedTrackBase(track));
+      TDRVertexBase.insert(new L1Track(track));
     }
     TDRVertexBase.setZ(tdrPVVertexFromEDM.z0());
 
@@ -653,7 +653,7 @@ namespace l1tVertexFinder {
 
       if(settings_->debug() == 7 and METres > 0.2){
         cout << "** RECO TRACKS in PV**" << endl;
-        for(const L1fittedTrack* track : RecoPrimaryVertex->tracks() ){
+        for(const L1TrackTruthMatched* track : RecoPrimaryVertex->tracks() ){
           if(track->getMatchedTP() != nullptr)
             cout << "matched TP "<< track->getMatchedTP()->index() ;
           cout << " pT "<< track->pt() << " phi0 "<< track->phi0()
@@ -740,7 +740,7 @@ namespace l1tVertexFinder {
     }
 
     if(settings_->debug() == 7) {
-      for(const L1fittedTrack* l1track : RecoPrimaryVertex->tracks()) {
+      for(const L1TrackTruthMatched* l1track : RecoPrimaryVertex->tracks()) {
         if(l1track->getMatchedTP() == nullptr) {
           cout << "FAKE track assigned to PV. Track z0: "<< l1track->z0()
                << " track pT "<< l1track->pt()
@@ -826,7 +826,7 @@ namespace l1tVertexFinder {
      * TODO: REVIEW
      *
      * The current implementation of the "matching" of unmatched TPs to fitted
-     * tracks takes the first L1fittedTrack object that is associated with a
+     * tracks takes the first L1TrackTruthMatched object that is associated with a
      * given unmatched TP. In the original implementation of below code (when it
      * was coupled to the vertex producer) the fitted tracks were coming
      * directly from the vertex finder which would often sort them in pT. As a
@@ -839,7 +839,7 @@ namespace l1tVertexFinder {
       cout << "*** Misassigned primary vertex tracks ***"<< endl;
     for (const TP& tp : TruePrimaryVertex.tracks()) {
       bool found = false;
-      for (const L1fittedTrack* l1track : RecoPrimaryVertex->tracks()) {
+      for (const L1TrackTruthMatched* l1track : RecoPrimaryVertex->tracks()) {
         if (l1track->getMatchedTP()!= nullptr) {
           if (tp.index() == l1track->getMatchedTP()->index()) {
             found = true;
@@ -850,8 +850,8 @@ namespace l1tVertexFinder {
 
       if (!found) {
         bool TrackIsReconstructed = false;
-        for (const L1fittedTrackBase * l1trackBase: l1TrackPtrs) {
-          const L1fittedTrack * l1track = trackAssociationMap[l1trackBase->getTTTrackPtr()];
+        for (const L1Track * l1trackBase: l1TrackPtrs) {
+          const L1TrackTruthMatched * l1track = trackAssociationMap[l1trackBase->getTTTrackPtr()];
           if (l1track->getMatchedTP()!= nullptr) {
             if (tp.index() == l1track->getMatchedTP()->index()) {
               TrackIsReconstructed = true;
@@ -862,7 +862,7 @@ namespace l1tVertexFinder {
               hisUnmatchTrueEta_->Fill(tp.eta());
 
               double mindistance = 999.;
-              for (const L1fittedTrack* vertexTrack : RecoPrimaryVertex->tracks()) {
+              for (const L1TrackTruthMatched* vertexTrack : RecoPrimaryVertex->tracks()) {
                 if( fabs(vertexTrack->z0() - l1track->z0()) < mindistance )
                   mindistance = fabs(vertexTrack->z0() - l1track->z0());
               }
@@ -889,7 +889,7 @@ namespace l1tVertexFinder {
 
       found = false;
 
-      for (const L1fittedTrack* l1track : TDRVertex->tracks()) {
+      for (const L1TrackTruthMatched* l1track : TDRVertex->tracks()) {
         if (l1track->getMatchedTP()!= nullptr) {
           if (tp.index() == l1track->getMatchedTP()->index()) {
             found = true;
@@ -899,8 +899,8 @@ namespace l1tVertexFinder {
       }
 
       if (!found) {
-        for (const L1fittedTrackBase * l1trackPtr: l1TrackPtrs) {
-          const L1fittedTrack * l1track = trackAssociationMap[l1trackPtr->getTTTrackPtr()];
+        for (const L1Track * l1trackPtr: l1TrackPtrs) {
+          const L1TrackTruthMatched * l1track = trackAssociationMap[l1trackPtr->getTTTrackPtr()];
           if (l1track->getMatchedTP()!= nullptr) {
             if (tp.index() == l1track->getMatchedTP()->index()) {
               hisTDRUnmatchZ0distance_->Fill(fabs(l1track->z0() - TDRVertex->z0()));
@@ -910,7 +910,7 @@ namespace l1tVertexFinder {
               hisTDRUnmatchTrueEta_->Fill(tp.eta());
               misassignedTracks_tdr++;
               double mindistance = 999.;
-              for (const L1fittedTrackBase* vertexTrack : TDRVertex->tracks()) {
+              for (const L1Track* vertexTrack : TDRVertex->tracks()) {
                 if ( fabs(vertexTrack->z0() - l1track->z0()) < mindistance )
                   mindistance = fabs(vertexTrack->z0() - l1track->z0());
               }
