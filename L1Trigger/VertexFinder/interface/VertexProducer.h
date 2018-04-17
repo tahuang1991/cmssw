@@ -12,30 +12,30 @@
 
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 
+#include "L1Trigger/VertexFinder/interface/AlgoSettings.h"
+
 
 namespace l1tVertexFinder {
-  class Settings;
+class AlgoSettings;
 }
 
 class VertexProducer : public edm::EDProducer {
 
 public:
   explicit VertexProducer(const edm::ParameterSet&);
-  ~VertexProducer(){}
+  ~VertexProducer() {}
 
 private:
-
-  typedef edm::View< TTTrack< Ref_Phase2TrackerDigi_ > > TTTrackCollectionView;
+  typedef edm::View<TTTrack<Ref_Phase2TrackerDigi_>> TTTrackCollectionView;
 
   virtual void beginRun(const edm::Run&, const edm::EventSetup&);
   virtual void produce(edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
+  virtual void endJob();
 
 private:
   const edm::EDGetTokenT<TTTrackCollectionView> l1TracksToken_;
 
-  l1tVertexFinder::Settings *settings_;
+  l1tVertexFinder::AlgoSettings settings_;
 };
 
 #endif
-
