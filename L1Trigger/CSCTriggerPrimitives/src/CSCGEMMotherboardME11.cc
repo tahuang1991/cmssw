@@ -640,6 +640,8 @@ void CSCGEMMotherboardME11::sortLCTs(std::vector<CSCCorrelatedLCTDigi>& LCTs, in
   allLCTs.getTimeMatched(bx, LCTs);
 
   CSCUpgradeMotherboard::sortLCTs(LCTs, *sorter);
+
+  if (LCTs.size() > max_lcts) LCTs.erase(LCTs.begin()+max_lcts, LCTs.end());
 }
 
 //sort LCTs in whole LCTs BX window
@@ -725,20 +727,29 @@ bool CSCGEMMotherboardME11::doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLC
 }
 
 
-void CSCGEMMotherboardME11::correlateLCTsGEM(CSCALCTDigi& bestALCT,
-					     CSCALCTDigi& secondALCT,
-					     CSCCLCTDigi& bestCLCT,
-					     CSCCLCTDigi& secondCLCT,
-					     const GEMPadDigiIds& pads,
-					     const GEMCoPadDigiIds& copads,
-					     CSCCorrelatedLCTDigi& lct1,
-					     CSCCorrelatedLCTDigi& lct2,
-					     enum CSCPart p) const
+void CSCGEMMotherboardME11::correlateLCTsGEM(const CSCALCTDigi& bALCT,
+                                             const CSCALCTDigi& sALCT,
+                                             const CSCCLCTDigi& bCLCT,
+                                             const CSCCLCTDigi& sCLCT,
+                                             const GEMPadDigiIds& pads,
+                                             const GEMCoPadDigiIds& copads,
+                                             CSCCorrelatedLCTDigi& lct1,
+                                             CSCCorrelatedLCTDigi& lct2,
+                                             enum CSCPart p) const
 {
-  // assume that always anodeBestValid and cathodeBestValid
+  CSCALCTDigi bestALCT = bALCT;
+  CSCALCTDigi secondALCT = sALCT;
+  CSCCLCTDigi bestCLCT = bCLCT;
+  CSCCLCTDigi secondCLCT = sCLCT;
 
+  // assume that always anodeBestValid and cathodeBestValid
   if (secondALCT == bestALCT) secondALCT.clear();
   if (secondCLCT == bestCLCT) secondCLCT.clear();
+
+  const bool ok_bb = bestALCT.isValid() and bestCLCT.isValid();
+  const bool ok_bs = bestALCT.isValid() and secondCLCT.isValid();
+  const bool ok_sb = secondALCT.isValid() and bestCLCT.isValid();
+  const bool ok_ss = secondALCT.isValid() and secondCLCT.isValid();
 
   const int ok11 = doesALCTCrossCLCT( bestALCT, bestCLCT, p);
   const int ok12 = doesALCTCrossCLCT( bestALCT, secondCLCT, p);
@@ -796,15 +807,15 @@ void CSCGEMMotherboardME11::correlateLCTsGEM(CSCALCTDigi& bestALCT,
   const GEMPadDigi& ss_pad = bestMatchingPad<GEMPadDigi>(secondALCT, secondCLCT, pads, p);
 
   // evaluate possible combinations
-  const bool ok_bb_copad = ok11==1 and bestALCT.isValid() and bestCLCT.isValid() and bb_copad.isValid();
-  const bool ok_bs_copad = ok12==1 and bestALCT.isValid() and secondCLCT.isValid() and bs_copad.isValid();
-  const bool ok_sb_copad = ok21==1 and secondALCT.isValid() and bestCLCT.isValid() and sb_copad.isValid();
-  const bool ok_ss_copad = ok22==1 and secondALCT.isValid() and secondCLCT.isValid() and ss_copad.isValid();
+  const bool ok_bb_copad = ok11==1 and ok_bb and bb_copad.isValid();
+  const bool ok_bs_copad = ok12==1 and ok_bs and bs_copad.isValid();
+  const bool ok_sb_copad = ok21==1 and ok_sb and sb_copad.isValid();
+  const bool ok_ss_copad = ok22==1 and ok_ss and ss_copad.isValid();
 
-  const bool ok_bb_pad = (not ok_bb_copad) and ok11==1 and bestALCT.isValid() and bestCLCT.isValid() and bb_pad.isValid();
-  const bool ok_bs_pad = (not ok_bs_copad) and ok12==1 and bestALCT.isValid() and secondCLCT.isValid() and bs_pad.isValid();
-  const bool ok_sb_pad = (not ok_sb_copad) and ok21==1 and secondALCT.isValid() and bestCLCT.isValid() and sb_pad.isValid();
-  const bool ok_ss_pad = (not ok_ss_copad) and ok22==1 and secondALCT.isValid() and secondCLCT.isValid() and ss_pad.isValid();
+  const bool ok_bb_pad = (not ok_bb_copad) and ok11==1 and ok_bb and bb_pad.isValid();
+  const bool ok_bs_pad = (not ok_bs_copad) and ok12==1 and ok_bs and bs_pad.isValid();
+  const bool ok_sb_pad = (not ok_sb_copad) and ok21==1 and ok_sb and sb_pad.isValid();
+  const bool ok_ss_pad = (not ok_ss_copad) and ok22==1 and ok_ss and ss_pad.isValid();
 
   switch (lut[code][0]) {
   case 11:
