@@ -127,6 +127,8 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
 
   // make a new LCT
   CSCCorrelatedLCTDigi thisLCT;
+  if (not alct.isValid() and not clct.isValid())
+      LogTrace("CSCGEMCMotherboardME11") << "warning!!! either ALCT or CLCT not valid, return invaild LCT \n";
 
   if (not alct.isValid() and not clct.isValid()) return thisLCT;
 
