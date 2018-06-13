@@ -626,14 +626,6 @@ std::vector<CSCCorrelatedLCTDigi> CSCGEMMotherboardME11::readoutLCTs(enum CSCPar
   // those within the LCT*L1A coincidence window.
   int bx_readout = -1;
   std::vector<CSCCorrelatedLCTDigi> all_lcts;
-  /*if (tmb_cross_bx_algo !=2 and tmb_cross_bx_algo != 3 ){
-      if (me1ab == ME1A and not (mpc_block_me1a or disableME1a)) {
-	allLCTs1a.getMatched(all_lcts);
-      }
-      if (me1ab == ME1B) {
-	allLCTs1b.getMatched(all_lcts);
-      }
-  }*/
   // tmb_cross_bx_algo ==0 or 1, old algorithm, no sortting 
   // tmb_cross_bx_algo ==2 or 3, sort LCTs by quality or bending angle
   switch(tmb_cross_bx_algo){
@@ -651,12 +643,7 @@ std::vector<CSCCorrelatedLCTDigi> CSCGEMMotherboardME11::readoutLCTs(enum CSCPar
       default: LogTrace("CSCGEMCMotherboardME11")<<"tmb_cross_bx_algo error" <<std::endl;
 	break;
   }
-  /*
-  if (all_lcts.size() > 0 )
-      std::cout <<"All LCTs after sorting ME1ab: "<< me1ab << std::endl;
-  for (auto p : all_lcts)
-      std::cout <<"LCT  "<< p << std::endl;
-  */
+
   for (const auto& lct: all_lcts)
   {
     if (!lct.isValid()) continue;
@@ -678,12 +665,6 @@ std::vector<CSCCorrelatedLCTDigi> CSCGEMMotherboardME11::readoutLCTs(enum CSCPar
     }
     else tmpV.push_back(lct);
   }
-  /*
-  if (tmpV.size() > 0 )
-      std::cout <<"readout LCTs, ME1ab "<< me1ab << std::endl;
-  for (auto p : tmpV)
-      std::cout <<" " << p << std::endl;
-      */
   return tmpV;
 }
 
@@ -722,12 +703,6 @@ void CSCGEMMotherboardME11::sortLCTs(std::vector<CSCCorrelatedLCTDigi>& LCTs_fin
 
       // sort the selected LCTs
       CSCUpgradeMotherboard::sortLCTs(LCTs_tmp, *sorter);
-
-      /*if (LCTs_tmp.size() > 0 )
-	  std::cout <<"CSCGEMMotherboardME11::sortLCTs , all LCTs from ME1a and ME1b "<< std::endl;
-      for (auto p : LCTs_tmp)
-	  std::cout <<" " << p << std::endl;
-	  */
 
       //LCTs reduction per BX
       if (max_lcts > 0)
