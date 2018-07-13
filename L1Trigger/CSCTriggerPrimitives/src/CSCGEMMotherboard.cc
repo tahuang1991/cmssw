@@ -140,6 +140,8 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     keyStrip = clct.getKeyStrip();
     keyWG = alct.getKeyWG();
     bend = clct.getBend();
+    if (debug_matching) 
+	LogTrace("CSCGEMCMotherboard")  <<"To construct LCT, ALCT CLCT GEM1 and GEM2 are valid, HS from GEM  "<< keyStrip  <<" WG from ALCT "<< keyWG << std::endl;
     thisLCT.setALCT(alct);
     thisLCT.setCLCT(clct);
     thisLCT.setGEM1(gem1);
@@ -152,6 +154,8 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     keyStrip = clct.getKeyStrip();
     keyWG = alct.getKeyWG();
     bend = clct.getBend();
+    if (debug_matching) 
+	LogTrace("CSCGEMCMotherboard")  <<"To construct LCT, ALCT, CLCT and GEM2 are valid while GEM1 not, HS from CLCT  "<< keyStrip  <<" WG from ALCT "<< keyWG << std::endl;
     thisLCT.setALCT(alct);
     thisLCT.setCLCT(clct);
     thisLCT.setGEM1(gem2.first());
@@ -163,8 +167,11 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     pattern = promoteALCTGEMpattern_ ? 10 : 0;
     quality = promoteALCTGEMquality_ ? 15 : 11;
     bx = alct.getBX();
-    keyStrip = mymap1[gem2.pad(2)];
+    // GEM pad number counting from 1
+    keyStrip = mymap1[gem2.pad(2) - 1 ];
     keyWG = alct.getKeyWG();
+    if (debug_matching) 
+	LogTrace("CSCGEMCMotherboard")  <<"To construct LCT, ALCT and GEMs are valid while CLCT is not valid, HS from GEM  "<< keyStrip <<" GEM Pad "<< gem2.pad(2) <<" WG from ALCT "<< keyWG << std::endl;
     thisLCT.setALCT(alct);
     thisLCT.setGEM1(gem2.first());
     thisLCT.setGEM2(gem2.second());
@@ -178,6 +185,8 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     keyStrip = clct.getKeyStrip();
     // choose the corresponding wire-group in the middle of the partition
     keyWG = mymap2[gem2.roll()];
+    if (debug_matching) 
+	LogTrace("CSCGEMCMotherboard")  <<"To construct LCT, CLCT and GEM are valid while ALCT is not valid, HS from CLCT  "<< keyStrip  <<" WG from ALCT "<< keyWG << std::endl;
     bend = clct.getBend();
     thisLCT.setCLCT(clct);
     thisLCT.setGEM1(gem2.first());
