@@ -18,7 +18,7 @@ CSCUpgradeMotherboard::LCTContainer::getTimeMatched(const int bx,
 {
   for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
     for (int i=0;i<2;i++)
-      if (data[bx][mbx][i].isValid())
+      if (data[bx][mbx][i].isValid() and std::find(lcts.begin(), lcts.end(), data[bx][mbx][i]) == lcts.end()) //remove duplicated LCTs
         lcts.push_back(data[bx][mbx][i]);
 }
 
@@ -37,6 +37,10 @@ CSCUpgradeMotherboard::CSCUpgradeMotherboard(unsigned endcap, unsigned station,
 						   unsigned chamber,
 						   const edm::ParameterSet& conf) :
   CSCMotherboard(endcap, station, sector, subsector, chamber, conf)
+  // special configuration parameters for ME11 treatment
+  , smartME1aME1b(commonParams_.getParameter<bool>("smartME1aME1b"))
+  , disableME1a(commonParams_.getParameter<bool>("disableME1a"))
+  , gangedME1a(commonParams_.getParameter<bool>("gangedME1a"))
 {
   if (!isSLHC) edm::LogError("L1CSCTPEmulatorConfigError")
     << "+++ Upgrade CSCUpgradeMotherboard constructed while isSLHC is not set! +++\n";
@@ -82,6 +86,32 @@ CSCUpgradeMotherboard::CSCUpgradeMotherboard() : CSCMotherboard()
 CSCUpgradeMotherboard::~CSCUpgradeMotherboard()
 {
 }
+
+enum CSCPart CSCUpgradeMotherboard::getCSCPart(int keystrip) const
+{
+    if (theStation == 1 and (theRing ==1 or theRing == 4)){
+	if (keystrip > CSCConstants::MAX_HALF_STRIP_ME1B){
+	    if ( !gangedME1a )
+		return CSCPart::ME1Ag;
+	    else
+		return CSCPart::ME1A;
+	}else if (keystrip <= CSCConstants::MAX_HALF_STRIP_ME1B and keystrip >= 0)
+	    return CSCPart::ME1B;
+	else
+	    return CSCPart::ME11;
+    }else if (theStation == 2 and theRing == 1 )
+	return CSCPart::ME21;
+    else if  (theStation == 3 and theRing == 1 )
+	return CSCPart::ME31;
+    else if (theStation == 4 and theRing == 1 )
+	return CSCPart::ME41;
+    else{
+	edm::LogError("L1CSCTPEmulatorCSCUpgradeMotherboardError") <<" ++ CSCUpgradeMotherboard , getCSCPart() failed to find the CSC chamber for in case ";
+	return  CSCPart::ME11;// return ME11 by default
+    }
+   
+}
+
 
 void CSCUpgradeMotherboard::debugLUTs()
 {

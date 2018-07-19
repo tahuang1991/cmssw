@@ -769,19 +769,18 @@ bool CSCCathodeLCTProcessor::getDigis(const CSCComparatorDigiCollection* compdc)
     CSCDetId detid(theEndcap, theStation, theRing, theChamber, i_layer+1);
     getDigis(compdc, detid);
 
-    // If this is ME1/1, fetch digis in corresponding ME1/A (ring=4) as well.
     if (theStation == 1 && theRing == 1 && !disableME1a && !smartME1aME1b) {
       CSCDetId detid_me1a(theEndcap, theStation, 4, theChamber, i_layer+1);
       getDigis(compdc, detid_me1a);
     }
 
-    // If this is ME1/1, fetch digis in corresponding ME1/B (ring=1) as well.
     // needed only for the "smart" A/B case; and, actually, only for data
-    if (theStation == 1 && theRing == 4 && !disableME1a && smartME1aME1b
-	&& digiV[i_layer].empty()) {
-      CSCDetId detid_me1b(theEndcap, theStation, 1, theChamber, i_layer+1);
-      getDigis(compdc, detid_me1b);
-    }
+    // in data, comparator digis from ME1A are stored with detid ring = 1
+    //if (theStation == 1 && theRing == 4 && !disableME1a && smartME1aME1b
+    //    && digiV[i_layer].empty()) {
+    //  CSCDetId detid_me1b(theEndcap, theStation, 1, theChamber, i_layer+1);
+    //  getDigis(compdc, detid_me1b);
+    //}
 
     if (!digiV[i_layer].empty()) {
       noDigis = false;
@@ -801,37 +800,35 @@ bool CSCCathodeLCTProcessor::getDigis(const CSCComparatorDigiCollection* compdc)
 
 void CSCCathodeLCTProcessor::getDigis(const CSCComparatorDigiCollection* compdc,
 				      const CSCDetId& id) {
-  bool me1bProc = theStation == 1 && theRing == 1;
-  bool me1aProc = theStation == 1 && theRing == 4;
-  bool me1b = (id.station() == 1) && (id.ring() == 1);
+  //bool me1bProc = theStation == 1 && theRing == 1;
+  //bool me1aProc = theStation == 1 && theRing == 4;
+  //bool me1b = (id.station() == 1) && (id.ring() == 1);
   bool me1a = (id.station() == 1) && (id.ring() == 4);
   const CSCComparatorDigiCollection::Range rcompd = compdc->get(id);
   for (CSCComparatorDigiCollection::const_iterator digiIt = rcompd.first;
        digiIt != rcompd.second; ++digiIt) {
     unsigned int origStrip = digiIt->getStrip();
     unsigned int maxStripsME1a = gangedME1a ? 16 : 48;
-    if (me1a && origStrip <= maxStripsME1a && !disableME1a && !smartME1aME1b) {
+    if (me1a && origStrip <= maxStripsME1a && !disableME1a && smartME1aME1b) {
       // Move ME1/A comparators from CFEB=0 to CFEB=4 if this has not
       // been done already.
       CSCComparatorDigi digi_corr(origStrip+64,
 				  digiIt->getComparator(),
 				  digiIt->getTimeBinWord());
       digiV[id.layer()-1].push_back(digi_corr);
-    }
-    else if (smartME1aME1b && (me1bProc || me1aProc)){
-      //stay within bounds; in data all comps are in ME11B DetId
-
-      if (me1aProc && me1b && origStrip > 64){//this is data
-	//shift back to start from 1
-	CSCComparatorDigi digi_corr(origStrip-64,
-				    digiIt->getComparator(),
-				    digiIt->getTimeBinWord());
-	digiV[id.layer()-1].push_back(digi_corr);
-      } else if ((me1bProc && me1b && origStrip <= 64)
-		 || ((me1aProc && me1a))//this is MC for ME11a
-		 ){
-	digiV[id.layer()-1].push_back(*digiIt);
-      }
+    //else if (smartME1aME1b && me1aProc && me1b && origStrip > maxStripsME1b){
+    //    digiV[id.layer()-1].push_back(*digiIt);
+    //  //if (me1aProc && me1b && origStrip > 64){//this is data
+      //  //shift back to start from 1
+      //  CSCComparatorDigi digi_corr(origStrip-64,
+      //  			    digiIt->getComparator(),
+      //  			    digiIt->getTimeBinWord());
+      //  digiV[id.layer()-1].push_back(digi_corr);
+      //} else if ((me1bProc && me1b && origStrip <= 64)
+      //  	 || ((me1aProc && me1a))//this is MC for ME11a
+      //  	 ){
+      //  digiV[id.layer()-1].push_back(*digiIt);
+      //}
     }
     else {
       digiV[id.layer()-1].push_back(*digiIt);
@@ -2924,6 +2921,56 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::readoutCLCTs() {
     }
     else tmpV.push_back(*plct);
   }
+  return tmpV;
+}
+
+
+// Returns vector of read-out CLCTs, if any.  Starts with the vector
+// of all found CLCTs and selects the ones in the read-out time window.
+std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::readoutCLCTsME1a() {
+  std::vector<CSCCLCTDigi> tmpV;
+  if (not (theStation == 1 and  (theRing == 1 or theRing == 4)) )
+      return tmpV;
+  std::vector<CSCCLCTDigi>  allCLCTs = readoutCLCTs();
+  for (auto clct : allCLCTs)
+      if (clct.getCFEB() >= 4 )
+	  tmpV.push_back(clct);
+  return tmpV;
+}
+
+// Returns vector of read-out CLCTs, if any.  Starts with the vector
+// of all found CLCTs and selects the ones in the read-out time window.
+std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::readoutCLCTsME1b() {
+  std::vector<CSCCLCTDigi> tmpV;
+  if (not (theStation == 1 and  (theRing == 1 or theRing == 4)) )
+      return tmpV;
+  std::vector<CSCCLCTDigi>  allCLCTs = readoutCLCTs();
+  for (auto clct : allCLCTs)
+      if (clct.getCFEB() < 4 )
+	  tmpV.push_back(clct);
+  return tmpV;
+}
+
+std::vector<CSCCLCTPreTriggerDigi> CSCCathodeLCTProcessor::preTriggerDigisME1a(){
+  std::vector<CSCCLCTPreTriggerDigi> tmpV;
+  if (not (theStation == 1 and  (theRing == 1 or theRing == 4)) )
+      return tmpV;
+  std::vector<CSCCLCTPreTriggerDigi>  allPretriggerdigis = preTriggerDigis();
+  for (auto preclct : allPretriggerdigis)
+      if (preclct.getCFEB() >= 4 )
+	  tmpV.push_back(preclct);
+  return tmpV;
+
+}
+
+std::vector<CSCCLCTPreTriggerDigi> CSCCathodeLCTProcessor::preTriggerDigisME1b(){
+  std::vector<CSCCLCTPreTriggerDigi> tmpV;
+  if (not (theStation == 1 and  (theRing == 1 or theRing == 4)) )
+      return tmpV;
+  std::vector<CSCCLCTPreTriggerDigi>  allPretriggerdigis = preTriggerDigis();
+  for (auto preclct : allPretriggerdigis)
+      if (preclct.getCFEB() < 4 )
+	  tmpV.push_back(preclct);
   return tmpV;
 }
 
