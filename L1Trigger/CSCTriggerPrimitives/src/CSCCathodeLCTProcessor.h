@@ -85,12 +85,21 @@ class CSCCathodeLCTProcessor
   /** Returns vector of CLCTs in the read-out time window, if any. */
   std::vector<CSCCLCTDigi> readoutCLCTs();
 
+  /** read out CLCTs in ME1a , ME1b */
+  std::vector<CSCCLCTDigi> readoutCLCTsME1a();
+  std::vector<CSCCLCTDigi> readoutCLCTsME1b();
+
   /** Returns vector of all found CLCTs, if any. */
   std::vector<CSCCLCTDigi> getCLCTs();
 
   std::vector<int> preTriggerBXs() const {return thePreTriggerBXs;}
 
   std::vector<CSCCLCTPreTriggerDigi> preTriggerDigis() const {return thePreTriggerDigis; }
+
+  /** read out CLCTs in ME1a , ME1b */
+  std::vector<CSCCLCTPreTriggerDigi> preTriggerDigisME1a();
+  std::vector<CSCCLCTPreTriggerDigi> preTriggerDigisME1b();
+
 
   static void distripStagger(int stag_triad[CSCConstants::MAX_NUM_STRIPS_7CFEBS],
 			     int stag_time[CSCConstants::MAX_NUM_STRIPS_7CFEBS],

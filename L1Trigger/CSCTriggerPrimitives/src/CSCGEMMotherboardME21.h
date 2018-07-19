@@ -56,8 +56,7 @@ class CSCGEMMotherboardME21 : public CSCGEMMotherboard
                         const GEMPadDigiIds& pads,
                         const GEMCoPadDigiIds& copads,
                         CSCCorrelatedLCTDigi& lct1,
-                        CSCCorrelatedLCTDigi& lct2,
-                        enum CSCPart p) const;
+                        CSCCorrelatedLCTDigi& lct2) const;
 
   /** for the case when more than 2 LCTs/BX are allowed;
       maximum match window = 15 */
