@@ -215,7 +215,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               // get all collections
 	      // all ALCTs, CLCTs, LCTs are written with detid ring = 1, as data did
-	      // but CLCTs and LCTs are written sperately in ME1a and ME1b, considering whether ME1a is disabled or not 
+	      // but CLCTs and LCTs are written sperately in ME1a and ME1b, considering whether ME1a is disabled or not
               const std::vector<CSCCorrelatedLCTDigi>& lctV = tmb11->readoutLCTs1b();
               const std::vector<CSCCorrelatedLCTDigi>& lctV1a = tmb11->readoutLCTs1a();
               //std::vector<CSCALCTDigi> alctV1a, alctV = tmb11->alct->readoutALCTs();
@@ -253,7 +253,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               put(alctV, oc_alct, detid, " ME1b ALCT digi");
               put(clctV, oc_clct, detid, " ME1b CLCT digi");
               put(pretriggerV, oc_pretrigger, detid, " ME1b CLCT pre-trigger digi");
-              //put(preTriggerBXs, oc_pretrig, detid, " ME1b CLCT pre-trigger BX");
+              put(preTriggerBXs, oc_pretrig, detid, " ME1b CLCT pre-trigger BX");
 
               // ME1/a
 
@@ -268,10 +268,9 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               // put collections in event, still use detid ring =1
               put(lctV1a, oc_lct, detid, " ME1a LCT digi");
-              //put(alctV1a, oc_alct, detid1a, " ME1a ALCT digi");
               put(clctV1a, oc_clct, detid, " ME1a CLCT digi");
               put(pretriggerV1a, oc_pretrigger, detid, " ME1a CLCT pre-trigger digi");
-              //put(preTriggerBXs1a, oc_pretrig, detid, " ME1a CLCT pre-trigger BX");
+              put(preTriggerBXs1a, oc_pretrig, detid, " ME1a CLCT pre-trigger BX");
             } // upgraded TMB
 
             // running upgraded ME1/1 TMBs with GEMs
@@ -323,7 +322,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               put(alctV, oc_alct, detid, " ME1b ALCT digi");
               put(clctV, oc_clct, detid, " ME1b CLCT digi");
               put(pretriggerV, oc_pretrigger, detid, " ME1b CLCT pre-trigger digi");
-              //put(preTriggerBXs, oc_pretrig, detid, " ME1b CLCT pre-trigger BX");
+              put(preTriggerBXs, oc_pretrig, detid, " ME1b CLCT pre-trigger BX");
               put(copads, oc_gemcopad, gemId, " GEM coincidence pad");
 
               // ME1/a
@@ -337,10 +336,9 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               // put collections in event, still use detid ring =1
               put(lctV1a, oc_lct, detid, " ME1a LCT digi");
-              //put(alctV1a, oc_alct, detid1a, " ME1a ALCT digi");
               put(clctV1a, oc_clct, detid, " ME1a CLCT digi");
               put(pretriggerV1a, oc_pretrigger, detid, " ME1a CLCT pre-trigger digi");
-              //put(preTriggerBXs1a, oc_pretrig, detid, " ME1a CLCT pre-trigger BX");
+              put(preTriggerBXs1a, oc_pretrig, detid, " ME1a CLCT pre-trigger BX");
             }
 
             // running upgraded ME2/1 TMBs
@@ -373,7 +371,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               put(alctV, oc_alct, detid, " ME21 ALCT digi");
               put(clctV, oc_clct, detid, " ME21 CLCT digi");
               put(pretriggerV, oc_pretrigger, detid, " ME21 CLCT pre-trigger digi");
-              //put(preTriggerBXs, oc_pretrig, detid, " ME21 CLCT pre-trigger BX");
+              put(preTriggerBXs, oc_pretrig, detid, " ME21 CLCT pre-trigger BX");
               put(copads, oc_gemcopad, gemId, " GEM coincidence pad");
             }
             // running upgraded ME3/1-ME4/1 TMBs
@@ -401,7 +399,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               put(alctV, oc_alct, detid, " ME21 ALCT digi");
               put(clctV, oc_clct, detid, " ME21 CLCT digi");
               put(pretriggerV, oc_pretrigger, detid, " ME21 CLCT pre-trigger digi");
-              //put(preTriggerBXs, oc_pretrig, detid, " ME21 CLCT pre-trigger BX");
+              put(preTriggerBXs, oc_pretrig, detid, " ME21 CLCT pre-trigger BX");
             }
 
             // running non-upgraded TMB
@@ -428,7 +426,7 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               put(alctV, oc_alct, detid, chamberString + " ALCT digi");
               put(clctV, oc_clct, detid, chamberString + " CLCT digi");
               put(pretriggerV, oc_pretrigger, detid, chamberString + " CLCT pre-trigger digi");
-              //put(preTriggerBXs, oc_pretrig, detid, chamberString + " CLCT pre-trigger BX");
+              put(preTriggerBXs, oc_pretrig, detid, chamberString + " CLCT pre-trigger BX");
             } // non-upgraded TMB
           }
         }
