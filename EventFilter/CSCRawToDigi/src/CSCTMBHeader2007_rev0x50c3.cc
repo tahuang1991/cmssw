@@ -70,6 +70,10 @@ CSCTMBHeader2007_rev0x50c3::CorrelatedLCTDigis(uint32_t idlayer) const
                               bits.MPC_Muon0_bend_, bits.MPC_Muon0_bx_, 0,
                               bits.MPC_Muon0_bc0_, bits.MPC_Muon0_SyncErr_,
                               bits.MPC_Muon0_cscid_low | (bits.MPC_Muon0_cscid_bit4<<3));
+    if (digi.isValid()){
+	digi.setBX0(bits.matchWin);
+	//std::cout <<"bits.matchWin "<< bits.matchWin <<" LCT " << digi << std::endl;
+    }
     result.push_back(digi);
     /// for the first MPC word:
     strip = bits.MPC_Muon1_halfstrip_clct_pattern;//this goes from 0-159
@@ -79,6 +83,10 @@ CSCTMBHeader2007_rev0x50c3::CorrelatedLCTDigis(uint32_t idlayer) const
                                 bits.MPC_Muon1_bend_, bits.MPC_Muon1_bx_, 0,
                                 bits.MPC_Muon1_bc0_, bits.MPC_Muon1_SyncErr_,
                                 bits.MPC_Muon1_cscid_low | (bits.MPC_Muon1_cscid_bit4<<3));
+    if (digi.isValid()){
+	digi.setBX0(bits.matchWin);
+	//std::cout <<"bits.matchWin "<< bits.matchWin <<" LCT " << digi << std::endl;
+    }
     result.push_back(digi);
     return result;
 }

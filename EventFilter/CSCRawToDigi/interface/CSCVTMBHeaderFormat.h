@@ -8,6 +8,7 @@
 #include <vector>
 #include <iosfwd>
 #include <strings.h>
+#include <iostream>
 class CSCDMBHeader;
 
 

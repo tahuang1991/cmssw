@@ -11,7 +11,7 @@ struct CSCTMBHeader2006 : public CSCVTMBHeaderFormat {
   void setEventInformation(const CSCDMBHeader & dmbHeader) override;
 
   uint16_t BXNCount() const override {return bits.bxnCount;}
-  uint16_t ALCTMatchTime() const override {return bits.alctMatchTime;}
+  uint16_t ALCTMatchTime() const override {return bits.matchWin;}
   uint16_t CLCTOnly() const override {return bits.clctOnly;}
   uint16_t ALCTOnly() const override {return bits.alctOnly;}
   uint16_t TMBMatch() const override {return bits.tmbMatch;}
@@ -92,7 +92,7 @@ struct CSCTMBHeader2006 : public CSCVTMBHeaderFormat {
       unsigned reserved_10      :3;
 
       unsigned tmbMatch:1, alctOnly:1, clctOnly:1, bxn0Diff:2, bxn1Diff:2,
-               alctMatchTime:4, reserved_11:5;
+               matchWin:4, reserved_11:5;
 
       unsigned MPC_Muon0_wire_         : 7;
       unsigned MPC_Muon0_clct_pattern_ : 4;
