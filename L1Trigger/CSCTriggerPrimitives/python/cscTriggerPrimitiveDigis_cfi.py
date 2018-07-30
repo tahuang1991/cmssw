@@ -508,6 +508,8 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
         # If false, all LCTs would be readout in L1A window.
         tmbReadoutEarliest2 = cms.bool(True),
 
+        lctCentralBX = cms.int32(8),
+	clctBXOffset = cms.int32(2),
         # For CLCT-centric matching, whether to drop ALCTs that were matched
         # to CLCTs in this BX, and not use them in the following BX 
         # (default non-upgrade TMB behavior).
@@ -565,9 +567,12 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
         #     then the closest early, the slocest late, etc.
         tmbCrossBxAlgorithm = cms.uint32(1),
         
+        lctCentralBX = cms.int32(6),
+	clctBXOffset = cms.int32(2),
         # How many maximum LCTs per whole chamber per BX to keep
         # (supposedly, 1b and 1a can have max 2 each)
         maxME11LCTs = cms.uint32(2)
+        
     ),
 
     # MPC sorter config for Run2
