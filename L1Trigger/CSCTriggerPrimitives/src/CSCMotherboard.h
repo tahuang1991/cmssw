@@ -111,6 +111,7 @@ class CSCMotherboard
 
   /** Central BX */
   int lct_central_bx;
+  int clct_bxOffset;
 
   /** SLHC: whether to not reuse ALCTs that were used by previous matching CLCTs */
   bool drop_used_alcts;

@@ -27,6 +27,8 @@
 #include "DataFormats/RPCDigi/interface/RPCDigiCollection.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/CSCDigi/interface/CSCPretriggerCollection.h"
+
 class CSCDBL1TPParameters;
 class CSCMotherboard;
 class CSCMuonPortCard;
@@ -66,6 +68,7 @@ class CSCTriggerPrimitivesBuilder
 	     const GEMPadDigiCollection* gemPads,
 	     const RPCDigiCollection* rpcDigis,
 	     CSCALCTDigiCollection& oc_alct, CSCCLCTDigiCollection& oc_clct,
+	     CSCPretriggerCollection& oc_pretrigger,
              CSCCLCTPreTriggerCollection & oc_pretrig,
 	     CSCCorrelatedLCTDigiCollection& oc_lct,
 	     CSCCorrelatedLCTDigiCollection& oc_sorted_lct,

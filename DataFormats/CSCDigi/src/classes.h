@@ -8,6 +8,8 @@
 #include <DataFormats/CSCDigi/interface/CSCComparatorDigiCollection.h>
 #include <DataFormats/CSCDigi/interface/CSCCLCTDigi.h>
 #include <DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h>
+#include <DataFormats/CSCDigi/interface/CSCPretrigger.h>
+#include <DataFormats/CSCDigi/interface/CSCPretriggerCollection.h>
 #include <DataFormats/CSCDigi/interface/CSCALCTDigi.h>
 #include <DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h>
 #include <DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigi.h>
@@ -54,6 +56,7 @@ namespace DataFormats_CSCDigi {
   CSCDDUStatusDigi cDDUSD_;
   CSCDCCStatusDigi cDCCSD_;
   CSCALCTStatusDigi cALCTSD_;
+  CSCPretrigger cpretrigger_;
 
 
 
@@ -73,6 +76,7 @@ namespace DataFormats_CSCDigi {
   std::vector<CSCDCCStatusDigi>  vDCCSD_;
   std::vector<CSCALCTStatusDigi>  vALCTSD_;
   std::vector<CSCCLCTPreTrigger> vPreTriggerBX_;
+  std::vector<CSCPretrigger> vPretrigger_;
 
   std::vector<std::vector<CSCWireDigi> >  vvWD_;
   std::vector<std::vector<CSCRPCDigi>  >  vvRD_;
@@ -90,6 +94,7 @@ namespace DataFormats_CSCDigi {
   std::vector<std::vector<CSCDCCStatusDigi> >  vvDCCSD_;
   std::vector<std::vector<CSCALCTStatusDigi> >  vvALCTSD_;
   std::vector<std::vector<CSCCLCTPreTrigger> > vvPreTrigger_;
+  std::vector<std::vector<CSCPretrigger>> vvCscPretrigger_;
 
   CSCWireDigiCollection clWD_;
   CSCRPCDigiCollection  clRD_;
@@ -107,6 +112,7 @@ namespace DataFormats_CSCDigi {
   CSCDMBStatusDigiCollection clDCCSD_;
   CSCDMBStatusDigiCollection clALCTSD_;
   CSCCLCTPreTriggerCollection clPreTrigger_;
+  CSCPretriggerCollection cscPretrig_;
 
   edm::Wrapper<CSCWireDigiCollection> wWD_;
   edm::Wrapper<CSCRPCDigiCollection> wRD_;
@@ -124,5 +130,6 @@ namespace DataFormats_CSCDigi {
   edm::Wrapper<CSCDCCStatusDigiCollection> wDCCSD_;
   edm::Wrapper<CSCALCTStatusDigiCollection> wALCTSD_;
   edm::Wrapper<CSCCLCTPreTriggerCollection> wPreTrigger_;
+  edm::Wrapper<CSCPretriggerCollection> wcscPretrig_;
   };
 }

@@ -31,6 +31,7 @@
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigi.h"
 #include "CondFormats/CSCObjects/interface/CSCDBL1TPParameters.h"
 #include "L1Trigger/CSCCommonTrigger/interface/CSCConstants.h"
+#include "DataFormats/CSCDigi/interface/CSCPretrigger.h"
 
 #include <vector>
 
@@ -75,6 +76,7 @@ class CSCCathodeLCTProcessor
   /** Second best LCT in this chamber, as found by the processor. */
   CSCCLCTDigi secondCLCT[MAX_CLCT_BINS];
 
+
   /** Returns vector of CLCTs in the read-out time window, if any. */
   std::vector<CSCCLCTDigi> readoutCLCTs();
 
@@ -82,6 +84,11 @@ class CSCCathodeLCTProcessor
   std::vector<CSCCLCTDigi> getCLCTs();
 
   std::vector<int> preTriggerBXs() const {return thePreTriggerBXs;}
+
+  
+  std::vector<CSCPretrigger> allPretrigggers;
+  std::vector<CSCPretrigger> preTriggers() const  {return allPretrigggers; }
+
 
   static void distripStagger(int stag_triad[CSCConstants::MAX_NUM_STRIPS_7CFEBS],
 			     int stag_time[CSCConstants::MAX_NUM_STRIPS_7CFEBS],

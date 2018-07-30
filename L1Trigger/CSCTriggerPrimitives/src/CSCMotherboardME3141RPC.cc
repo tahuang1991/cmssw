@@ -334,8 +334,8 @@ CSCMotherboardME3141RPC::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
-      const int bx_clct_start(bx_alct - match_trig_window_size/2);
-      const int bx_clct_stop(bx_alct + match_trig_window_size/2);
+      const int bx_clct_start(bx_alct - match_trig_window_size/2 - clct_bxOffset);
+      const int bx_clct_stop(bx_alct + match_trig_window_size/2 - clct_bxOffset);
       if (debug_rpc_matching_){ 
         std::cout << "========================================================================" << std::endl;
         std::cout << "ALCT-CLCT matching in ME" << theStation << "/1 chamber: " << csc_id << std::endl;

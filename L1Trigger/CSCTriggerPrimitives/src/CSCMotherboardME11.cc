@@ -189,8 +189,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     // matching in ME1b
     if (clct->bestCLCT[bx_clct].isValid())
     {
-      int bx_alct_start = bx_clct - match_trig_window_size/2;
-      int bx_alct_stop  = bx_clct + match_trig_window_size/2;
+      int bx_alct_start = bx_clct - match_trig_window_size/2 + clct_bxOffset;
+      int bx_alct_stop  = bx_clct + match_trig_window_size/2 + clct_bxOffset;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
       {
         if (bx_alct < 0 || bx_alct >= CSCAnodeLCTProcessor::MAX_ALCT_BINS) continue;
@@ -217,8 +217,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
     // matching in ME1a
     if (clct1a->bestCLCT[bx_clct].isValid())
     {
-      int bx_alct_start = bx_clct - match_trig_window_size/2;
-      int bx_alct_stop  = bx_clct + match_trig_window_size/2;
+      int bx_alct_start = bx_clct - match_trig_window_size/2 + clct_bxOffset;
+      int bx_alct_stop  = bx_clct + match_trig_window_size/2 + clct_bxOffset;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
       {
         if (bx_alct < 0 || bx_alct >= CSCAnodeLCTProcessor::MAX_ALCT_BINS) continue;
@@ -250,8 +250,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
-      int bx_clct_start = bx_alct - match_trig_window_size/2;
-      int bx_clct_stop  = bx_alct + match_trig_window_size/2;
+      int bx_clct_start = bx_alct - match_trig_window_size/2 - clct_bxOffset;
+      int bx_clct_stop  = bx_alct + match_trig_window_size/2 - clct_bxOffset;
       
       // matching in ME1b
       for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)

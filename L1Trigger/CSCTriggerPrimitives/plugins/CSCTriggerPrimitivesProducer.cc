@@ -30,6 +30,7 @@
 #include "DataFormats/CSCDigi/interface/CSCALCTDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCCLCTDigiCollection.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
+#include "DataFormats/CSCDigi/interface/CSCPretriggerCollection.h"
 
 #include "DataFormats/CSCDigi/interface/GEMCSCLCTDigiCollection.h"
 #include "DataFormats/GEMDigi/interface/GEMCoPadDigiCollection.h"
@@ -60,6 +61,7 @@ CSCTriggerPrimitivesProducer::CSCTriggerPrimitivesProducer(const edm::ParameterS
   // register what this produces
   produces<CSCALCTDigiCollection>();
   produces<CSCCLCTDigiCollection>();
+  produces<CSCPretriggerCollection>();
   produces<CSCCLCTPreTriggerCollection>();
   produces<CSCCorrelatedLCTDigiCollection>();
   produces<CSCCorrelatedLCTDigiCollection>("MPCSORTED");
@@ -161,6 +163,7 @@ void CSCTriggerPrimitivesProducer::produce(edm::Event& ev,
   // and downstream of MPC.
   std::auto_ptr<CSCALCTDigiCollection> oc_alct(new CSCALCTDigiCollection);
   std::auto_ptr<CSCCLCTDigiCollection> oc_clct(new CSCCLCTDigiCollection);
+  std::auto_ptr<CSCPretriggerCollection> oc_pretrigger(new CSCPretriggerCollection);
   std::auto_ptr<CSCCLCTPreTriggerCollection> oc_pretrig(new CSCCLCTPreTriggerCollection);
   std::auto_ptr<CSCCorrelatedLCTDigiCollection> oc_lct(new CSCCorrelatedLCTDigiCollection);
   std::auto_ptr<CSCCorrelatedLCTDigiCollection> oc_sorted_lct(new CSCCorrelatedLCTDigiCollection);
@@ -186,7 +189,7 @@ void CSCTriggerPrimitivesProducer::produce(edm::Event& ev,
     const CSCBadChambers* temp = checkBadChambers_ ? pBadChambers.product() : new CSCBadChambers;
     lctBuilder_->build(temp,
 		       wireDigis.product(), compDigis.product(), gemPads, rpcDigis,
-		       *oc_alct, *oc_clct, *oc_pretrig, *oc_lct, *oc_sorted_lct, *oc_gemcopad, *oc_gemcsclct);
+		       *oc_alct, *oc_clct, *oc_pretrigger, *oc_pretrig, *oc_lct, *oc_sorted_lct, *oc_gemcopad, *oc_gemcsclct);
     if (!checkBadChambers_)
       delete temp;
   }
@@ -194,6 +197,7 @@ void CSCTriggerPrimitivesProducer::produce(edm::Event& ev,
   // Put collections in event.
   ev.put(oc_alct);
   ev.put(oc_clct);
+  ev.put(oc_pretrigger);
   ev.put(oc_pretrig);
   ev.put(oc_lct);
   ev.put(oc_sorted_lct,"MPCSORTED");
