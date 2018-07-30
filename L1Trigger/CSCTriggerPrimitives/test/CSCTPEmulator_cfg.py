@@ -33,7 +33,7 @@ process.source = cms.Source("PoolSource",
          #'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
 	 #'file:/home/taohuang/CSCEmulation/CMSSW_6_2_0_SLHC28_patch1/src/L1Trigger/CSCTriggerPrimitives/test/cms904data_unpacked_test.root'
 	 #'file:lcts_CMS904data_unpacked.root'
-	 'file:/fdata/hepx/store/user/taohuang/CMS904Data/csc_00000001_EmuRUI01_Monitor_012_171213_193753_UTC.root'
+	 'file:/eos/uscms/store/user/tahuang/GIFPP_RAW/2017OTMBfw_201805/csc_00000001_EmuRUI01_STEP_40_000_180508_144001_UTC.raw.root'
      )
 ##        untracked uint32 debugVebosity = 10
 ##        untracked bool   debugFlag     = false
@@ -86,7 +86,7 @@ process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load("EventFilter.CSCRawToDigi.cscUnpacker_cfi")
 process.muonCSCDigis.InputObjects = "rawDataCollector"
 # Turn on lots of output
-process.muonCSCDigis.Debug = cms.untracked.bool(True)
+process.muonCSCDigis.Debug = cms.untracked.bool(False)
 process.muonCSCDigis.PrintEventNumber = cms.untracked.bool(True)
 # Visualization of raw data in corrupted events
 process.muonCSCDigis.VisualFEDInspect = cms.untracked.bool(False)
@@ -141,13 +141,13 @@ process.lctreader.CSCLCTProducerEmul = "cscTriggerPrimitiveDigis"
 process.output = cms.OutputModule("PoolOutputModule",
     #fileName = cms.untracked.string("/data0/slava/test/lcts_run122909.root"),
     #fileName = cms.untracked.string("lcts_CMS904data_emulationonly.root"),
-    fileName = cms.untracked.string("/fdata/hepx/store/user/taohuang/CMS904Data/csc_00000001_EmuRUI01_Monitor_012_171213_193753_emulation.root"),
+    fileName = cms.untracked.string("/eos/uscms/store/user/tahuang/GIFPP_RAW/2017OTMBfw_201805/csc_00000001_EmuRUI01_STEP_40_000_180508_144001_UTC_reemulation.root"),
     outputCommands = cms.untracked.vstring("keep *", 
         "drop *_DaqSource_*_*")
 )
 
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string('TPEHists_Monitor_012_171213_193753_20170129.root')
+    fileName = cms.string('TPEHists_csc_00000001_EmuRUI01_STEP_40_000_180508_144001_UTC.root')
 )
 
 # Scheduler path
