@@ -29,7 +29,8 @@ process.source = cms.Source("PoolSource",
      fileNames = cms.untracked.vstring(
 #         '/store/data/Commissioning12/MinimumBias/RAW/v1/000/189/778/FC9A951F-977A-E111-9385-001D09F2B30B.root'
 #         '/store/data/Run2012C/SingleMu/RAW/v1/000/199/703/6401E77F-05D7-E111-A310-BCAEC518FF41.root'
-         'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+         #'rfio:/castor/cern.ch/cms/store/data/Run2012C/SingleMu/RAW/v1/000/200/152/F8871A89-F8DC-E111-BAF2-003048F024FA.root'
+	 'file:/eos/uscms/store/user/lpernie/HW/RUN320500_BC8C0D64-EF93-E811-81A5-02163E00C22E.root'
      )
 ##        untracked uint32 debugVebosity = 10
 ##        untracked bool   debugFlag     = false
@@ -67,7 +68,8 @@ process.load("Geometry.CSCGeometry.cscGeometry_cfi")
 
 process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
 #process.GlobalTag.globaltag = 'MC_38Y_V8::All'
-process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+#process.GlobalTag.globaltag = 'GR_R_60_V7::All'
+process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v10'
 #process.prefer("GlobalTag")
 
 # magnetic field (do I need it?)
@@ -119,7 +121,7 @@ process.lctreader.debug = True
 # ======
 process.output = cms.OutputModule("PoolOutputModule",
     #fileName = cms.untracked.string("/data0/slava/test/lcts_run122909.root"),
-    fileName = cms.untracked.string("lcts_run200152.root"),
+    fileName = cms.untracked.string("lcts_run_test.root"),
     outputCommands = cms.untracked.vstring("keep *", 
         "drop *_DaqSource_*_*")
 )
@@ -131,5 +133,6 @@ process.TFileService = cms.Service("TFileService",
 # Scheduler path
 # ==============
 #process.p = cms.Path(process.myfilter*process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
-process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
-#process.ep = cms.EndPath(process.output)
+#process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis*process.lctreader)
+process.p = cms.Path(process.muonCSCDigis*process.cscTriggerPrimitiveDigis)
+process.ep = cms.EndPath(process.output)
