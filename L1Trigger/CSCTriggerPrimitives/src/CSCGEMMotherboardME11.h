@@ -43,7 +43,7 @@ class CSCGEMMotherboardME11 : public CSCGEMMotherboard
   std::vector<CSCCorrelatedLCTDigi> readoutLCTs1b() const;
 
   /** additional Cathode LCT processor for ME1a */
-  std::unique_ptr<CSCCathodeLCTProcessor> clct1a;
+  //std::unique_ptr<CSCCathodeLCTProcessor> clct1a;
 
  private:
 
@@ -62,25 +62,29 @@ class CSCGEMMotherboardME11 : public CSCGEMMotherboard
   std::vector<CSCCorrelatedLCTDigi> readoutLCTs(enum CSCPart me1ab) const;
 
   /** Methods to sort the LCTs */
-  void sortLCTs(std::vector<CSCCorrelatedLCTDigi>&, int bx, enum CSCPart,
+  void sortLCTs(std::vector<CSCCorrelatedLCTDigi>&, int bx,
                 bool (*sorter)(const CSCCorrelatedLCTDigi&, const CSCCorrelatedLCTDigi&)) const;
-  void sortLCTs(std::vector<CSCCorrelatedLCTDigi>&, enum CSCPart,
+  void sortLCTs(std::vector<CSCCorrelatedLCTDigi>&, 
                 bool (*sorter)(const CSCCorrelatedLCTDigi&, const CSCCorrelatedLCTDigi&)) const;
 
   /* check if an ALCT cross a CLCT in an ME11 sector */
-  bool doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c, int me) const;
+  bool doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c) const;
 
   /* correlate a pair of ALCTs and a pair of CLCTs with matched pads or copads
      the output is up to two LCTs in a sector of ME11 */
-  void correlateLCTsGEM(CSCALCTDigi& bestALCT, CSCALCTDigi& secondALCT,
-			CSCCLCTDigi& bestCLCT, CSCCLCTDigi& secondCLCT,
-			const GEMPadDigiIds& pads, const GEMCoPadDigiIds& copads,
-			CSCCorrelatedLCTDigi& lct1, CSCCorrelatedLCTDigi& lct2,
-			enum CSCPart p) const;
+  void correlateLCTsGEM(const CSCALCTDigi& bestALCT,
+                        const CSCALCTDigi& secondALCT,
+                        const CSCCLCTDigi& bestCLCT,
+                        const CSCCLCTDigi& secondCLCT,
+                        const GEMPadDigiIds& pads,
+                        const GEMCoPadDigiIds& copads,
+                        CSCCorrelatedLCTDigi& lct1,
+                        CSCCorrelatedLCTDigi& lct2) const;
 
   /* store the LCTs found separately in ME1a and ME1b */
-  LCTContainer allLCTs1b;
-  LCTContainer allLCTs1a;
+  LCTContainer allLCTsME11;
+  //LCTContainer allLCTs1a;
+
 
   /** SLHC: special configuration parameters for ME11 treatment. */
   bool smartME1aME1b, disableME1a, gangedME1a;

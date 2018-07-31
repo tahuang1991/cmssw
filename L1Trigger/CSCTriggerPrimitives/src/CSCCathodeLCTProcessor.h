@@ -85,12 +85,21 @@ class CSCCathodeLCTProcessor
   /** Returns vector of CLCTs in the read-out time window, if any. */
   std::vector<CSCCLCTDigi> readoutCLCTs();
 
+  /** read out CLCTs in ME1a , ME1b */
+  std::vector<CSCCLCTDigi> readoutCLCTsME1a();
+  std::vector<CSCCLCTDigi> readoutCLCTsME1b();
+
   /** Returns vector of all found CLCTs, if any. */
   std::vector<CSCCLCTDigi> getCLCTs();
 
   std::vector<int> preTriggerBXs() const {return thePreTriggerBXs;}
 
   std::vector<CSCCLCTPreTriggerDigi> preTriggerDigis() const {return thePreTriggerDigis; }
+
+  /** read out CLCTs in ME1a , ME1b */
+  std::vector<CSCCLCTPreTriggerDigi> preTriggerDigisME1a();
+  std::vector<CSCCLCTPreTriggerDigi> preTriggerDigisME1b();
+
 
   static void distripStagger(int stag_triad[CSCConstants::MAX_NUM_STRIPS_7CFEBS],
 			     int stag_time[CSCConstants::MAX_NUM_STRIPS_7CFEBS],
@@ -156,6 +165,11 @@ class CSCCathodeLCTProcessor
 
   /** Flag for SLHC studies. */
   bool isSLHC;
+
+  /** Offset between ALCT and CLCT in simulation.
+   *  This is important when ALCTs (at BX0=8) and CLCTs (at BX0=7)
+   *  are correlated in the trigger motherboard. */
+  unsigned int alctClctOffset;
 
   /** Configuration parameters. */
   unsigned int fifo_tbins,  fifo_pretrig; // only for test beam mode.

@@ -94,10 +94,13 @@ public:
                 bool (*sorter)(const CSCCorrelatedLCTDigi&,
                                const CSCCorrelatedLCTDigi&)) const;
 
+  /** get CSCPart from HS, station, ring number **/
+  enum CSCPart getCSCPart(int keystrip) const;
   // functions to setup geometry and LUTs
   void setCSCGeometry(const CSCGeometry *g) { csc_g = g; }
   void setupGeometry();
   void debugLUTs();
+
 
  protected:
 
@@ -105,6 +108,10 @@ public:
   unsigned theRegion;
   unsigned theChamber;
   Parity par;
+
+  /** SLHC: special configuration parameters for ME11 treatment. */
+  bool smartME1aME1b, disableME1a, gangedME1a;
+
 
   edm::ParameterSet tmbParams_;
   edm::ParameterSet commonParams_;
