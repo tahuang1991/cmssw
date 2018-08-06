@@ -336,7 +336,7 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
         maxME11LCTs = cms.uint32(2),
 
         # use ALCT cross CLCT?
-        useAlctCrossClct = cms.bool(True)
+        ignoreAlctCrossClct = cms.bool(True)
     ),
 
     # MPC sorter config for Run2 and beyond

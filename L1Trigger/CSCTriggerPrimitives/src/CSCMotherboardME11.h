@@ -108,6 +108,6 @@ class CSCMotherboardME11 : public CSCMotherboard
   /** maximum lcts per BX in ME11: 2, 3, 4 or 999 */
   unsigned int max_me11_lcts;
 
-  bool useAlctCrossClct;
+  bool ignoreAlctCrossClct;
 };
 #endif

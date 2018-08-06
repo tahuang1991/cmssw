@@ -107,7 +107,7 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
     pref[m]   = pref[0] + m/2;
   }
 
-  useAlctCrossClct = tmbParams.getParameter<bool>("useAlctCrossClct");
+  ignoreAlctCrossClct = tmbParams.getParameter<bool>("ignoreAlctCrossClct");
 }
 
 
@@ -448,7 +448,7 @@ void CSCMotherboardME11::correlateLCTsME11(const CSCALCTDigi& bALCT,
   CSCCLCTDigi bestCLCT = bCLCT;
   CSCCLCTDigi secondCLCT = sCLCT;
 
-  if (useAlctCrossClct) {
+  if (ignoreAlctCrossClct) {
     const bool anodeBestValid     = bestALCT.isValid();
     const bool anodeSecondValid   = secondALCT.isValid();
     const bool cathodeBestValid   = bestCLCT.isValid();
