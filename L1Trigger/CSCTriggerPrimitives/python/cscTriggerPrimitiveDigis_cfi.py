@@ -158,7 +158,10 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
         # whether to store the "corrected" ALCT stub time
         # (currently it is median time of particular hits in a pattern) into the ASCCLCTDigi bx,
         # and temporary store the regular "key layer hit" time into the CSCCLCTDigi fullBX:
-        alctUseCorrectedBx = cms.bool(True)
+        alctUseCorrectedBx = cms.bool(True),
+
+        # use ALCT cross CLCT?
+        useAlctCrossClct = cms.bool(True)
     ),
 
     # Parameters for CLCT processors: old MC studies
