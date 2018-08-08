@@ -588,14 +588,11 @@ CSCCathodeLCTProcessor::run(const CSCComparatorDigiCollection* compdc) {
       // to them.
       // For SLHC ME1/1 is set to have 4 CFEBs in ME1/b and 3 CFEBs in ME1/a
       if (isME11) {
-	if (!smartME1aME1b && !disableME1a && theRing == 1 && !gangedME1a) numStrips = 112;
-	if (!smartME1aME1b && !disableME1a && theRing == 1 && gangedME1a) numStrips = 80;
-	if (!smartME1aME1b &&  disableME1a && theRing == 1 ) numStrips = 64;
-	if ( smartME1aME1b && !disableME1a && theRing == 1 ) numStrips = 64;
-	if ( smartME1aME1b && !disableME1a && theRing == 4 ) {
-	  if (gangedME1a) numStrips = 16;
-	  else numStrips = 48;
-	}
+	if (!disableME1a && theRing == 1 && !gangedME1a) numStrips = 112;
+	if (!disableME1a && theRing == 1 && gangedME1a) numStrips = 80;
+	if ( disableME1a && theRing == 1 ) numStrips = 64;
+	if (theRing == 4) edm::LogError("L1CSCTPEmulatorSetupError") 
+	    	<<"in cathodeProcessor wrong theRing number"<< theRing <<"\n ";
       }
 
       if (numStrips > CSCConstants::MAX_NUM_STRIPS_7CFEBS) {
@@ -884,7 +881,8 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       int thisComparator = pld->getComparator();
       if (thisComparator != 0 && thisComparator != 1) {
 	if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
-	  << "+++ Found comparator digi with wrong comparator value = "
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
+	  << " Found comparator digi with wrong comparator value = "
 	  << thisComparator << "; skipping it... +++\n";
 	continue;
       }
@@ -893,7 +891,8 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       int thisStrip = pld->getStrip() - 1; // count from 0
       if (thisStrip < 0 || thisStrip >= numStrips) {
 	if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
-	  << "+++ Found comparator digi with wrong strip number = "
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
+	  <<" Found comparator digi with wrong strip number = "
 	  << thisStrip
 	  << " (max strips = " << numStrips << "); skipping it... +++\n";
 	continue;
@@ -904,7 +903,8 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       int thisHalfstrip = 2*thisStrip + thisComparator + stagger[i_layer];
       if (thisHalfstrip >= 2*numStrips + 1) {
 	if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
-	  << "+++ Found wrong halfstrip number = " << thisHalfstrip
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
+	  << " Found wrong halfstrip number = " << thisHalfstrip
 	  << "; skipping this digi... +++\n";
 	continue;
       }
@@ -940,6 +940,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
 	  }
 	  else if (i > 0) {
 	    if (infoV > 1) LogTrace("CSCCathodeLCTProcessor")
+	      << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	      << " Skipping comparator digi: strip = " << thisStrip
 	      << ", layer = " << i_layer+1 << ", bx = " << bx_times[i]
 	      << ", bx of previous hit = " << bx_times[i-1];
@@ -947,6 +948,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
 	}
 	else {
 	  if (infoV > 1) LogTrace("CSCCathodeLCTProcessor")
+	    << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	    << "+++ Skipping comparator digi: strip = " << thisStrip
 	    << ", layer = " << i_layer+1 << ", bx = " << bx_times[i] << " +++";
 	}
@@ -990,6 +992,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       int thisComparator = thisDigi.getComparator();
       if (thisComparator != 0 && thisComparator != 1) {
 	if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	  << "+++ Comparator digi with wrong comparator value: digi #" << j
 	  << ", comparator = " << thisComparator << "; skipping it... +++\n";
 	continue;
@@ -999,6 +1002,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       int thisStrip = thisDigi.getStrip() - 1; // count from 0
       if (thisStrip < 0 || thisStrip >= numStrips) {
 	if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	  << "+++ Comparator digi with wrong strip number: digi #" << j
 	  << ", strip = " << thisStrip
 	  << ", max strips = " << numStrips << "; skipping it... +++\n";
@@ -1037,6 +1041,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
       }
       else {
 	if (infoV > 1) LogTrace("CSCCathodeLCTProcessor")
+	  << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	  << "+++ Skipping comparator digi: strip = " << thisStrip
 	  << ", layer = " << i+1 << ", bx = " << thisDigiBx << " +++";
       }
@@ -1056,6 +1061,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
 	// stagger: stagger for this layer
 	if (i_halfstrip >= 2*numStrips + 1) {
 	  if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
+	    << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	    << "+++ Found wrong halfstrip number = " << i_halfstrip
 	    << "; skipping this digi... +++\n";
 	  continue;
@@ -1090,6 +1096,7 @@ void CSCCathodeLCTProcessor::readComparatorDigis(
 	  }
 	  if (i_distrip >= numStrips/2 + 1) {
 	    if (infoV >= 0) edm::LogWarning("L1CSCTPEmulatorWrongInput")
+	      << "+++ station "<< theStation<<" ring "<< theRing<<" chamber "<< theChamber 
 	      << "+++ Found wrong distrip number = " << i_distrip
 	      << "; skipping this digi... +++\n";
 	    continue;
