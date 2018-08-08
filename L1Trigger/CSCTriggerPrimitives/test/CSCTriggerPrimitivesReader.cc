@@ -1634,7 +1634,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	    //cout <<"ALCT data BX "<< stubs_comparison[0].bx_data <<" WG "<< stubs_comparison[0].key_WG_data <<" emul BX "<< stubs_comparison[0].bx_emul<<" emul BX corrected "<< stubs_comparison[0].bx_corr_emul <<" WG "<< stubs_comparison[0].key_WG_emul << endl;
 	    stub_tree[0]->Fill(); 
 	  }//loop data
-	  for (int i = ndata; i<nemul; i++){
+	  for (int i = 0; i<nemul; i++){
 	      if (alctV_emul[i].isValid() == 0 or bookedalctV_emul[i]) continue;
 	      int emul_bx        = alctV_emul[i].getBX();
 	      stubs_comparison[0].init();
