@@ -106,6 +106,8 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
     pref[m-1] = pref[0] - m/2;
     pref[m]   = pref[0] + m/2;
   }
+
+  ignoreAlctCrossClct = tmbParams.getParameter<bool>("ignoreAlctCrossClct");
 }
 
 
@@ -446,54 +448,83 @@ void CSCMotherboardME11::correlateLCTsME11(const CSCALCTDigi& bALCT,
   CSCCLCTDigi bestCLCT = bCLCT;
   CSCCLCTDigi secondCLCT = sCLCT;
 
-  if (secondALCT == bestALCT) secondALCT.clear();
-  if (secondCLCT == bestCLCT) secondCLCT.clear();
+  if (ignoreAlctCrossClct) {
+    const bool anodeBestValid     = bestALCT.isValid();
+    const bool anodeSecondValid   = secondALCT.isValid();
+    const bool cathodeBestValid   = bestCLCT.isValid();
+    const bool cathodeSecondValid = secondCLCT.isValid();
 
-  int ok11 = doesALCTCrossCLCT( bestALCT, bestCLCT);
-  int ok12 = doesALCTCrossCLCT( bestALCT, secondCLCT);
-  int ok21 = doesALCTCrossCLCT( secondALCT, bestCLCT);
-  int ok22 = doesALCTCrossCLCT( secondALCT, secondCLCT);
-  int code = (ok11<<3) | (ok12<<2) | (ok21<<1) | (ok22);
+    if (anodeBestValid and !anodeSecondValid)     secondALCT = bestALCT;
+    if (!anodeBestValid and anodeSecondValid)     bestALCT   = secondALCT;
+    if (cathodeBestValid and !cathodeSecondValid) secondCLCT = bestCLCT;
+    if (!cathodeBestValid and cathodeSecondValid) bestCLCT   = secondCLCT;
 
-  int dbg=0;
-  //int ring = me;
-  int chamb= CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector, theStation, theTrigChamber);
-  //CSCDetId did(theEndcap, theStation, ring, chamb, 0);
-  CSCDetId did(theEndcap, theStation, 1, chamb, 0);
-  if (dbg) LogTrace("CSCMotherboardME11")<<"debug correlateLCTs in ME11 "<<did<<std::endl
-	   <<"ALCT1: "<<bestALCT<<std::endl
-	   <<"ALCT2: "<<secondALCT<<std::endl
-	   <<"CLCT1: "<<bestCLCT<<std::endl
-	   <<"CLCT2: "<<secondCLCT<<std::endl
-	   <<"ok 11 12 21 22 code = "<<ok11<<" "<<ok12<<" "<<ok21<<" "<<ok22<<" "<<code<<std::endl;
+    // ALCT-CLCT matching conditions are defined by "trig_enable" configuration
+    // parameters.
+    if ((alct_trig_enable  and bestALCT.isValid()) or
+        (clct_trig_enable  and bestCLCT.isValid()) or
+        (match_trig_enable and bestALCT.isValid() and bestCLCT.isValid())){
+      lct1 = constructLCTs(bestALCT, bestCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
+    }
 
-  if ( code==0 ) return;
+    if (((secondALCT != bestALCT) or (secondCLCT != bestCLCT)) and
+        ((alct_trig_enable  and secondALCT.isValid()) or
+         (clct_trig_enable  and secondCLCT.isValid()) or
+         (match_trig_enable and secondALCT.isValid() and secondCLCT.isValid()))){
+      lct2 = constructLCTs(secondALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 2);
+    }
+    return;
+  }
+  else {
 
-  // LUT defines correspondence between possible ok## combinations
-  // and resulting lct1 and lct2
-  int lut[16][2] = {
-          //ok: 11 12 21 22
-    {0 ,0 }, // 0  0  0  0
-    {22,0 }, // 0  0  0  1
-    {21,0 }, // 0  0  1  0
-    {21,22}, // 0  0  1  1
-    {12,0 }, // 0  1  0  0
-    {12,22}, // 0  1  0  1
-    {12,21}, // 0  1  1  0
-    {12,21}, // 0  1  1  1
-    {11,0 }, // 1  0  0  0
-    {11,22}, // 1  0  0  1
-    {11,21}, // 1  0  1  0
-    {11,22}, // 1  0  1  1
-    {11,12}, // 1  1  0  0
-    {11,22}, // 1  1  0  1
-    {11,12}, // 1  1  1  0
-    {11,22}, // 1  1  1  1
-  };
+    if (secondALCT == bestALCT) secondALCT.clear();
+    if (secondCLCT == bestCLCT) secondCLCT.clear();
 
-  if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
+    int ok11 = doesALCTCrossCLCT( bestALCT, bestCLCT);
+    int ok12 = doesALCTCrossCLCT( bestALCT, secondCLCT);
+    int ok21 = doesALCTCrossCLCT( secondALCT, bestCLCT);
+    int ok22 = doesALCTCrossCLCT( secondALCT, secondCLCT);
+    int code = (ok11<<3) | (ok12<<2) | (ok21<<1) | (ok22);
 
-  switch (lut[code][0]) {
+    int dbg=0;
+    //int ring = me;
+    int chamb= CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector, theStation, theTrigChamber);
+    //CSCDetId did(theEndcap, theStation, ring, chamb, 0);
+    CSCDetId did(theEndcap, theStation, 1, chamb, 0);
+    if (dbg) LogTrace("CSCMotherboardME11")<<"debug correlateLCTs in ME11 "<<did<<std::endl
+                                           <<"ALCT1: "<<bestALCT<<std::endl
+                                           <<"ALCT2: "<<secondALCT<<std::endl
+                                           <<"CLCT1: "<<bestCLCT<<std::endl
+                                           <<"CLCT2: "<<secondCLCT<<std::endl
+                                           <<"ok 11 12 21 22 code = "<<ok11<<" "<<ok12<<" "<<ok21<<" "<<ok22<<" "<<code<<std::endl;
+
+    if ( code==0 ) return;
+
+    // LUT defines correspondence between possible ok## combinations
+    // and resulting lct1 and lct2
+    int lut[16][2] = {
+      //ok: 11 12 21 22
+      {0 ,0 }, // 0  0  0  0
+      {22,0 }, // 0  0  0  1
+      {21,0 }, // 0  0  1  0
+      {21,22}, // 0  0  1  1
+      {12,0 }, // 0  1  0  0
+      {12,22}, // 0  1  0  1
+      {12,21}, // 0  1  1  0
+      {12,21}, // 0  1  1  1
+      {11,0 }, // 1  0  0  0
+      {11,22}, // 1  0  0  1
+      {11,21}, // 1  0  1  0
+      {11,22}, // 1  0  1  1
+      {11,12}, // 1  1  0  0
+      {11,22}, // 1  1  0  1
+      {11,12}, // 1  1  1  0
+      {11,22}, // 1  1  1  1
+    };
+
+    if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
+
+    switch (lut[code][0]) {
     case 11:
       lct1 = constructLCTs(bestALCT, bestCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
       break;
@@ -507,12 +538,11 @@ void CSCMotherboardME11::correlateLCTsME11(const CSCALCTDigi& bALCT,
       lct1 = constructLCTs(secondALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
       break;
     default: return;
-  }
+    }
 
-  if (dbg) LogTrace("CSCMotherboardME11")<<"lct1: "<<lct1<<std::endl;
+    if (dbg) LogTrace("CSCMotherboardME11")<<"lct1: "<<lct1<<std::endl;
 
-  switch (lut[code][1])
-  {
+    switch (lut[code][1]){
     case 12:
       lct2 = constructLCTs(bestALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 2);
       if (dbg) LogTrace("CSCMotherboardME11")<<"lct2: "<<lct2<<std::endl;
@@ -526,9 +556,10 @@ void CSCMotherboardME11::correlateLCTsME11(const CSCALCTDigi& bALCT,
       if (dbg) LogTrace("CSCMotherboardME11")<<"lct2: "<<lct2<<std::endl;
       return;
     default: return;
-  }
-  if (dbg) LogTrace("CSCMotherboardME11")<<"out of correlateLCTs"<<std::endl;
+    }
+    if (dbg) LogTrace("CSCMotherboardME11")<<"out of correlateLCTs"<<std::endl;
 
-  return;
+    return;
+  }
 }
 

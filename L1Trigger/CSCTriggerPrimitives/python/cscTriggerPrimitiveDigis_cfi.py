@@ -158,7 +158,7 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
         # whether to store the "corrected" ALCT stub time
         # (currently it is median time of particular hits in a pattern) into the ASCCLCTDigi bx,
         # and temporary store the regular "key layer hit" time into the CSCCLCTDigi fullBX:
-        alctUseCorrectedBx = cms.bool(True)
+        alctUseCorrectedBx = cms.bool(True),
     ),
 
     # Parameters for CLCT processors: old MC studies
@@ -333,7 +333,10 @@ cscTriggerPrimitiveDigis = cms.EDProducer("CSCTriggerPrimitivesProducer",
 
         # How many maximum LCTs per whole chamber per BX to keep
         # (supposedly, 1b and 1a can have max 2 each)
-        maxME11LCTs = cms.uint32(2)
+        maxME11LCTs = cms.uint32(2),
+
+        # use ALCT cross CLCT?
+        ignoreAlctCrossClct = cms.bool(True)
     ),
 
     # MPC sorter config for Run2 and beyond
