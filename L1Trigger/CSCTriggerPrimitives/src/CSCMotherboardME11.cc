@@ -378,7 +378,7 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::getLCTs1b() const
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
-        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() < CSCConstants::MAX_HALF_STRIP_ME1B) tmpV.push_back(allLCTsME11[bx][mbx][i]);
+        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() <= CSCConstants::MAX_HALF_STRIP_ME1B) tmpV.push_back(allLCTsME11[bx][mbx][i]);
   return tmpV;
 }
 
@@ -394,7 +394,7 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::getLCTs1a() const
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
-        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() >= CSCConstants::MAX_HALF_STRIP_ME1B)  tmpV.push_back(allLCTsME11[bx][mbx][i]);
+        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() > CSCConstants::MAX_HALF_STRIP_ME1B)  tmpV.push_back(allLCTsME11[bx][mbx][i]);
   return tmpV;
 }
 
