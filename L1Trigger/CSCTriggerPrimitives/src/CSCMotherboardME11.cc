@@ -186,12 +186,19 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   for (int b=0;b<20;b++)
     used_alct_mask[b] = used_alct_mask_1a[b] = used_clct_mask[b] = used_clct_mask_1a[b] = 0;
 
+  
   // CLCT-centric CLCT-to-ALCT matching
   if (clct_to_alct) for (int bx_clct = 0; bx_clct < CSCConstants::MAX_CLCT_TBINS; bx_clct++)
   {
 
     if (clct->bestCLCT[bx_clct].isValid())
     {
+      if (infoV > 1 ) LogTrace("CSCMotherboard")
+	  <<"clct centric in ME11, endcap "<< theEndcap <<" theStation "<< theStation <<" thechamber  "<< theChamber 
+	  <<" bx_clct " << bx_clct <<" best CLCT "<< clct->bestCLCT[bx_clct];
+      if (infoV > 1 && clct->secondCLCT[bx_clct].isValid()) LogTrace("CSCMotherboard")
+	  <<" second CLCT "<< clct->secondCLCT[bx_clct];
+
       int bx_alct_start = bx_clct - match_trig_window_size/2;
       int bx_alct_stop  = bx_clct + match_trig_window_size/2;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
@@ -224,10 +231,15 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
+      if (infoV > 1 ) LogTrace("CSCMotherboard")
+	  <<"alct centric in ME11, endcap "<< theEndcap <<" theStation "<< theStation <<" thechamber  "<< theChamber 
+	  <<" bx_alct " << bx_alct <<" best ALCT "<< alct->bestALCT[bx_alct];
+      if (infoV > 1 && alct->secondALCT[bx_alct].isValid()) LogTrace("CSCMotherboard")
+	  <<" second ALCT "<< alct->secondALCT[bx_alct];
+
       int bx_clct_start = bx_alct - match_trig_window_size/2;
       int bx_clct_stop  = bx_alct + match_trig_window_size/2;
 
-      // matching in ME1b
       for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)
       {
         if (bx_clct < 0 || bx_clct >= CSCConstants::MAX_CLCT_TBINS) continue;

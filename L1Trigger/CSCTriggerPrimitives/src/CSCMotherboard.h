@@ -101,6 +101,7 @@ class CSCMotherboard
   const unsigned theSubsector;
   const unsigned theTrigChamber;
   unsigned theRing;
+  unsigned theChamber;
 
   const CSCGeometry* csc_g;
 

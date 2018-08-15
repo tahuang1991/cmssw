@@ -55,6 +55,7 @@ CSCMotherboard::CSCMotherboard(unsigned endcap, unsigned station,
                    theSubsector(subsector), theTrigChamber(chamber) {
 
   theRing = CSCTriggerNumbering::ringFromTriggerLabels(theStation, theTrigChamber);
+  theChamber = CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector,theStation,theTrigChamber);
 
   // Normal constructor.  -JM
   // Pass ALCT, CLCT, and common parameters on to ALCT and CLCT processors.

@@ -210,7 +210,6 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             {
               // run the TMB
               CSCMotherboardME11* tmb11 = static_cast<CSCMotherboardME11*>(tmb);
-              LogTrace("CSCTriggerPrimitivesBuilder")<<"CSCTriggerPrimitivesBuilder::build in E:"<<endc<<" S:"<<stat<<" R:"<<ring;
               tmb11->run(wiredc,compdc);
 
               // get all collections
@@ -237,15 +236,13 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               //  if (tmpV[al].getKeyWG()>=10) alctV.push_back(tmpV[al]);
               //}
 
-              LogTrace("CSCTriggerPrimitivesBuilder")<<"CSCTriggerPrimitivesBuilder:: a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size()
-                                                     //<<"   1a: a="<<alctV1a.size()<<" c="<<clctV1a.size()<<" l="<<lctV1a.size();
-                                                     <<" c="<<clctV1a.size()<<" l="<<lctV1a.size();
-
               // ME1/b
 
-              if (!(lctV.empty()&&alctV.empty()&&clctV.empty())) {
-                LogTrace("L1CSCTrigger")
-                  << "CSCTriggerPrimitivesBuilder results in " <<detid;
+              if (!(lctV.empty()&&alctV.empty()&&clctV.empty() && lctV1a.empty() && clctV1a.empty())) {
+                 LogTrace("CSCTriggerPrimitivesBuilder")<<"CSCTriggerPrimitivesBuilder::build "
+                  << "CSCTriggerPrimitivesBuilder results in " <<detid
+		  <<" ME1b a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size()
+		  <<" ME1a c="<<clctV1a.size()<<" l="<<lctV1a.size();
               }
 
               // put collections in event
@@ -259,12 +256,6 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               if (disableME1a) continue;
 
-              CSCDetId detid1a(endc, stat, 4, chid, 0);
-
-              //if (!(lctV1a.empty()&&alctV1a.empty()&&clctV1a.empty())){
-              if (!(lctV1a.empty() && clctV1a.empty())){
-                LogTrace("L1CSCTrigger") << "CSCTriggerPrimitivesBuilder results in " <<detid1a;
-              }
 
               // put collections in event, still use detid ring =1
               put(lctV1a, oc_lct, detid, " ME1a LCT digi");
@@ -281,7 +272,6 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               CSCGEMMotherboardME11* tmb11GEM = static_cast<CSCGEMMotherboardME11*>(tmb);
               tmb11GEM->setCSCGeometry(csc_g);
               tmb11GEM->setGEMGeometry(gem_g);
-              LogTrace("CSCTriggerPrimitivesBuilder")<<"CSCTriggerPrimitivesBuilder::build in E:"<<endc<<" S:"<<stat<<" R:"<<ring;
               tmb11GEM->run(wiredc, compdc, gemPads);
 
               // 0th layer means whole chamber.
@@ -315,7 +305,9 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               // ME1/b
               if (!(lctV.empty()&&alctV.empty()&&clctV.empty())) {
                 LogTrace("L1CSCTrigger")
-                  << "CSCTriggerPrimitivesBuilder results in " <<detid;
+                  << "CSCTriggerPrimitivesBuilder results in " <<detid
+		  <<" ME1b a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size()
+		  <<" ME1a c="<<clctV1a.size()<<" l="<<lctV1a.size();
               }
 
               // put collections in event
@@ -329,11 +321,6 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               // ME1/a
               if (disableME1a) continue;
 
-              CSCDetId detid1a(endc, stat, 4, chid, 0);
-
-              if (!(lctV1a.empty() && clctV1a.empty())){
-                LogTrace("L1CSCTrigger") << "CSCTriggerPrimitivesBuilder results in " <<detid1a;
-              }
 
               // put collections in event, still use detid ring =1
               put(lctV1a, oc_lct, detid, " ME1a LCT digi");
@@ -365,7 +352,8 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               if (!(alctV.empty() && clctV.empty() && lctV.empty())) {
                 LogTrace("L1CSCTrigger")
-                  << "CSCTriggerPrimitivesBuilder got results in " <<detid;
+                  << "CSCTriggerPrimitivesBuilder got results in " <<detid
+		  <<" ME21 a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size();
               }
 
               // put collections in event
@@ -393,7 +381,8 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               if (!(alctV.empty() && clctV.empty() && lctV.empty())) {
                 LogTrace("L1CSCTrigger")
-                  << "CSCTriggerPrimitivesBuilder got results in " <<detid;
+                  << "CSCTriggerPrimitivesBuilder got results in " <<detid
+		  <<" ME31/41 a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size();
               }
 
               // put collections in event
@@ -419,7 +408,8 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
               if (!(alctV.empty() && clctV.empty() && lctV.empty())) {
                 LogTrace("L1CSCTrigger")
-                  << "CSCTriggerPrimitivesBuilder got results in " <<detid;
+                  << "CSCTriggerPrimitivesBuilder got results in " <<detid
+		  <<" ME21 a="<<alctV.size()<<" c="<<clctV.size()<<" l="<<lctV.size();
               }
 
               // put collections in event
