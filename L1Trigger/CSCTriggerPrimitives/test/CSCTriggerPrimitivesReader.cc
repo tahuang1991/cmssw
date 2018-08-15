@@ -1729,7 +1729,7 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	  for (pretrigIt = pretrigrange.first; pretrigIt != pretrigrange.second; pretrigIt++){
 	      if ((*pretrigIt).isValid()){
 		  //for (auto preclct : pretrigV_emul){
-		  //    if (digiIt->getBX() != preclct.getBX() and abs(pretrigIt->getBX() - preclct.getBX())< 5)
+		  //    if (pretrigIt->getBX() != preclct.getBX() and abs(pretrigIt->getBX() - preclct.getBX())< 5)
 		  //        LogTrace("CSCTriggerPrimitivesReader") <<"Two CLCTPretrigs very close in timing!!! Special event: first preclct "<< preclct <<" second preclct "<<*pretrigIt << std::endl;
 		  //}
 		  pretrigV_emul.push_back(*pretrigIt);
