@@ -2196,8 +2196,8 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	    }//loop emul
 	    if (debug and stubs_comparison[2].key_hs_data != stubs_comparison[2].key_hs_emul)
 	      LogTrace("CSCTriggerPrimitivesReader")
-	        <<" not matched LCT from emulation "<< (*pd)
-	        <<"stubs_comparison 2 key_hs_data "<<stubs_comparison[2].key_hs_data <<" key_hs_emul "<< stubs_comparison[2].key_hs_emul;
+	        <<" not matched LCT from Data "<< (*pd)
+	        <<" stubs_comparison 2 key_hs_data "<<stubs_comparison[2].key_hs_data <<" key_hs_emul "<< stubs_comparison[2].key_hs_emul;
 	    //cout <<"LCT data BX "<< stubs_comparison[2].bx_data <<" emul BX "<< stubs_comparison[2].bx_emul<<" emul BX corrected "<< stubs_comparison[2].bx_corr_emul << endl;
 	    stub_tree[2]->Fill();
 	  }//loop data
