@@ -1490,8 +1490,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	      strstrm << "\n";
 	    }
 	    LogTrace("CSCTriggerPrimitivesReader") << strstrm.str();
-	    if (stat==1 && ring==1) 
-	    	std::cout <<"ME11  CompareALCTs "<< strstrm.str()<< std::endl;
+	    //if (stat==1 && ring==1) 
+	    //	std::cout <<"ME11  CompareALCTs "<< strstrm.str()<< std::endl;
 	  }
 
 	  int csctype = getCSCType(detid);
@@ -1586,7 +1586,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		}
                 hAlctCompTotal2i->Fill(ix2,detid.chamber());
 	      }
-	      if (data_trknmb    == emul_trknmb )  {
+	      if (abs(data_wiregroup - emul_wiregroup) <= 2){
+	      //if (data_trknmb    == emul_trknmb )  {
 		  //data_quality   == emul_quality   &&
 		  //data_accel     == emul_accel     &&
 		  //data_collB     == emul_collB     &&
@@ -1629,7 +1630,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	    }//loop emul
 	    if (debug and stubs_comparison[0].key_WG_data != stubs_comparison[0].key_WG_emul)
 	      LogTrace("CSCTriggerPrimitivesReader")
-	         <<"stubs_comparison 0 key_WG_data "<<stubs_comparison[0].key_WG_data <<" key_WG_emul "<< stubs_comparison[0].key_WG_emul;
+	    	  <<" not matched ALCT from data "<< alctV_data[i]
+	         <<" stubs_comparison 0 key_WG_data "<<stubs_comparison[0].key_WG_data <<" key_WG_emul "<< stubs_comparison[0].key_WG_emul;
 	    //if (stat==1) std::cout <<" stub_tree filled , ring "<< stubs_comparison[0].ring << std::endl;
 	    //cout <<"ALCT data BX "<< stubs_comparison[0].bx_data <<" WG "<< stubs_comparison[0].key_WG_data <<" emul BX "<< stubs_comparison[0].bx_emul<<" emul BX corrected "<< stubs_comparison[0].bx_corr_emul <<" WG "<< stubs_comparison[0].key_WG_emul << endl;
 	    stub_tree[0]->Fill(); 
@@ -1666,6 +1668,9 @@ void CSCTriggerPrimitivesReader::compareALCTs(
                 emul_corr_bx = emul_bx;
 	      stubs_comparison[0].bx_corr_emul = emul_corr_bx;
 	      stub_tree[0]->Fill(); 
+	      if (debug)
+		   LogTrace("CSCTriggerPrimitivesReader") 
+		       <<"not matched ALCT from emulation "<< alctV_emul[i];
 
 	  }//loop emul	
 	}
@@ -1710,6 +1715,10 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	  std::vector<bool> bookedclctV_emul;
 	  for (digiIt = erange.first; digiIt != erange.second; digiIt++) {
 	    if ((*digiIt).isValid()) {
+	      for (auto pclct : clctV_emul){
+		  if (digiIt->getBX() != pclct.getBX() and abs(digiIt->getBX() - pclct.getBX())< 5)
+		      LogTrace("CSCTriggerPrimitivesReader") <<"Two CLCTs very close in timing!!! Special event: first clct "<< pclct <<" second clct "<<*digiIt << std::endl;
+	      }
 	      clctV_emul.push_back(*digiIt);
 	      bookedclctV_emul.push_back(false);
 	    }
@@ -1718,8 +1727,13 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	  std::vector<CSCCLCTPreTriggerDigi> pretrigV_emul;
 	  const CSCCLCTPreTriggerDigiCollection::Range& pretrigrange = pretrigs_emul->get(detid);
 	  for (pretrigIt = pretrigrange.first; pretrigIt != pretrigrange.second; pretrigIt++){
-	      if ((*pretrigIt).isValid())
+	      if ((*pretrigIt).isValid()){
+		  //for (auto preclct : pretrigV_emul){
+		  //    if (pretrigIt->getBX() != preclct.getBX() and abs(pretrigIt->getBX() - preclct.getBX())< 5)
+		  //        LogTrace("CSCTriggerPrimitivesReader") <<"Two CLCTPretrigs very close in timing!!! Special event: first preclct "<< preclct <<" second preclct "<<*pretrigIt << std::endl;
+		  //}
 		  pretrigV_emul.push_back(*pretrigIt);
+	      }
 	  }
 
 	  int ndata = clctV_data.size();
@@ -1753,8 +1767,8 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	      strstrm << "\n";
 	    }
 	    LogTrace("CSCTriggerPrimitivesReader") << strstrm.str();
-	    if (stat==1 && ring==1) 
-	    	std::cout <<"ME11  CompareCLCTs "<< strstrm.str()<< std::endl;
+	    //if (stat==1 && ring==1) 
+	    //	std::cout <<"ME11  CompareCLCTs "<< strstrm.str()<< std::endl;
 	  }
 
 	  int csctype = getCSCType(detid);
@@ -1839,7 +1853,8 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	      int emul_cfeb      = (*pe).getCFEB();
 	      int emul_bx        = (*pe).getBX();
 
-	      if (data_trknmb == emul_trknmb) {
+	      //if (data_trknmb == emul_trknmb) {
+	      if (abs(data_keystrip - emul_keystrip) <= 2){
 		// Emulator BX re-calculated using 12-bit full BX number.
 		// Used for comparison with BX in the data.
 		int emul_corr_bx =
@@ -1924,7 +1939,8 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	    }//loop emul
 	    if (debug and stubs_comparison[1].key_hs_data != stubs_comparison[1].key_hs_emul)
 	      LogTrace("CSCTriggerPrimitivesReader")
-		  <<"stubs_comparison 1 key_hs_data "<<stubs_comparison[1].key_hs_data <<" key_hs_emul "<< stubs_comparison[1].key_hs_emul;
+	    	  <<" not matched CLCT from data "<<  (*pd)
+		  <<" stubs_comparison 1 key_hs_data "<<stubs_comparison[1].key_hs_data <<" key_hs_emul "<< stubs_comparison[1].key_hs_emul;
 	    //cout <<"CLCT data BX "<< stubs_comparison[1].bx_data <<" emul BX "<< stubs_comparison[1].bx_emul<<" emul BX corrected "<< stubs_comparison[1].bx_corr_emul << endl;
 	    stub_tree[1]->Fill(); 
 	  }//loop data
@@ -1958,6 +1974,9 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	    stubs_comparison[1].phi_emul = gp_clct_emul.phi();
 	    bookedclctV_emul[k] = true;
 	    stub_tree[1]->Fill(); 
+	    if (debug)
+	       LogTrace("CSCTriggerPrimitivesReader") 
+		   <<"not matched CLCT from emulation "<< clctV_emul[k];
 	  }
 	}
       }
@@ -2111,7 +2130,8 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	      int emul_striptype = (*pe).getStripType();
 	      int emul_bend      = (*pe).getBend();
 	      int emul_bx        = (*pe).getBX();
-	      if (data_trknmb == emul_trknmb) {
+	      //if (data_trknmb == emul_trknmb) {
+	      if (abs(data_keystrip - emul_keystrip) <= 2 || abs(data_wiregroup - emul_wiregroup) <= 2){
 		// Convert emulator BX into hardware BX using full 12-bit
 		// BX words in ALCT and CLCT digi collections.
 		int emul_corr_bx = convertBXofLCT(emul_bx, detid,
@@ -2176,7 +2196,8 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	    }//loop emul
 	    if (debug and stubs_comparison[2].key_hs_data != stubs_comparison[2].key_hs_emul)
 	      LogTrace("CSCTriggerPrimitivesReader")
-	        <<"stubs_comparison 2 key_hs_data "<<stubs_comparison[2].key_hs_data <<" key_hs_emul "<< stubs_comparison[2].key_hs_emul;
+	        <<" not matched LCT from Data "<< (*pd)
+	        <<" stubs_comparison 2 key_hs_data "<<stubs_comparison[2].key_hs_data <<" key_hs_emul "<< stubs_comparison[2].key_hs_emul;
 	    //cout <<"LCT data BX "<< stubs_comparison[2].bx_data <<" emul BX "<< stubs_comparison[2].bx_emul<<" emul BX corrected "<< stubs_comparison[2].bx_corr_emul << endl;
 	    stub_tree[2]->Fill();
 	  }//loop data
@@ -2210,6 +2231,9 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	    stubs_comparison[2].phi_emul = gp_lct_emul.phi();
 	    bookedlctV_emul[k] = true;
 	    stub_tree[2]->Fill(); 
+	    if (debug)
+	       LogTrace("CSCTriggerPrimitivesReader") 
+		   <<"not matched LCT from emulation "<< lctV_emul[k];
 
 	  }
 	}
@@ -4454,6 +4478,7 @@ CSCTriggerPrimitivesReader::getGlobalPosition(unsigned int rawId, int keyWg, int
   // taken from https://github.com/cms-sw/cmssw/blob/dc9f78b6af4ad56c9342cf14041b6485a60b0691/L1Trigger/CSCTriggerPrimitives/src/CSCTriggerPrimitivesReaderGEM.cc
   CSCDetId cscId = CSCDetId(rawId);
   int ring = cscId.ring();
+  //std::cout <<"To find globalPosition CSCid "<< cscId <<" keyWG "<< keyWg <<" keyHS "<< keyHS << std::endl;
   if (cscId.station() == 1 and cscId.ring() == 1 and (lut_wg_vs_hs_me1b[keyWg][0] <0 || keyHS>=128)){
       ring =4;
       if (keyHS >= 128)
