@@ -259,7 +259,7 @@ CSCAnodeLCTProcessor::CSCAnodeLCTProcessor(unsigned endcap, unsigned station,
 
   // whether to calculate bx as corrected_bx instead of pretrigger one
   use_corrected_bx = false;
-  if (isSLHC && isME11) {
+  if (isSLHC && isME11 and false) { /*##*/
     use_corrected_bx = conf.getParameter<bool>("alctUseCorrectedBx");
   }
 
@@ -621,8 +621,13 @@ void CSCAnodeLCTProcessor::run(const std::vector<int> wire[CSCConstants::NUM_LAY
 
   // Do the rest only if there is at least one trigger candidate.
   if (trigger) {
-    if (isSLHC) ghostCancellationLogicSLHC();
-    else ghostCancellationLogic();
+    std::cout << "Chamber triggered ALCT! " << std::endl; /*##*/
+    if (isSLHC and false) {
+      ghostCancellationLogicSLHC();
+    }
+    else {
+      ghostCancellationLogic();
+    }
     lctSearch();
   }
 }
