@@ -110,7 +110,7 @@ CSCMotherboard::CSCMotherboard(unsigned endcap, unsigned station,
   if (isSLHC and theRing == 1){
     if (theStation == 1) {
       tmbParams = conf.getParameter<edm::ParameterSet>("tmbSLHC");
-      alctParams = conf.getParameter<edm::ParameterSet>("alctSLHC");
+      alctParams = conf.getParameter<edm::ParameterSet>("alctParam07"); /*##*/
       clctParams = conf.getParameter<edm::ParameterSet>("clctSLHC");
       if (runME11ILT) {
         tmbParams = me11tmbGemParams;
