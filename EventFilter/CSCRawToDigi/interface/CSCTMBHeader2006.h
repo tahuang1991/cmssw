@@ -12,6 +12,7 @@ struct CSCTMBHeader2006 : public CSCVTMBHeaderFormat {
 
   uint16_t BXNCount() const override {return bits.bxnCount;}
   uint16_t ALCTMatchTime() const override {return bits.matchWin;}
+  uint16_t L1AMatchTime() const override {return bits.pop_l1a_match_win;}
   uint16_t CLCTOnly() const override {return bits.clctOnly;}
   uint16_t ALCTOnly() const override {return bits.alctOnly;}
   uint16_t TMBMatch() const override {return bits.tmbMatch;}

@@ -72,7 +72,7 @@ CSCTMBHeader2013::CorrelatedLCTDigis(uint32_t idlayer) const
                               bits.MPC_Muon0_cscid_low | (bits.MPC_Muon0_cscid_bit4<<3));
     if (digi.isValid()){
 	digi.setBX0(bits.matchWin);
-	//std::cout <<"bits.matchWin "<< bits.matchWin <<" LCT " << digi << std::endl;
+	std::cout <<"bits.matchWin "<< bits.matchWin <<" LCT " << digi <<" L1AMatchBX "<< bits.pop_l1a_match_win << std::endl;
     }
     result.push_back(digi);
 	
