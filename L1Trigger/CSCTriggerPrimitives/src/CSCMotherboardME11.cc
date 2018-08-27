@@ -81,8 +81,8 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
   edm::ParameterSet clctParams = conf.getParameter<edm::ParameterSet>("clctSLHC");
   edm::ParameterSet tmbParams = conf.getParameter<edm::ParameterSet>("tmbSLHC");
 
-  clct1a.reset( new CSCCathodeLCTProcessor(endcap, station, sector, subsector, chamber, clctParams, commonParams, tmbParams) );
-  clct1a->setRing(4);
+  //clct1a.reset( new CSCCathodeLCTProcessor(endcap, station, sector, subsector, chamber, clctParams, commonParams, tmbParams) );
+  //clct1a->setRing(4);
 
   match_earliest_alct_me11_only = tmbParams.getParameter<bool>("matchEarliestAlctME11Only");
   match_earliest_clct_me11_only = tmbParams.getParameter<bool>("matchEarliestClctME11Only");
@@ -106,6 +106,8 @@ CSCMotherboardME11::CSCMotherboardME11(unsigned endcap, unsigned station,
     pref[m-1] = pref[0] - m/2;
     pref[m]   = pref[0] + m/2;
   }
+
+  ignoreAlctCrossClct = tmbParams.getParameter<bool>("ignoreAlctCrossClct");
 }
 
 
@@ -113,8 +115,8 @@ CSCMotherboardME11::CSCMotherboardME11() : CSCMotherboard()
 {
   // Constructor used only for testing.
 
-  clct1a.reset( new CSCCathodeLCTProcessor() );
-  clct1a->setRing(4);
+  //clct1a.reset( new CSCCathodeLCTProcessor() );
+  //clct1a->setRing(4);
 
   pref[0] = match_trig_window_size/2;
   for (unsigned int m=2; m<match_trig_window_size; m+=2)
@@ -133,14 +135,13 @@ CSCMotherboardME11::~CSCMotherboardME11()
 void CSCMotherboardME11::clear()
 {
   CSCMotherboard::clear();
-  if (clct1a) clct1a->clear();
+  //if (clct1a) clct1a->clear();
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
   {
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
       {
-        allLCTs1b[bx][mbx][i].clear();
-        allLCTs1a[bx][mbx][i].clear();
+        allLCTsME11[bx][mbx][i].clear();
       }
   }
 }
@@ -150,7 +151,7 @@ void CSCMotherboardME11::setConfigParameters(const CSCDBL1TPParameters* conf)
 {
   alct->setConfigParameters(conf);
   clct->setConfigParameters(conf);
-  clct1a->setConfigParameters(conf);
+  //clct1a->setConfigParameters(conf);
   // No config. parameters in DB for the TMB itself yet.
 }
 
@@ -160,7 +161,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 {
   clear();
 
-  if (!( alct && clct &&  clct1a && smartME1aME1b))
+  //if (!( alct && clct &&  clct1a && smartME1aME1b))
+  if (!( alct && clct && smartME1aME1b))
   {
     if (infoV >= 0) edm::LogError("L1CSCTPEmulatorSetupError")
       << "+++ run() called for non-existing ALCT/CLCT processor! +++ \n";
@@ -169,11 +171,11 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
   alct->setCSCGeometry(csc_g);
   clct->setCSCGeometry(csc_g);
-  clct1a->setCSCGeometry(csc_g);
+  //clct1a->setCSCGeometry(csc_g);
 
   alctV = alct->run(wiredc); // run anodeLCT
   clctV1b = clct->run(compdc); // run cathodeLCT in ME1/b
-  clctV1a = clct1a->run(compdc); // run cathodeLCT in ME1/a
+  //clctV1a = clct1a->run(compdc); // run cathodeLCT in ME1/a
 
   //int n_clct_a=0, n_clct_b=0;
   //if (clct1a->bestCLCT[6].isValid() && clct1a->bestCLCT[6].getBX()==6) n_clct_a++;
@@ -184,12 +186,19 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   for (int b=0;b<20;b++)
     used_alct_mask[b] = used_alct_mask_1a[b] = used_clct_mask[b] = used_clct_mask_1a[b] = 0;
 
+  
   // CLCT-centric CLCT-to-ALCT matching
   if (clct_to_alct) for (int bx_clct = 0; bx_clct < CSCConstants::MAX_CLCT_TBINS; bx_clct++)
   {
-    // matching in ME1b
+
     if (clct->bestCLCT[bx_clct].isValid())
     {
+      if (infoV > 1 ) LogTrace("CSCMotherboard")
+	  <<"clct centric in ME11, endcap "<< theEndcap <<" theStation "<< theStation <<" thechamber  "<< theChamber 
+	  <<" bx_clct " << bx_clct <<" best CLCT "<< clct->bestCLCT[bx_clct];
+      if (infoV > 1 && clct->secondCLCT[bx_clct].isValid()) LogTrace("CSCMotherboard")
+	  <<" second CLCT "<< clct->secondCLCT[bx_clct];
+
       int bx_alct_start = bx_clct - match_trig_window_size/2;
       int bx_alct_stop  = bx_clct + match_trig_window_size/2;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
@@ -203,10 +212,10 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
             << "; match window: [" << bx_alct_start << "; " << bx_alct_stop
             << "]; bx_alct = " << bx_alct;
           int mbx = bx_alct_stop - bx_alct;
-          correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+          correlateLCTsME11(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
                         clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
-                        allLCTs1b[bx_alct][mbx][0], allLCTs1b[bx_alct][mbx][1], ME1B);
-          if (allLCTs1b[bx_alct][mbx][0].isValid())
+                        allLCTsME11[bx_alct][mbx][0], allLCTsME11[bx_alct][mbx][1]);
+          if (allLCTsME11[bx_alct][mbx][0].isValid())
           {
             used_alct_mask[bx_alct] += 1;
             if (match_earliest_alct_me11_only) break;
@@ -215,35 +224,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       }
       // Do not report CLCT-only LCT for ME1b
     }
-    // matching in ME1a
-    if (clct1a->bestCLCT[bx_clct].isValid())
-    {
-      int bx_alct_start = bx_clct - match_trig_window_size/2;
-      int bx_alct_stop  = bx_clct + match_trig_window_size/2;
-      for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
-      {
-        if (bx_alct < 0 || bx_alct >= CSCConstants::MAX_ALCT_TBINS) continue;
-        if (drop_used_alcts && used_alct_mask_1a[bx_alct]) continue;
-        if (alct->bestALCT[bx_alct].isValid())
-        {
-          if (infoV > 1) LogTrace("CSCMotherboard")
-            << "Successful CLCT-ALCT match in ME1a: bx_clct = " << bx_clct
-            << "; match window: [" << bx_alct_start << "; " << bx_alct_stop
-            << "]; bx_alct = " << bx_alct;
-          int mbx = bx_alct_stop - bx_alct;
-          correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
-                        clct1a->bestCLCT[bx_clct], clct1a->secondCLCT[bx_clct],
-                        allLCTs1a[bx_alct][mbx][0], allLCTs1a[bx_alct][mbx][1], ME1A);
-          if (allLCTs1a[bx_alct][mbx][0].isValid())
-          {
-            used_alct_mask_1a[bx_alct] += 1;
-            if (match_earliest_alct_me11_only) break;
-          }
-        }
-      }
-      // Do not report CLCT-only LCT for ME1b
-    }
-    // Do not attempt to make ALCT-only LCT for ME1b
   } // end of CLCT-centric matching
 
   // ALCT-centric ALCT-to-CLCT matching
@@ -251,10 +231,15 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   {
     if (alct->bestALCT[bx_alct].isValid())
     {
+      if (infoV > 1 ) LogTrace("CSCMotherboard")
+	  <<"alct centric in ME11, endcap "<< theEndcap <<" theStation "<< theStation <<" thechamber  "<< theChamber 
+	  <<" bx_alct " << bx_alct <<" best ALCT "<< alct->bestALCT[bx_alct];
+      if (infoV > 1 && alct->secondALCT[bx_alct].isValid()) LogTrace("CSCMotherboard")
+	  <<" second ALCT "<< alct->secondALCT[bx_alct];
+
       int bx_clct_start = bx_alct - match_trig_window_size/2;
       int bx_clct_stop  = bx_alct + match_trig_window_size/2;
 
-      // matching in ME1b
       for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)
       {
         if (bx_clct < 0 || bx_clct >= CSCConstants::MAX_CLCT_TBINS) continue;
@@ -266,10 +251,10 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
             << "; match window: [" << bx_clct_start << "; " << bx_clct_stop
             << "]; bx_clct = " << bx_clct;
           int mbx = bx_clct-bx_clct_start;
-          correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+          correlateLCTsME11(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
                         clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
-                        allLCTs1b[bx_alct][mbx][0], allLCTs1b[bx_alct][mbx][1], ME1B);
-          if (allLCTs1b[bx_alct][mbx][0].isValid())
+                        allLCTsME11[bx_alct][mbx][0], allLCTsME11[bx_alct][mbx][1]);
+          if (allLCTsME11[bx_alct][mbx][0].isValid())
           {
             used_clct_mask[bx_clct] += 1;
             if (match_earliest_clct_me11_only) break;
@@ -277,28 +262,6 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
         }
       }
 
-      // matching in ME1a
-      for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)
-      {
-        if (bx_clct < 0 || bx_clct >= CSCConstants::MAX_CLCT_TBINS) continue;
-        if (drop_used_clcts && used_clct_mask_1a[bx_clct]) continue;
-        if (clct1a->bestCLCT[bx_clct].isValid())
-        {
-          if (infoV > 1) LogTrace("CSCMotherboard")
-            << "Successful ALCT-CLCT match in ME1a: bx_alct = " << bx_alct
-            << "; match window: [" << bx_clct_start << "; " << bx_clct_stop
-            << "]; bx_clct = " << bx_clct;
-          int mbx = bx_clct-bx_clct_start;
-          correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
-                        clct1a->bestCLCT[bx_clct], clct1a->secondCLCT[bx_clct],
-                        allLCTs1a[bx_alct][mbx][0], allLCTs1a[bx_alct][mbx][1], ME1A);
-          if (allLCTs1a[bx_alct][mbx][0].isValid())
-          {
-            used_clct_mask_1a[bx_clct] += 1;
-            if (match_earliest_clct_me11_only) break;
-          }
-        }
-      }
     }
   } // end of ALCT-centric matching
 
@@ -306,80 +269,48 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
   {
     // counting
-    unsigned int n1a=0, n1b=0;
+    unsigned int  nlct=0;
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
       {
         int cbx = bx + mbx - match_trig_window_size/2;
-        if (allLCTs1b[bx][mbx][i].isValid())
+        if (allLCTsME11[bx][mbx][i].isValid())
         {
-          n1b++;
-          if (infoV > 0) LogDebug("CSCMotherboard") << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1b[bx][mbx][i];
-        }
-        if (allLCTs1a[bx][mbx][i].isValid())
-        {
-          n1a++;
-          if (infoV > 0) LogDebug("CSCMotherboard") << "1a LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1a[bx][mbx][i];
+          nlct++;
+          if (infoV > 0) LogDebug("CSCMotherboard") << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTsME11[bx][mbx][i];
         }
       }
-    if (infoV > 0 && n1a+n1b>0) LogDebug("CSCMotherboard") <<"bx "<<bx<<" nLCT:"<<n1a<<" "<<n1b<<" "<<n1a+n1b;
+    if (infoV > 0 && nlct>0) LogDebug("CSCMotherboard") <<"bx "<<bx<<" nLCT:"<<nlct;
 
     // some simple cross-bx sorting algorithms
-    if (tmb_cross_bx_algo == 1 && (n1a>2 || n1b>2) )
+    if (tmb_cross_bx_algo == 1 && (nlct > 2) )
     {
-      n1a=0, n1b=0;
+      nlct=0;
       for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
         for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
         {
-          if (allLCTs1b[bx][pref[mbx]][i].isValid())
+          if (allLCTsME11[bx][pref[mbx]][i].isValid())
           {
-            n1b++;
-            if (n1b>2) allLCTs1b[bx][pref[mbx]][i].clear();
-          }
-          if (allLCTs1a[bx][pref[mbx]][i].isValid())
-          {
-            n1a++;
-            if (n1a>2) allLCTs1a[bx][pref[mbx]][i].clear();
+            nlct++;
+            if (nlct > CSCConstants::MAX_LCTS_PER_CSC) allLCTsME11[bx][pref[mbx]][i].clear();
           }
         }
 
       if (infoV > 0) LogDebug("CSCMotherboard") <<"After x-bx sorting:";
-      n1a=0, n1b=0;
+      nlct=0;
       for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
         for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
         {
           int cbx = bx + mbx - match_trig_window_size/2;
-          if (allLCTs1b[bx][mbx][i].isValid())
+          if (allLCTsME11[bx][mbx][i].isValid())
           {
-            n1b++;
-            if (infoV > 0) LogDebug("CSCMotherboard") << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1b[bx][mbx][i];
-          }
-          if (allLCTs1a[bx][mbx][i].isValid())
-          {
-            n1a++;
-            if (infoV > 0) LogDebug("CSCMotherboard") << "1a LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTs1a[bx][mbx][i];
+            nlct++;
+            if (infoV > 0) LogDebug("CSCMotherboard") << "1b LCT"<<i+1<<" "<<bx<<"/"<<cbx<<": "<<allLCTsME11[bx][mbx][i];
           }
         }
-      if (infoV > 0 && n1a+n1b>0) LogDebug("CSCMotherboard") <<"bx "<<bx<<" nnLCT:"<<n1a<<" "<<n1b<<" "<<n1a+n1b;
+      if (infoV > 0 && nlct>0) LogDebug("CSCMotherboard") <<"bx "<<bx<<" nnLCT:"<<nlct;
     } // x-bx sorting
 
-    // Maximum 2 or 3 per whole ME11 per BX case:
-    // (supposedly, now we should have max 2 per bx in each 1a and 1b)
-    if ( n1a+n1b > max_me11_lcts )
-    {
-      // do it simple so far: take all low eta 1/b stubs
-      unsigned int nLCT=n1b;
-      n1a=0;
-      // right now nLCT<=2; cut 1a if necessary
-      for (unsigned int mbx=0; mbx<match_trig_window_size; mbx++)
-        for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
-          if (allLCTs1a[bx][mbx][i].isValid()) {
-            nLCT++;
-            if (nLCT>max_me11_lcts) allLCTs1a[bx][mbx][i].clear();
-            else n1a++;
-          }
-      if (infoV > 0 && nLCT>0) LogDebug("CSCMotherboard") <<"bx "<<bx<<" nnnLCT:"<<n1a<<" "<<n1b<<" "<<n1a+n1b;
-    }
   }// reduction per bx
 
   //if (infoV > 1) LogTrace("CSCMotherboardME11")<<"clct_count E:"<<theEndcap<<"S:"<<theStation<<"R:"<<1<<"C:"
@@ -459,7 +390,7 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::getLCTs1b() const
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
-        if (allLCTs1b[bx][mbx][i].isValid()) tmpV.push_back(allLCTs1b[bx][mbx][i]);
+        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() <= CSCConstants::MAX_HALF_STRIP_ME1B) tmpV.push_back(allLCTsME11[bx][mbx][i]);
   return tmpV;
 }
 
@@ -475,18 +406,20 @@ std::vector<CSCCorrelatedLCTDigi> CSCMotherboardME11::getLCTs1a() const
   for (int bx = 0; bx < CSCConstants::MAX_LCT_TBINS; bx++)
     for (unsigned int mbx = 0; mbx < match_trig_window_size; mbx++)
       for (int i=0;i<CSCConstants::MAX_LCTS_PER_CSC;i++)
-        if (allLCTs1a[bx][mbx][i].isValid())  tmpV.push_back(allLCTs1a[bx][mbx][i]);
+        if (allLCTsME11[bx][mbx][i].isValid() and allLCTsME11[bx][mbx][i].getStrip() > CSCConstants::MAX_HALF_STRIP_ME1B)  tmpV.push_back(allLCTsME11[bx][mbx][i]);
   return tmpV;
 }
 
 
-bool CSCMotherboardME11::doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c, int me) const
+bool CSCMotherboardME11::doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c) const
 {
   if ( !c.isValid() || !a.isValid() ) return false;
   int key_hs = c.getKeyStrip();
   int key_wg = a.getKeyWG();
-  if ( me == ME1A )
+
+  if (key_hs > CSCConstants::MAX_HALF_STRIP_ME1B)
   {
+    key_hs = key_hs - CSCConstants::MAX_HALF_STRIP_ME1B -1;//convert it from 128-223 -> 0-95
     if ( !gangedME1a )
     {
       // wrap around ME11 HS number for -z endcap
@@ -503,7 +436,7 @@ bool CSCMotherboardME11::doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDi
       return false;
     }
   }
-  if ( me == ME1B)
+  if ( key_hs <= CSCConstants::MAX_HALF_STRIP_ME1B)
   {
     if (theEndcap==2) key_hs = CSCConstants::MAX_HALF_STRIP_ME1B - key_hs;
     if ( key_hs >= lut_wg_vs_hs_me1b[key_wg][0] &&
@@ -513,13 +446,13 @@ bool CSCMotherboardME11::doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDi
 }
 
 
-void CSCMotherboardME11::correlateLCTs(const CSCALCTDigi& bALCT,
+void CSCMotherboardME11::correlateLCTsME11(const CSCALCTDigi& bALCT,
                                        const CSCALCTDigi& sALCT,
                                        const CSCCLCTDigi& bCLCT,
                                        const CSCCLCTDigi& sCLCT,
                                        CSCCorrelatedLCTDigi& lct1,
-                                       CSCCorrelatedLCTDigi& lct2,
-                                       int me) const
+                                       CSCCorrelatedLCTDigi& lct2
+                                       ) const
 {
   // assume that always anodeBestValid && cathodeBestValid
   CSCALCTDigi bestALCT = bALCT;
@@ -527,53 +460,83 @@ void CSCMotherboardME11::correlateLCTs(const CSCALCTDigi& bALCT,
   CSCCLCTDigi bestCLCT = bCLCT;
   CSCCLCTDigi secondCLCT = sCLCT;
 
-  if (secondALCT == bestALCT) secondALCT.clear();
-  if (secondCLCT == bestCLCT) secondCLCT.clear();
+  if (ignoreAlctCrossClct) {
+    const bool anodeBestValid     = bestALCT.isValid();
+    const bool anodeSecondValid   = secondALCT.isValid();
+    const bool cathodeBestValid   = bestCLCT.isValid();
+    const bool cathodeSecondValid = secondCLCT.isValid();
 
-  int ok11 = doesALCTCrossCLCT( bestALCT, bestCLCT, me);
-  int ok12 = doesALCTCrossCLCT( bestALCT, secondCLCT, me);
-  int ok21 = doesALCTCrossCLCT( secondALCT, bestCLCT, me);
-  int ok22 = doesALCTCrossCLCT( secondALCT, secondCLCT, me);
-  int code = (ok11<<3) | (ok12<<2) | (ok21<<1) | (ok22);
+    if (anodeBestValid and !anodeSecondValid)     secondALCT = bestALCT;
+    if (!anodeBestValid and anodeSecondValid)     bestALCT   = secondALCT;
+    if (cathodeBestValid and !cathodeSecondValid) secondCLCT = bestCLCT;
+    if (!cathodeBestValid and cathodeSecondValid) bestCLCT   = secondCLCT;
 
-  int dbg=0;
-  int ring = me;
-  int chamb= CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector, theStation, theTrigChamber);
-  CSCDetId did(theEndcap, theStation, ring, chamb, 0);
-  if (dbg) LogTrace("CSCMotherboardME11")<<"debug correlateLCTs in "<<did<<std::endl
-	   <<"ALCT1: "<<bestALCT<<std::endl
-	   <<"ALCT2: "<<secondALCT<<std::endl
-	   <<"CLCT1: "<<bestCLCT<<std::endl
-	   <<"CLCT2: "<<secondCLCT<<std::endl
-	   <<"ok 11 12 21 22 code = "<<ok11<<" "<<ok12<<" "<<ok21<<" "<<ok22<<" "<<code<<std::endl;
+    // ALCT-CLCT matching conditions are defined by "trig_enable" configuration
+    // parameters.
+    if ((alct_trig_enable  and bestALCT.isValid()) or
+        (clct_trig_enable  and bestCLCT.isValid()) or
+        (match_trig_enable and bestALCT.isValid() and bestCLCT.isValid())){
+      lct1 = constructLCTs(bestALCT, bestCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
+    }
 
-  if ( code==0 ) return;
+    if (((secondALCT != bestALCT) or (secondCLCT != bestCLCT)) and
+        ((alct_trig_enable  and secondALCT.isValid()) or
+         (clct_trig_enable  and secondCLCT.isValid()) or
+         (match_trig_enable and secondALCT.isValid() and secondCLCT.isValid()))){
+      lct2 = constructLCTs(secondALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 2);
+    }
+    return;
+  }
+  else {
 
-  // LUT defines correspondence between possible ok## combinations
-  // and resulting lct1 and lct2
-  int lut[16][2] = {
-          //ok: 11 12 21 22
-    {0 ,0 }, // 0  0  0  0
-    {22,0 }, // 0  0  0  1
-    {21,0 }, // 0  0  1  0
-    {21,22}, // 0  0  1  1
-    {12,0 }, // 0  1  0  0
-    {12,22}, // 0  1  0  1
-    {12,21}, // 0  1  1  0
-    {12,21}, // 0  1  1  1
-    {11,0 }, // 1  0  0  0
-    {11,22}, // 1  0  0  1
-    {11,21}, // 1  0  1  0
-    {11,22}, // 1  0  1  1
-    {11,12}, // 1  1  0  0
-    {11,22}, // 1  1  0  1
-    {11,12}, // 1  1  1  0
-    {11,22}, // 1  1  1  1
-  };
+    if (secondALCT == bestALCT) secondALCT.clear();
+    if (secondCLCT == bestCLCT) secondCLCT.clear();
 
-  if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
+    int ok11 = doesALCTCrossCLCT( bestALCT, bestCLCT);
+    int ok12 = doesALCTCrossCLCT( bestALCT, secondCLCT);
+    int ok21 = doesALCTCrossCLCT( secondALCT, bestCLCT);
+    int ok22 = doesALCTCrossCLCT( secondALCT, secondCLCT);
+    int code = (ok11<<3) | (ok12<<2) | (ok21<<1) | (ok22);
 
-  switch (lut[code][0]) {
+    int dbg=0;
+    //int ring = me;
+    int chamb= CSCTriggerNumbering::chamberFromTriggerLabels(theSector,theSubsector, theStation, theTrigChamber);
+    //CSCDetId did(theEndcap, theStation, ring, chamb, 0);
+    CSCDetId did(theEndcap, theStation, 1, chamb, 0);
+    if (dbg) LogTrace("CSCMotherboardME11")<<"debug correlateLCTs in ME11 "<<did<<std::endl
+                                           <<"ALCT1: "<<bestALCT<<std::endl
+                                           <<"ALCT2: "<<secondALCT<<std::endl
+                                           <<"CLCT1: "<<bestCLCT<<std::endl
+                                           <<"CLCT2: "<<secondCLCT<<std::endl
+                                           <<"ok 11 12 21 22 code = "<<ok11<<" "<<ok12<<" "<<ok21<<" "<<ok22<<" "<<code<<std::endl;
+
+    if ( code==0 ) return;
+
+    // LUT defines correspondence between possible ok## combinations
+    // and resulting lct1 and lct2
+    int lut[16][2] = {
+      //ok: 11 12 21 22
+      {0 ,0 }, // 0  0  0  0
+      {22,0 }, // 0  0  0  1
+      {21,0 }, // 0  0  1  0
+      {21,22}, // 0  0  1  1
+      {12,0 }, // 0  1  0  0
+      {12,22}, // 0  1  0  1
+      {12,21}, // 0  1  1  0
+      {12,21}, // 0  1  1  1
+      {11,0 }, // 1  0  0  0
+      {11,22}, // 1  0  0  1
+      {11,21}, // 1  0  1  0
+      {11,22}, // 1  0  1  1
+      {11,12}, // 1  1  0  0
+      {11,22}, // 1  1  0  1
+      {11,12}, // 1  1  1  0
+      {11,22}, // 1  1  1  1
+    };
+
+    if (dbg) LogTrace("CSCMotherboardME11")<<"lut 0 1 = "<<lut[code][0]<<" "<<lut[code][1]<<std::endl;
+
+    switch (lut[code][0]) {
     case 11:
       lct1 = constructLCTs(bestALCT, bestCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
       break;
@@ -587,12 +550,11 @@ void CSCMotherboardME11::correlateLCTs(const CSCALCTDigi& bALCT,
       lct1 = constructLCTs(secondALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 1);
       break;
     default: return;
-  }
+    }
 
-  if (dbg) LogTrace("CSCMotherboardME11")<<"lct1: "<<lct1<<std::endl;
+    if (dbg) LogTrace("CSCMotherboardME11")<<"lct1: "<<lct1<<std::endl;
 
-  switch (lut[code][1])
-  {
+    switch (lut[code][1]){
     case 12:
       lct2 = constructLCTs(bestALCT, secondCLCT, CSCCorrelatedLCTDigi::ALCTCLCT, 2);
       if (dbg) LogTrace("CSCMotherboardME11")<<"lct2: "<<lct2<<std::endl;
@@ -606,9 +568,10 @@ void CSCMotherboardME11::correlateLCTs(const CSCALCTDigi& bALCT,
       if (dbg) LogTrace("CSCMotherboardME11")<<"lct2: "<<lct2<<std::endl;
       return;
     default: return;
-  }
-  if (dbg) LogTrace("CSCMotherboardME11")<<"out of correlateLCTs"<<std::endl;
+    }
+    if (dbg) LogTrace("CSCMotherboardME11")<<"out of correlateLCTs"<<std::endl;
 
-  return;
+    return;
+  }
 }
 
