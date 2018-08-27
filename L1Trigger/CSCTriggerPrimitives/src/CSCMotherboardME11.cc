@@ -199,8 +199,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       if (infoV > 1 && clct->secondCLCT[bx_clct].isValid()) LogTrace("CSCMotherboard")
 	  <<" second CLCT "<< clct->secondCLCT[bx_clct];
 
-      int bx_alct_start = bx_clct - match_trig_window_size/2;
-      int bx_alct_stop  = bx_clct + match_trig_window_size/2;
+      int bx_alct_start = bx_clct - match_trig_window_size/2 + alctClctOffset;
+      int bx_alct_stop  = bx_clct + match_trig_window_size/2 + alctClctOffset;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
       {
         if (bx_alct < 0 || bx_alct >= CSCConstants::MAX_ALCT_TBINS) continue;
@@ -237,8 +237,8 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       if (infoV > 1 && alct->secondALCT[bx_alct].isValid()) LogTrace("CSCMotherboard")
 	  <<" second ALCT "<< alct->secondALCT[bx_alct];
 
-      int bx_clct_start = bx_alct - match_trig_window_size/2;
-      int bx_clct_stop  = bx_alct + match_trig_window_size/2;
+      int bx_clct_start = bx_alct - match_trig_window_size/2 - alctClctOffset;
+      int bx_clct_stop  = bx_alct + match_trig_window_size/2 - alctClctOffset;
 
       for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)
       {
