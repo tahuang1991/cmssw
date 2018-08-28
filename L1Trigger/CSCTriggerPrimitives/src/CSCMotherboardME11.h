@@ -72,19 +72,18 @@ class CSCMotherboardME11 : public CSCMotherboard
   /** SLHC: special configuration parameters for ME11 treatment. */
   bool smartME1aME1b, disableME1a, gangedME1a;
 
-  bool doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c, int me) const;
+  bool doesALCTCrossCLCT(const CSCALCTDigi &a, const CSCCLCTDigi &c) const;
 
   /** for the case when more than 2 LCTs/BX are allowed;
       maximum match window = 15 */
-  CSCCorrelatedLCTDigi allLCTs1b[CSCConstants::MAX_LCT_TBINS][15][2];
-  CSCCorrelatedLCTDigi allLCTs1a[CSCConstants::MAX_LCT_TBINS][15][2];
+  CSCCorrelatedLCTDigi allLCTsME11[CSCConstants::MAX_LCT_TBINS][15][2];
 
-  void correlateLCTs(const CSCALCTDigi& bestALCT,
+  void correlateLCTsME11(const CSCALCTDigi& bestALCT,
                      const CSCALCTDigi& secondALCT,
                      const CSCCLCTDigi& bestCLCT,
                      const CSCCLCTDigi& secondCLCT,
                      CSCCorrelatedLCTDigi& lct1,
-                     CSCCorrelatedLCTDigi& lct2, int me) const;
+                     CSCCorrelatedLCTDigi& lct2) const;
 
   std::vector<CSCALCTDigi> alctV;
   std::vector<CSCCLCTDigi> clctV1b;
@@ -108,5 +107,7 @@ class CSCMotherboardME11 : public CSCMotherboard
 
   /** maximum lcts per BX in ME11: 2, 3, 4 or 999 */
   unsigned int max_me11_lcts;
+
+  bool ignoreAlctCrossClct;
 };
 #endif

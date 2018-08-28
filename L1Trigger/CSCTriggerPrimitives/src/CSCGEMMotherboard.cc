@@ -15,6 +15,7 @@ CSCGEMMotherboard::CSCGEMMotherboard(unsigned endcap, unsigned station,
 {
   // super chamber has layer=0!
   gemId = GEMDetId(theRegion, 1, theStation, 0, theChamber, 0).rawId();
+  std::cout <<"CSCGEMMotherboard GEMDetID "<< gemId <<" CSC station "<< theStation <<" ring "<< theRing << std::endl;
 
   const edm::ParameterSet coPadParams(station==1 ?
 				      conf.getParameter<edm::ParameterSet>("copadParamGE11") :
@@ -83,45 +84,41 @@ void CSCGEMMotherboard::retrieveGEMCoPads()
 
 CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct,
                                                          const GEMCoPadDigi& gem,
-                                                         enum CSCPart part,
                                                          int trknmb) const
 {
-  return constructLCTsGEM(alct, CSCCLCTDigi(), GEMPadDigi(), gem, part, trknmb);
+  return constructLCTsGEM(alct, CSCCLCTDigi(), GEMPadDigi(), gem, trknmb);
 }
 
 
 CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCCLCTDigi& clct,
                                                          const GEMCoPadDigi& gem,
-                                                         enum CSCPart part,
                                                          int trknmb) const
 {
-  return constructLCTsGEM(CSCALCTDigi(), clct, GEMPadDigi(), gem, part, trknmb);
+  return constructLCTsGEM(CSCALCTDigi(), clct, GEMPadDigi(), gem, trknmb);
 }
 
 CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct,
                                                          const CSCCLCTDigi& clct,
                                                          const GEMCoPadDigi& gem,
-                                                         enum CSCPart part,
                                                          int trknmb) const
 {
-  return constructLCTsGEM(alct, clct, GEMPadDigi(), gem, part, trknmb);
+  return constructLCTsGEM(alct, clct, GEMPadDigi(), gem, trknmb);
 }
 
 
 CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct,
                                                          const CSCCLCTDigi& clct,
                                                          const GEMPadDigi& gem,
-                                                         enum CSCPart part,
                                                          int trknmb) const
 {
-  return constructLCTsGEM(alct, clct, gem, GEMCoPadDigi(), part, trknmb);
+  return constructLCTsGEM(alct, clct, gem, GEMCoPadDigi(), trknmb);
 }
 
 CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct,
                                                          const CSCCLCTDigi& clct,
                                                          const GEMPadDigi& gem1,
                                                          const GEMCoPadDigi& gem2,
-                                                         enum CSCPart p, int trknmb) const
+                                                         int trknmb) const
 {
   int pattern = 0, quality = 0, bx = 0, keyStrip = 0, keyWG = 0, bend = 0;
 
@@ -159,6 +156,15 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     thisLCT.setType(CSCCorrelatedLCTDigi::ALCTCLCT2GEM);
   }
   else if (alct.isValid() and gem2.isValid() and not clct.isValid()) {
+    //in ME11 
+    //ME1b: keyWG >15,
+    //ME1a and ME1b overlap:  10<=keyWG<=15
+    //ME1a: keyWG < 10
+    //in overlap region, firstly try a match in ME1b     
+    
+    auto p(getCSCPart(-1));//use -1 as fake halfstrip, it returns ME11 if station==1 && (ring==1 or ring==4)
+    if (p == CSCPart::ME11 and alct.getKeyWG() <= 15)
+	p = CSCPart::ME1B;
     const auto& mymap1 = getLUT()->get_gem_pad_to_csc_hs(par, p);
     pattern = promoteALCTGEMpattern_ ? 10 : 0;
     quality = promoteALCTGEMquality_ ? 15 : 11;
@@ -172,6 +178,7 @@ CSCCorrelatedLCTDigi CSCGEMMotherboard::constructLCTsGEM(const CSCALCTDigi& alct
     thisLCT.setType(CSCCorrelatedLCTDigi::ALCT2GEM);
   }
   else if (clct.isValid() and gem2.isValid() and not alct.isValid()) {
+    auto p(getCSCPart(clct.getKeyStrip()));
     const auto& mymap2 = getLUT()->get_gem_roll_to_csc_wg(par, p);
     pattern = encodePattern(clct.getPattern(), clct.getStripType());
     quality = promoteCLCTGEMquality_ ? 15 : 11;

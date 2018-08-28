@@ -41,6 +41,9 @@ std::vector<CSCCLCTDigi> CSCTMBHeader2013::CLCTDigis(uint32_t idlayer)
   CSCCLCTDigi digi0(bits.clct0_valid, bits.clct0_quality,
 		    pattern, 1, bend, strip, cfeb, bits.clct_bxn, 1, bits.bxnPreTrigger);
   //digi0.setFullBX(bits.bxnPreTrigger);
+  if (digi0.isValid())
+      digi0.setBX(bits.matchWin);
+
 
   halfstrip = bits.clct1_key_low + (bits.clct1_key_high << 7);
   strip   = halfstrip%32;
@@ -51,6 +54,8 @@ std::vector<CSCCLCTDigi> CSCTMBHeader2013::CLCTDigis(uint32_t idlayer)
   //offlineStripNumbering(strip, cfeb, pattern, bend);
   CSCCLCTDigi digi1(bits.clct1_valid, bits.clct1_quality,
 		    pattern, 1, bend, strip, cfeb, bits.clct_bxn, 2, bits.bxnPreTrigger);
+  if (digi1.isValid())
+      digi1.setBX(bits.matchWin);
   //digi1.setFullBX(bits.bxnPreTrigger);
   result.push_back(digi0);
   result.push_back(digi1);
@@ -70,6 +75,8 @@ CSCTMBHeader2013::CorrelatedLCTDigis(uint32_t idlayer) const
                               bits.MPC_Muon0_bend_, bits.MPC_Muon0_bx_, 0,
                               bits.MPC_Muon0_bc0_, bits.MPC_Muon0_SyncErr_,
                               bits.MPC_Muon0_cscid_low | (bits.MPC_Muon0_cscid_bit4<<3));
+    if (digi.isValid())
+      digi.setBX(bits.matchWin);
     result.push_back(digi);
     /// for the first MPC word:
     strip = bits.MPC_Muon1_halfstrip_clct_pattern;//this goes from 0-159
@@ -79,6 +86,8 @@ CSCTMBHeader2013::CorrelatedLCTDigis(uint32_t idlayer) const
                                 bits.MPC_Muon1_bend_, bits.MPC_Muon1_bx_, 0,
                                 bits.MPC_Muon1_bc0_, bits.MPC_Muon1_SyncErr_,
                                 bits.MPC_Muon1_cscid_low | (bits.MPC_Muon1_cscid_bit4<<3));
+    if (digi.isValid())
+      digi.setBX(bits.matchWin);
     result.push_back(digi);
     return result;
 }
