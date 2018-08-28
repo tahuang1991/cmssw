@@ -164,10 +164,12 @@ void MyStubComparison::init(){
 
   npretrig = 0;
   quality_pretrig = -1;
+  maxquality_pretrig = -1;
   bend_pretrig = -1;
   bx_pretrig = -1;
   key_hs_pretrig = -1;  
   pattern_pretrig = -1;  
+  maxpattern_pretrig = -1;  
   quality_data = -1;
   bend_data = -1;
   bx_data = -1;
@@ -216,9 +218,11 @@ TTree *MyStubComparison::bookTree(TTree *t, const std::string & name)
    t->Branch("quality_emul",&quality_emul);   
    t->Branch("npretrig",&npretrig);   
    t->Branch("quality_pretrig",&quality_pretrig);   
+   t->Branch("maxquality_pretrig",&maxquality_pretrig);
    t->Branch("pattern_data",&pattern_data);   
    t->Branch("pattern_emul",&pattern_emul);   
    t->Branch("pattern_pretrig",&pattern_pretrig);   
+   t->Branch("maxpattern_pretrig",&maxpattern_pretrig);
    t->Branch("bend_data",&bend_data);   
    t->Branch("bx_data",&bx_data);   
    t->Branch("fullbx_data",&fullbx_data);   
@@ -1913,9 +1917,10 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	        stubs_comparison[1].phi_emul = gp_clct_emul.phi();
 		bookedclctV_emul[j]  = true;
 	    
-		int mingap_trig_pretrig = pretrig_trig_zone*2;
+		//int mingap_trig_pretrig = pretrig_trig_zone*2;
 		int num_pretrig = 0;
 	        for (pretrig = pretrigV_emul.begin(); pretrig != pretrigV_emul.end(); pretrig++){
+                    if ((*pretrig).getBX() != (*pe).getBX()) continue;   
 	            int hsgap = std::abs((*pretrig).getKeyStrip() - (*pe).getKeyStrip());
 		    bool samechamber = true;
                     if (stat == 1 and ring == 1)
@@ -1925,7 +1930,12 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 
 		    if (hsgap <= pretrig_trig_zone)
 			num_pretrig ++;
-		    if (hsgap <= pretrig_trig_zone and hsgap <= mingap_trig_pretrig){
+                    else 
+                        continue;
+                    if ((*pretrig).getPattern() > stubs_comparison[1].maxpattern_pretrig)
+                         stubs_comparison[1].maxpattern_pretrig = (*pretrig).getPattern();
+
+		    if ((*pretrig).getQuality() > stubs_comparison[1].maxquality_pretrig){
 	                stubs_comparison[1].quality_pretrig = (*pretrig).getQuality(); 
 	                stubs_comparison[1].key_hs_pretrig = (*pretrig).getKeyStrip();
 	                stubs_comparison[1].bend_pretrig = (*pretrig).getBend();

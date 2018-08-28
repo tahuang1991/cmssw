@@ -72,10 +72,12 @@ struct MyStubComparison
   Int_t bx_corr_emul;//corrected
   Int_t npretrig;
   Int_t quality_pretrig;
+  Int_t maxquality_pretrig;
   Int_t bend_pretrig;
   Int_t bx_pretrig;
   Int_t key_hs_pretrig;  
   Int_t pattern_pretrig;  
+  Int_t maxpattern_pretrig;  
   Int_t fullbx_data;
   Int_t fullbx_emul;
   Int_t pattern_data;
