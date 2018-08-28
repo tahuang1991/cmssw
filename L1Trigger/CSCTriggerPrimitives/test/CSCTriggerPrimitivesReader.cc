@@ -152,8 +152,8 @@ void MyStubComparison::init(){
   nEvents = -1;
   totStubs_data = -1;
   totStubs_emul = -1;
-  nStub_data = -1;
-  nStub_emul = -1;
+  nStub_data = 0;
+  nStub_emul = 0;
   chamber = -1;
   ring =-1;
   endcap =-1;
@@ -1548,7 +1548,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	    stubs_comparison[0].chambertype = detid.iChamberType();
 	    stubs_comparison[0].totStubs_data = ndata;
 	    stubs_comparison[0].totStubs_emul = nemul;
-	    stubs_comparison[0].nStub_data = i;
+	    stubs_comparison[0].nStub_data = i+1;
 	    stubs_comparison[0].has_data = true;
 	    stubs_comparison[0].quality_data = alctV_data[i].getQuality(); 
 	    stubs_comparison[0].key_WG_data = alctV_data[i].getKeyWG();
@@ -1607,7 +1607,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		 if (debug) LogTrace("CSCTriggerPrimitivesReader")
 		  << "       Identical ALCTs #" << data_trknmb;
 
-	         stubs_comparison[0].nStub_emul = i;
+	         stubs_comparison[0].nStub_emul = i+1;
 	         stubs_comparison[0].has_emul = true;
 	         stubs_comparison[0].quality_emul = alctV_emul[j].getQuality(); 
 	         stubs_comparison[0].key_WG_emul = alctV_emul[j].getKeyWG();
@@ -1649,7 +1649,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	      stubs_comparison[0].totStubs_data = ndata;
 	      stubs_comparison[0].totStubs_emul = nemul;
 	      stubs_comparison[0].nStub_data = -1;
-	      stubs_comparison[0].nStub_emul = i;
+	      stubs_comparison[0].nStub_emul = i+1;
 	      stubs_comparison[0].has_data = false;
 	      stubs_comparison[0].has_emul = true;
 	      stubs_comparison[0].trknmb_emul = alctV_emul[i].getTrknmb();
@@ -1827,7 +1827,7 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	    stubs_comparison[1].chambertype = detid.iChamberType();
 	    stubs_comparison[1].totStubs_data = ndata;
 	    stubs_comparison[1].totStubs_emul = nemul;
-	    stubs_comparison[1].nStub_data = i;
+	    stubs_comparison[1].nStub_data = i+1;
 	    stubs_comparison[1].has_data = true;
 	    stubs_comparison[1].quality_data = (*pd).getQuality(); 
 	    stubs_comparison[1].key_hs_data = (*pd).getKeyStrip();
@@ -1900,7 +1900,7 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 		    << ((endc == 1) ? "+" : "-") << stat << "/"
 		    << ring << "/" << cham <<" data_bx "<< data_bx <<" emul_corr_bx "<< emul_corr_bx;
 		}
-	        stubs_comparison[1].nStub_emul = j;
+	        stubs_comparison[1].nStub_emul = j+1;
 	        stubs_comparison[1].has_emul = true;
 	        stubs_comparison[1].quality_emul = (*pe).getQuality(); 
 	        stubs_comparison[1].key_hs_emul = (*pe).getKeyStrip();
@@ -1959,7 +1959,7 @@ void CSCTriggerPrimitivesReader::compareCLCTs(
 	    stubs_comparison[1].trknmb_emul = clctV_emul[i].getTrknmb();
 	    stubs_comparison[1].nStub_data =-1;
 	    stubs_comparison[1].has_data = false;
-	    stubs_comparison[1].nStub_emul = k;
+	    stubs_comparison[1].nStub_emul = k+1;
 	    stubs_comparison[1].has_emul = true;
 	    stubs_comparison[1].quality_emul = clctV_emul[k].getQuality(); 
 	    stubs_comparison[1].key_hs_emul = clctV_emul[k].getKeyStrip();
@@ -2105,7 +2105,7 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	    stubs_comparison[2].chambertype = detid.iChamberType();
 	    stubs_comparison[2].totStubs_data = ndata;
 	    stubs_comparison[2].totStubs_emul = nemul;
-	    stubs_comparison[2].nStub_data = i;
+	    stubs_comparison[2].nStub_data = i+1;
 	    stubs_comparison[2].has_data = true;
 	    stubs_comparison[2].quality_data = (*pd).getQuality(); 
 	    stubs_comparison[2].key_WG_data = (*pd).getKeyWG();
@@ -2177,7 +2177,7 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 		    << ((endc == 1) ? "+" : "-") << stat << "/"
 		    << ring << "/" << cham <<" data_lct bx "<< data_bx<< " emul bx "<< emul_corr_bx;
 		}
-	        stubs_comparison[2].nStub_emul = j;
+	        stubs_comparison[2].nStub_emul = j+1;
 	        stubs_comparison[2].has_emul = true;
 	        stubs_comparison[2].quality_emul = (*pe).getQuality(); 
 	        stubs_comparison[2].key_WG_emul = (*pe).getKeyWG();
@@ -2216,7 +2216,7 @@ void CSCTriggerPrimitivesReader::compareLCTs(
 	    stubs_comparison[2].trknmb_emul = lctV_emul[i].getTrknmb();
 	    stubs_comparison[2].nStub_data =-1;
 	    stubs_comparison[2].has_data = false;
-	    stubs_comparison[2].nStub_emul = k;
+	    stubs_comparison[2].nStub_emul = k+1;
 	    stubs_comparison[2].has_emul = true;
 	    stubs_comparison[2].quality_emul = lctV_emul[k].getQuality(); 
 	    stubs_comparison[2].key_WG_emul = lctV_emul[k].getKeyWG();
@@ -2355,7 +2355,7 @@ void CSCTriggerPrimitivesReader::compareMPCLCTs(
 	    stubs_comparison[3].chambertype = detid.iChamberType();
 	    stubs_comparison[3].totStubs_data = ndata;
 	    stubs_comparison[3].totStubs_emul = nemul;
-	    stubs_comparison[3].nStub_data = i;
+	    stubs_comparison[3].nStub_data = i+1;
 	    stubs_comparison[3].has_data = true;
 	    stubs_comparison[3].quality_data = (*pd).getQuality(); 
 	    stubs_comparison[3].key_WG_data = (*pd).getKeyWG();
@@ -2419,7 +2419,7 @@ void CSCTriggerPrimitivesReader::compareMPCLCTs(
 		  }*/
 		  if (debug) LogTrace("CSCTriggerPrimitivesReader")
 		    << "       Identical LCTs #" << data_trknmb;
-	          stubs_comparison[3].nStub_emul = j;
+	          stubs_comparison[3].nStub_emul = j+1;
 	          stubs_comparison[3].has_emul = true;
 	          stubs_comparison[3].quality_emul = (*pe).getQuality(); 
 	          stubs_comparison[3].key_WG_emul = (*pe).getKeyWG();
@@ -2464,7 +2464,7 @@ void CSCTriggerPrimitivesReader::compareMPCLCTs(
 	    stubs_comparison[3].trknmb_emul = lctV_emul[i].getTrknmb();
 	    stubs_comparison[3].nStub_data =-1;
 	    stubs_comparison[3].has_data = false;
-	    stubs_comparison[3].nStub_emul = k;
+	    stubs_comparison[3].nStub_emul = k+1;
 	    stubs_comparison[3].has_emul = true;
 	    stubs_comparison[3].quality_emul = lctV_emul[k].getQuality(); 
 	    stubs_comparison[3].key_WG_emul = lctV_emul[k].getKeyWG();
