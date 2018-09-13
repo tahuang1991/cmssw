@@ -53,6 +53,7 @@ struct MyStubComparison
   Int_t nEvents;
   Int_t nRUN;
   Int_t nEvent;
+  Bool_t firstfill;
   Int_t totStubs_data;
   Int_t totStubs_emul;
   Int_t nStub_data;

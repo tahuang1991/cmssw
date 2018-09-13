@@ -199,6 +199,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
       if (infoV > 1 && clct->secondCLCT[bx_clct].isValid()) LogTrace("CSCMotherboard")
 	  <<" second CLCT "<< clct->secondCLCT[bx_clct];
 
+      bool is_matched = false;
       int bx_alct_start = bx_clct - match_trig_window_size/2 + alctClctOffset;
       int bx_alct_stop  = bx_clct + match_trig_window_size/2 + alctClctOffset;
       for (int bx_alct = bx_alct_start; bx_alct <= bx_alct_stop; bx_alct++)
@@ -218,11 +219,22 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
           if (allLCTsME11[bx_alct][mbx][0].isValid())
           {
             used_alct_mask[bx_alct] += 1;
+            is_matched = true;
             if (match_earliest_alct_me11_only) break;
           }
         }
       }
-      // Do not report CLCT-only LCT for ME1b
+      // report CLCT-only LCT for ME1b if clct_trig_enable ON
+      if (!is_matched) {
+        if (infoV > 1) LogTrace("CSCMotherboard")
+                         << "Unsuccessful ALCT-CLCT match (CLCT only): bx_clct = "
+                         << bx_clct << "; match window: [" << bx_alct_start
+                         << "; " << bx_alct_stop << "]";
+        //correlateLCTsME11(alct->bestALCT[bx_clct], alct->secondALCT[bx_clct],
+        //                  clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
+        //                  allLCTsME11[bx_alct][mbx][0], allLCTsME11[bx_alct][mbx][1]);
+      }
+
     }
   } // end of CLCT-centric matching
 
@@ -239,6 +251,7 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
 
       int bx_clct_start = bx_alct - match_trig_window_size/2 - alctClctOffset;
       int bx_clct_stop  = bx_alct + match_trig_window_size/2 - alctClctOffset;
+      bool is_matched = false;
 
       for (int bx_clct = bx_clct_start; bx_clct <= bx_clct_stop; bx_clct++)
       {
@@ -257,10 +270,21 @@ void CSCMotherboardME11::run(const CSCWireDigiCollection* wiredc,
           if (allLCTsME11[bx_alct][mbx][0].isValid())
           {
             used_clct_mask[bx_clct] += 1;
+            is_matched = true;
             if (match_earliest_clct_me11_only) break;
           }
         }
       }
+      if (!is_matched) {
+        if (infoV > 1) LogTrace("CSCMotherboard")
+                         << "Unsuccessful CLCT-ALCT match (ALCT only): bx_alct = "
+                         << bx_alct << "; match window: [" << bx_clct_start
+                         << "; " << bx_clct_stop << "]";
+        //correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+        //              clct->bestCLCT[bx_alct], clct->secondCLCT[bx_alct],
+        //              CSCCorrelatedLCTDigi::ALCTONLY);
+      }
+      
 
     }
   } // end of ALCT-centric matching

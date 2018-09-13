@@ -621,7 +621,6 @@ void CSCAnodeLCTProcessor::run(const std::vector<int> wire[CSCConstants::NUM_LAY
 
   // Do the rest only if there is at least one trigger candidate.
   if (trigger) {
-    //std::cout << "Chamber triggered ALCT! " << std::endl;
     if (isSLHC and false) {
       ghostCancellationLogicSLHC();
     }

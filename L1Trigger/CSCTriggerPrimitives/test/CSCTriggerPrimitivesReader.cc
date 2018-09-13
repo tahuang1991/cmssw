@@ -152,6 +152,7 @@ void MyStubComparison::init(int run, int event){
   nEvents = -1;
   nRUN = run;
   nEvent = event;
+  firstfill =  false;
   totStubs_data = -1;
   totStubs_emul = -1;
   nStub_data = 0;
@@ -206,6 +207,7 @@ TTree *MyStubComparison::bookTree(TTree *t, const std::string & name)
   t->Branch("nEvents",&nEvents);
   t->Branch("nRUN",&nRUN);
   t->Branch("nEvent",&nEvent);
+  t->Branch("firstfill",&firstfill);
   t->Branch("totStubs_data",&totStubs_data);
   t->Branch("totStubs_emul",&totStubs_emul);
   t->Branch("nStub_data",&nStub_data);
@@ -1468,6 +1470,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 	    int nemul = alctV_emul.size();
 
 	    if (ndata == 0 && nemul == 0) continue;
+            bool firstfill = true;
 
 	    if (debug or (stat == 1 and ring== 1 and (alctV_emul.size()>=3 or alctV_data.size() >= 3)) ) {
 		ostringstream strstrm;
@@ -1549,6 +1552,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		int fullBX = alctV_data[i].getFullBX(); // full 12-bit BX
 
 		stubs_comparison[0].init(RUN_, Event_);
+		stubs_comparison[0].firstfill = firstfill;
+                if (firstfill) firstfill = false;
 		stubs_comparison[0].nEvents = eventsAnalyzed;
 		stubs_comparison[0].endcap = endc; 
 		stubs_comparison[0].station = stat;
@@ -1641,6 +1646,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  if (alctV_emul[i].isValid() == 0 or bookedalctV_emul[i]) continue;
 		  int emul_bx        = alctV_emul[i].getBX();
 		  stubs_comparison[0].init(RUN_, Event_);
+		  stubs_comparison[0].firstfill = firstfill;
+                  if (firstfill) firstfill = false;
 		  stubs_comparison[0].nEvents = eventsAnalyzed;
 		  stubs_comparison[0].endcap = endc; 
 		  stubs_comparison[0].station = stat;
@@ -1736,6 +1743,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		int ndata = clctV_data.size();
 		int nemul = clctV_emul.size();
 		if (ndata == 0 && nemul == 0) continue;
+                bool firstfill = true;
 
 		if (debug) {
 		  ostringstream strstrm;
@@ -1816,6 +1824,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  else testwg = 20;
 
 		  stubs_comparison[1].init(RUN_, Event_);
+		  stubs_comparison[1].firstfill = firstfill;
+                  if (firstfill) firstfill = false;
 		  stubs_comparison[1].nEvents = eventsAnalyzed;
 		  stubs_comparison[1].endcap = endc; 
 		  stubs_comparison[1].station = stat;
@@ -1948,6 +1958,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			if (bookedclctV_emul[k]) continue;
 			if (clctV_emul[i].isValid() == 0) continue;
 			stubs_comparison[1].init(RUN_, Event_);
+                        stubs_comparison[1].firstfill = firstfill;
+                        if (firstfill) firstfill = false;
 			stubs_comparison[1].nEvents = eventsAnalyzed;
 			stubs_comparison[1].endcap = endc; 
 			stubs_comparison[1].station = stat;
@@ -2023,6 +2035,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		    int ndata = lctV_data.size();
 		    int nemul = lctV_emul.size();
 		    if (ndata == 0 && nemul == 0) continue;
+                    bool firstfill = true;
 
 		    if (debug) {
 			ostringstream strstrm;
@@ -2094,6 +2107,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			int data_bx        = (*pd).getBX();
 
 			stubs_comparison[2].init(RUN_, Event_);
+                        stubs_comparison[2].firstfill = firstfill;
+                        if (firstfill) firstfill = false;
 			stubs_comparison[2].nEvents = eventsAnalyzed;
 			stubs_comparison[2].endcap = endc; 
 			stubs_comparison[2].station = stat;
@@ -2277,6 +2292,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			  int ndata = lctV_data.size();
 			  int nemul = lctV_emul.size();
 			  if (ndata == 0 && nemul == 0) continue;
+                          bool firstfill = true;
 
 			  if (debug) {
 			    ostringstream strstrm;
@@ -2338,6 +2354,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			    int data_bx        = (*pd).getBX();
 
 			    stubs_comparison[3].init(RUN_, Event_);
+                            stubs_comparison[3].firstfill = firstfill;
+                            if (firstfill) firstfill = false;
 			    stubs_comparison[3].nEvents = eventsAnalyzed;
 			    stubs_comparison[3].endcap = endc; 
 			    stubs_comparison[3].station = stat;
@@ -2444,6 +2462,8 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			    for (int k=0; k<nemul; k++){
 				if (bookedlctV_emul[k]) continue;
 				stubs_comparison[3].init(RUN_, Event_);
+                                stubs_comparison[3].firstfill = firstfill;
+                                if (firstfill) firstfill = false;
 				stubs_comparison[3].nEvents = eventsAnalyzed;
 				stubs_comparison[3].endcap = endc; 
 				stubs_comparison[3].station = stat;

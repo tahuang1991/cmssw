@@ -420,14 +420,15 @@ CSCMotherboard::run(const CSCWireDigiCollection* wiredc,
           }
           // No ALCT within the match time interval found: report CLCT-only LCT
           // (use dummy ALCTs).
-          if (!is_matched and clct_trig_enable) {
+          if (!is_matched) {
             if (infoV > 1) LogTrace("CSCMotherboard")
                              << "Unsuccessful ALCT-CLCT match (CLCT only): bx_clct = "
                              << bx_clct << "; match window: [" << bx_alct_start
                              << "; " << bx_alct_stop << "]";
-            correlateLCTs(alct->bestALCT[bx_clct], alct->secondALCT[bx_clct],
-                          clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
-                          CSCCorrelatedLCTDigi::CLCTONLY);
+            if (clct_trig_enable)
+                correlateLCTs(alct->bestALCT[bx_clct], alct->secondALCT[bx_clct],
+                              clct->bestCLCT[bx_clct], clct->secondCLCT[bx_clct],
+                              CSCCorrelatedLCTDigi::CLCTONLY);
           }
         }
         // No valid CLCTs; attempt to make ALCT-only LCT.  Use only ALCTs
@@ -498,14 +499,15 @@ CSCMotherboard::run(const CSCWireDigiCollection* wiredc,
           }
           // No CLCT within the match time interval found: report ALCT-only LCT
           // (use dummy CLCTs).
-          if (!is_matched and alct_trig_enable) {
+          if (!is_matched) {
             if (infoV > 1) LogTrace("CSCMotherboard")
                              << "Unsuccessful CLCT-ALCT match (ALCT only): bx_alct = "
                              << bx_alct << "; match window: [" << bx_clct_start
                              << "; " << bx_clct_stop << "]";
-            correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
-                          clct->bestCLCT[bx_alct], clct->secondCLCT[bx_alct],
-                          CSCCorrelatedLCTDigi::ALCTONLY);
+            if (alct_trig_enable)
+                correlateLCTs(alct->bestALCT[bx_alct], alct->secondALCT[bx_alct],
+                              clct->bestCLCT[bx_alct], clct->secondCLCT[bx_alct],
+                              CSCCorrelatedLCTDigi::ALCTONLY);
           }
         }
         // No valid ALCTs; attempt to make CLCT-only LCT.  Use only CLCTs
