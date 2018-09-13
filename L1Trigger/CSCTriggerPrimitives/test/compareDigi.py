@@ -3,18 +3,16 @@ import random
 import os
 import sys
 import numpy as np
+import pandas as pd
 import array
 from math import *
 from uncertainties import ufloat
+import Useful_func as uf
+import matplotlib.pyplot as plt
 
-ROOT.gROOT.SetBatch(0)
+ROOT.gROOT.SetBatch(1)
 ROOT.gStyle.SetStatW(0.07)
 ROOT.gStyle.SetStatH(0.06)
-
-#ROOT.gStyle.SetOptStat(111110)
-
-#ROOT.gStyle.SetErrorX(0)
-#ROOT.gStyle.SetErrorY(0)
 
 ROOT.gStyle.SetTitleStyle(0)
 ROOT.gStyle.SetTitleAlign(13) ## coord in top left
@@ -40,20 +38,14 @@ offsetLUT = {}
 #binLow = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,12.0,14.0,16.0,18.0,20.0,24.0,28.0,32.0,36.0,42.0,50.0,60.0]
 binLow = [0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,12.0,14.0,16.0,18.0,20.0,24.0,28.0,32.0,36.0,42.0,50.0]
 ptbins = np.asarray(binLow)
-	
+
 def gethist1D(chain, den, todraw, x_bins):
-	
     xBins = int(x_bins[1:-1].split(',')[0])
     xminBin = float(x_bins[1:-1].split(',')[1])
     xmaxBin = float(x_bins[1:-1].split(',')[2])
     h1 = ROOT.TH1F("h1","h1",xBins,xminBin,xmaxBin)
     chain.Draw("fabs(%s) >> h1"%todraw,den)
-    #print "gethist1D, den ",den
-    #h1.Print("ALL")
     return h1
-		
-
-
 
 def draw2Dplots_1(ch, xaxis, yaxis, x_bins, y_bins, xtitle, ytitle,cuts, text, picname):
 
@@ -67,6 +59,7 @@ def draw2Dplots_1(ch, xaxis, yaxis, x_bins, y_bins, xtitle, ytitle,cuts, text, p
     todrawb0 = "%s"%yaxis+":"+"%s>>b0"%xaxis
     
     c0 = ROOT.TCanvas("c0","c0")
+    c0.SetBatch(kTRUE);
     c0.SetGridx()
     c0.SetGridy()
     c0.SetTickx()
@@ -84,9 +77,9 @@ def draw2Dplots_1(ch, xaxis, yaxis, x_bins, y_bins, xtitle, ytitle,cuts, text, p
     b0.SetStats(0)
     print "todraw ",todrawb0, " cut ",cuts
     #hasxy = "&& fabs(%s)>0 && fabs(%s)>0"%(xaxis, yaxis0)
-    drawoption = "colz"
+    drawoption = "goffcolz"
     if xBins < 20 and yBins < 20:
-        drawoption = "colztext"
+        drawoption = "colztextgoff"
     ch.Draw(todrawb0, cuts, drawoption)
     diag, off_diag_1, off_diag_m1 = 0., 0., 0.
     for iX in range(1, xBins):
@@ -101,37 +94,37 @@ def draw2Dplots_1(ch, xaxis, yaxis, x_bins, y_bins, xtitle, ytitle,cuts, text, p
                     off_diag_m1 += binCont
     num = ufloat(off_diag_m1+off_diag_1, sqrt(off_diag_m1+off_diag_1))
     den = ufloat(diag+off_diag_1+off_diag_m1, sqrt(diag+off_diag_1+off_diag_m1))
-    #myerr = sqrt( (pow(num,2)*(num+den)) / (pow(den,3)) ) # Poisson not good for small num
-    #myerr = (1./den) * sqrt(num*(1.-num/den))
-    tex0 = ROOT.TLatex(0.2,.76,"%s"%("Fraction off-diagonal: " + str(format((num)/(den)*100,'.3f')) + "%"))
-    tex0.SetTextSize(0.03)
-    tex0.SetTextFont(62)
-    tex0.SetNDC()
-    tex0.Draw("same")
-    num = ufloat(off_diag_1, sqrt(off_diag_1))
-    #myerr = (1./den) * sqrt(num*(1.-num/den))
-    tex0a = ROOT.TLatex(0.2,.66,"%s"%("Fraction off-diagonal (zeros): " + str(format((num)/(den)*100,'.3f')) + "%"))
-    tex0a.SetTextSize(0.03)
-    tex0a.SetTextFont(62)
-    tex0a.SetNDC()
-    tex0a.Draw("same")
-    num = ufloat(off_diag_m1, sqrt(off_diag_m1))
-    #myerr = (1./den) * sqrt(num*(1.-num/den))
-    tex0b = ROOT.TLatex(0.2,.56,"%s"%("Fraction off-diagonal (not zeros): " + str(format((num)/(den)*100,'.3f')) + "%"))
-    tex0b.SetTextSize(0.03)
-    tex0b.SetTextFont(62)
-    tex0b.SetNDC()
-    tex0b.Draw("same")
-    tex1 = ROOT.TLatex(0.2,.86,"%s"%(text))
-    tex1.SetTextSize(0.05)
-    tex1.SetTextFont(62)
-    tex1.SetNDC()
-    tex1.Draw("same")
+    if num>0 and den>0:
+        #myerr = sqrt( (pow(num,2)*(num+den)) / (pow(den,3)) ) # Poisson not good for small num
+        #myerr = (1./den) * sqrt(num*(1.-num/den))
+        #tex0 = ROOT.TLatex(0.2,.76,"%s"%("Fraction off-diagonal: " + str(format((num)/(den)*100,'.3f')) + "%"))
+        tex0 = ROOT.TLatex(0.2,.76,"Fraction off-diagonal: " + str('{:.3f}'.format(((num)/(den)*100).nominal_value)) + "% +- " + str('{:.3f}'.format(((num)/(den)*100).std_dev)) + "%")
+        tex0.SetTextSize(0.03)
+        tex0.SetTextFont(62)
+        tex0.SetNDC()
+        tex0.Draw("samegoff")
+        num = ufloat(off_diag_1, sqrt(off_diag_1))
+        tex0a = ROOT.TLatex(0.2,.66,"Fraction missing in emul. (zero): " + str('{:.3f}'.format(((num)/(den)*100).nominal_value)) + "% +- " + str('{:.3f}'.format(((num)/(den)*100).std_dev)) + "%")
+        tex0a.SetTextSize(0.03)
+        tex0a.SetTextFont(62)
+        tex0a.SetNDC()
+        tex0a.Draw("samegoff")
+        num = ufloat(off_diag_m1, sqrt(off_diag_m1))
+        tex0b = ROOT.TLatex(0.2,.56,"Fraction different in emul. (not zero): " + str('{:.3f}'.format(((num)/(den)*100).nominal_value)) + "% +- " + str('{:.3f}'.format(((num)/(den)*100).std_dev)) + "%")
+        tex0b.SetTextSize(0.03)
+        tex0b.SetTextFont(62)
+        tex0b.SetNDC()
+        tex0b.Draw("samegoff")
+        tex1 = ROOT.TLatex(0.2,.86,"%s"%(text))
+        tex1.SetTextSize(0.05)
+        tex1.SetTextFont(62)
+        tex1.SetNDC()
+        tex1.Draw("samegoff")
     #c0.SaveAs("%s"%picname+".png")
     c0.SaveAs("%s"%picname+".pdf")
     c0.SaveAs("%s"%picname+".C")
 
-def draw1D_compare(filelist, chname, h_names, nbin, bimMin, binMax, cuts, text, picname):
+def draw1D_compare(filelist, chname, h_names, nbin, bimMin, binMax, cuts, text, picname, check):
 
     c0 = ROOT.TCanvas("c0","c0")
     c0.SetGridx()
@@ -142,109 +135,83 @@ def draw1D_compare(filelist, chname, h_names, nbin, bimMin, binMax, cuts, text, 
     chs[0].Add(filelist[0])
     chs[1].Add(filelist[1])
 
+    print 'With the selection ', str(cuts)
+    print "  Size in data in '", chname,"' is (in NEW/OLD emulator):", str(chs[0].GetEntries(cuts)),  str(chs[1].GetEntries(cuts))
+    if chs[0].GetEntries(cuts) != chs[1].GetEntries(cuts):
+        print ' ---- WARNING: DATA in NEW & OLD emulator have different sizes ----'
     for nH, this_h in enumerate(h_names):
-        h0 = ROOT.TH1F("h0", 'h0', nbin[nH], bimMin[nH], binMax[nH])
-        chs[0].Draw(this_h+"_data>>h0",cuts)
-        h1 = ROOT.TH1F("h1", 'h1', nbin[nH], bimMin[nH], binMax[nH])
-        chs[0].Draw(this_h+"_emul>>h1", cuts)
-        h2 = ROOT.TH1F("h2", 'h2', nbin[nH], bimMin[nH], binMax[nH])
-        chs[1].Draw(this_h+"_emul>>h2", cuts)
+        if check != "nocheck" and this_h in check and chname in check:
+            print "Checking for differences..."
+            for VartoCheck in ['quality','bx','fullbx','key_WG','key_hs']:
+                Myindex = h_names.index(VartoCheck)
+                h_diff_d1_e0 = ROOT.TH1F("h_diff_d1_e0", 'h_diff_d1_e0', nbin[Myindex], bimMin[Myindex], binMax[Myindex])
+                diff_cuts = cuts + " & ( nStub_data==1 & nStub_emul==0 )"
+                chs[0].Draw(VartoCheck+"_data>>h_diff_d1_e0", diff_cuts, '')
+                h_diff_d1_e0.Draw('h')
+                h_diff_d1_e0.GetXaxis().SetTitle(VartoCheck+"_data"); h_diff_d1_e0.SetTitle("")
+                c0.SaveAs("%s"%picname + "_DIFF_D1E0_" + VartoCheck + ".pdf")
+
+                h_diff_d2_e1 = ROOT.TH1F("h_diff_d2_e1", 'h_diff_d2_e1', nbin[Myindex], bimMin[Myindex], binMax[Myindex])
+                diff_cuts = cuts + " & ( nStub_data==2 & nStub_emul==1 )"
+                chs[0].Draw(VartoCheck+"_data>>h_diff_d2_e1", diff_cuts, '')
+                h_diff_d2_e1.Draw('h')
+                h_diff_d2_e1.GetXaxis().SetTitle(VartoCheck+"_data"); h_diff_d2_e1.SetTitle("")
+                c0.SaveAs("%s"%picname + "_DIFF_D2E1_" + VartoCheck + ".pdf")
+
+                h_diff_d1_e2 = ROOT.TH1F("h_diff_d1_e2", 'h_diff_d1_e2', nbin[Myindex], bimMin[Myindex], binMax[Myindex])
+                diff_cuts = cuts + " & ( nStub_data==1 & nStub_emul==2 )"
+                chs[0].Draw(VartoCheck+"_data>>h_diff_d1_e2", diff_cuts, '')
+                h_diff_d1_e2.Draw('h')
+                h_diff_d1_e2.GetXaxis().SetTitle(VartoCheck+"_data"); h_diff_d1_e2.SetTitle("")
+                c0.SaveAs("%s"%picname + "_DIFF_D1E2_" + VartoCheck + ".pdf")
+                del h_diff_d1_e0
+                del h_diff_d2_e1
+                del h_diff_d1_e2
+        h0 = ROOT.TH1F("h0", 'h0_'+str(this_h) + '_' + str(chname) + '_' + str(text), nbin[nH], bimMin[nH], binMax[nH])
+        chs[0].Draw(this_h+"_data>>h0",cuts,'')
+        h1 = ROOT.TH1F("h1", 'h1_'+str(this_h) + '_' + str(chname) + '_' + str(text), nbin[nH], bimMin[nH], binMax[nH])
+        chs[0].Draw(this_h+"_emul>>h1", cuts,'')
+        h2 = ROOT.TH1F("h2", 'h2_'+str(this_h) + '_' + str(chname) + '_' + str(text), nbin[nH], bimMin[nH], binMax[nH])
+        chs[1].Draw(this_h+"_emul>>h2", cuts,'')
         if h0 > h1 and h0 > h2:
             h_max = h0.GetMaximum()
         elif h1 > h0 and h1 > h2:
             h_max = h1.GetMaximum()
         elif h2 > h0 and h2 > h1:
             h_max = h2.GetMaximum()
-        h0.Draw()
+        if h0.Integral() > 0:
+            h0.Scale( 1./h0.Integral() )
+        h0.Draw('h')
         h0.GetXaxis().SetTitle(this_h)
         h0.SetTitle("")
         h0.GetYaxis().SetLimits(h0.GetMinimum(), h_max*(1.1))
-        h1.Draw("same")
+        if h1.Integral() > 0:
+            h1.Scale( 1./h1.Integral() )
+        h1.Draw("hsame")
         h1.SetLineColor(ROOT.kRed)
-        h2.Draw("same")
+        if h2.Integral() > 0:
+            h2.Scale( 1./h2.Integral() )
+        h2.Draw("hsame")
         h2.SetLineColor(ROOT.kGreen+2)
         tex = ROOT.TLatex(0.2,.86,"%s"%(text))
         tex.SetTextSize(0.05)
         tex.SetTextFont(62)
         tex.SetNDC()
         tex.Draw("same")
-        legend = ROOT.TLegend(0.65,0.8,0.85,0.9)
+        x1, y1, x2, y2 = 0.65, 0.8, 0.85, 0.9
+        if this_h == 'quality':
+           x1, y1, x2, y2 = 0.65, 0.4, 0.85, 0.5
+        legend = ROOT.TLegend(x1,y1,x2,y2)
         legend.SetFillColor(ROOT.kWhite)
-        legend.AddEntry(h0, "SHLC ON, data", "l")
-        legend.AddEntry(h1, "SLHC ON, emul", "l")
-        legend.AddEntry(h2, "SLHC OFF, emul", "l")
+        legend.AddEntry(h0, "DATA", "l")
+        legend.AddEntry(h1, "NEW emulatoatorr", "l")
+        legend.AddEntry(h2, "STD emulator", "l")
         legend.Draw("same")
         c0.SaveAs("%s"%picname + this_h + ".pdf")
+        del h0
+        del h1
+        del h2
 
-#    xBins = int(x_bins[1:-1].split(',')[0])
-#    xminBin = float(x_bins[1:-1].split(',')[1])
-#    xmaxBin = float(x_bins[1:-1].split(',')[2])
-##    tfilelist = []
-##    for f in filelist:
-##        tfilelist.append(ROOT.TFile(f, "READ"))
-#    color = [ROOT.kBlue, ROOT.kRed, ROOT.kGreen+2,ROOT.kMagenta+2, ROOT.kCyan+2]
-#    maker = [20,21,22,23,33]
-#    title = "#scale[1.4]{#font[61]{CMS}} #font[52]{ Simulation preliminary}"+"  "*15
-#    hs1 = ROOT.THStack("hs1","%s"%title)
-#    hs2 = ROOT.THStack("hs2","%s"%title)
-#    legend = ROOT.TLegend(0.15,0.55,0.5,0.7)
-#    legend.SetFillColor(ROOT.kWhite)
-#    
-#    i=0
-#    meanlist = []
-#    for ch in chs:
-#        #tfilelist[i].cd()
-#        print "todraw ","%s>>hist%d"%(xaxis_list[i], i)," cut ",cuts[i]
-#        hist = ROOT.TH1F("hist%d"%i,"hist%d"%i, xBins, xminBin, xmaxBin)
-#        ch.Draw("%s>>hist%d"%(xaxis_list[i], i),cuts[i])
-#        ROOT.SetOwnership(hist, False)
-#        hist.SetLineColor(color[i])
-#        hist.SetLineWidth(2)
-#        hist.Sumw2()
-#        hs1.Add(hist)
-#        hs2.Add(hist.Scale(1.0/hist.Integral()))
-#        mean = hist.GetMean()
-#        meanlist.append(mean)
-#        rms = hist.GetRMS()
-#        #legend.AddEntry(hist, "%s, Mean: %.4f, RMS: %.4f"%(legs[i], mean, rms),"l")
-#        legend.AddEntry(hist, "%s, Mean: %.4f"%(legs[i], mean),"l")
-#        i +=1
-#    c0 = ROOT.TCanvas("c0","c0")
-#    c0.SetGridx()
-#    c0.SetGridy()
-#    c0.SetTickx()
-#    c0.SetTicky()
-#    c0.SetLogy()
-#    hs1.SetMinimum(.001)
-#    hs1.Draw("nostacke") 
-#    hs1.GetHistogram().GetXaxis().SetTitle("%s"%xtitle)
-#    hs1.GetHistogram().GetXaxis().SetTitleSize(.05)
-#    hs1.GetHistogram().GetYaxis().SetTitle("Normalized to unity")
-#    hs1.GetHistogram().GetYaxis().SetTitleSize(.05)
-#    legend.Draw("same")
-#    tex1 = ROOT.TLatex(0.2,.8,"%s"%(text))
-#    tex1.SetTextSize(0.05)
-#    tex1.SetTextFont(62)
-#    tex1.SetNDC()
-#    tex1.Draw("same")
-#    c0.SaveAs("%s"%picname+".C")
-#    c0.SaveAs("%s"%picname+".pdf")
-#    return meanlist
-#    """
-#    c1 = ROOT.TCanvas("c1","c1")
-#    c1.SetGridx()
-#    c1.SetGridy()
-#    c1.SetTickx()
-#    c1.SetTicky()
-#    hs2.Draw("nostack") 
-#    hs2.GetHistogram().GetXaxis().SetTitle("%s"%xtitle)
-#    hs2.GetHistogram().GetYaxis().SetTitle("Normalized to unity")
-#    legend.Draw("same")
-#    tex1.SetNDC()
-#    tex1.Draw("same")
-#    c1.SaveAs("%s"%picname+"_normalized.png")
-#    c1.SaveAs("%s"%picname+"_normalized.C")
-#    """
 #######################################################
 cscstations = [ [0,0], 
                 [1,1], [1,2], [1,3],[1,4],
@@ -290,14 +257,13 @@ def compareDataAndEmulation(rootfiles, outputdir):
                 if var == "quality" and (chname == 'alcttree' or chname == 'clcttree'):
                     x_bins = "(8,-1.5, 6.5)"
                 text = "Data Vs Re-emulation"
-                #print "text ",text," xaxis ",xaxis," yaxis ",yaxis," cuts ",cuts
                 picname = os.path.join(outputdir, obj+"_"+var+"_data_reemulation")
                 cuts = "(bx_corr_emul>=0 || bx_data>=0) && !(station==1 && (ring==1 || ring==4))"
                 draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_noMEpm11")
                 cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber==9)"
                 draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_ME119")
-                cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber!=9)"
-                draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_ME11no9")
+                cuts = "(bx_corr_emul>=0 || bx_data>=0) && (station==1 && (ring==1 || ring==4) && (chamber!=9 && chamber!=11))"
+                draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_ME11no911")
                 for ichambertype in range(1, len(cscstations)):
                     chambername = chambernames[ichambertype]
                     st = cscstations[ichambertype][0]
@@ -307,15 +273,6 @@ def compareDataAndEmulation(rootfiles, outputdir):
                     picname = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d"%(st, ring))
                     if ichambertype == 1:
                         chambername = "ME1/1"
-                        #for k in range(1, 37):
-                        #    text_pme11 = "Data Vs Re-emulation, p"+chambername+", chamber%d"%k
-                        #    picname_pme11 = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d_chamber%d_endcap1"%(st, ring, k))
-                        #    cuts_pme11 = cuts+" && "+cuts_ch+" && chamber ==%d && endcap==1"%k
-                        #    draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts_pme11, text_pme11, picname_pme11)
-                        #    text_mme11 = "Data Vs Re-emulation, m"+chambername+", chamber%d"%k
-                        #    picname_mme11 = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d_chamber%d_endcap2"%(st, ring, k))
-                        #    cuts_mme11 = cuts+" && "+cuts_ch+" && chamber ==%d && endcap==2"%k
-                        #    draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts_mme11, text_mme11, picname_mme11)
                     text = "Data Vs Re-emulation, "+chambername
                     cuts = "(bx_corr_emul>=0 || bx_data>=0)"
                     cuts_ch = "station == %d && ring ==%d "%(st, ring)
@@ -323,91 +280,187 @@ def compareDataAndEmulation(rootfiles, outputdir):
     if len(rootfiles)==2 :
         for chname in ['alcttree','clcttree','lcttree']:
             obj = chname[:-4]
-            #!for ivar, var in enumerate(allvars):
-            #!    x_bins = xbinsall[ivar]
-            #!    xaxis = var
-            #!    xtitle = obj + "," + var
-            #!    if var == "bx":
-            #!        if chname == 'alcttree':
-            #!            x_bins = "(10, -1.5, 8.5)"
-            #!        elif chname == 'clcttree':
-            #!            x_bins = "(6, -1.5, 4.5)"
-            #!        elif chname == "lcttree":
-            #!            x_bins = "(4, -1.5, 2.5)"
-
-            #!    if var == "quality" and (chname == 'alcttree' or chname == 'clcttree'):
-            #!        x_bins = "(8,-1.5, 6.5)"
             picname = os.path.join(outputdir, obj + "_")
-            h_names = ['totStubs','nStub','quality','bend','bx','fullbx','key_WG','key_hs']
-            nbin    = [7,  9,  10,   7,  25, 17, 81, 251]
-            bimMin  = [-1.5,-4.5, -1.5,  -3.5, -12.5, -8.5 , -1, -1]
-            binMax  = [5.5,  4.5,  8.5,   3.5,  12.5,  8.5,  80,  250]
+            h_names = ['nStub','quality','bx','fullbx','key_WG','key_hs']
+            nbin    = [9,    10,   25, 17, 81, 251]
+            bimMin  = [-4.5, -1.5, -12.5, -8.5 , -1, -1]
+            binMax  = [4.5,  8.5,  12.5,  8.5,  80,  250]
             cuts = "(bx_corr_emul>=0 || bx_data>=0) && !(station==1 && (ring==1 || ring==4))"
             text = obj + ', ' + 'noME+-1/1'
-            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"noMEpm11")
+            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"noMEpm11","nocheck")
             cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber==9)"
             text = obj + ', ' + 'ME1/1/9'
-            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"ME119")
-            cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber!=9)"
-            text = obj + ', ' + 'ME1/1/no9'
-            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"ME11no9")
-#                text = "Data"
-#                picname = os.path.join(outputdir, obj+"_"+var+"_data_reemulation")
-#                cuts = "(bx_corr_emul>=0 || bx_data>=0) && !((endcap==1 || endcap==2 ) && station==1 && (ring==1 || ring==4))"
-#                draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_noME11")
-#                cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber==9)"
-#                draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_ME119")
-#                cuts = "(bx_corr_emul>=0 || bx_data>=0) && (endcap==1 && station==1 && (ring==1 || ring==4) && chamber!=9)"
-#                draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts, text, picname+"_ME11no9")
-#                for ichambertype in range(1, len(cscstations)):
-#                    chambername = chambernames[ichambertype]
-#                    st = cscstations[ichambertype][0]
-#                    ring = cscstations[ichambertype][1]
-#                    if ring == 4:
-#                        continue
-#                    picname = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d"%(st, ring))
-#                    if ichambertype == 1:
-#                        chambername = "ME1/1"
-#                        #for k in range(1, 37):
-#                        #    text_pme11 = "Data Vs Re-emulation, p"+chambername+", chamber%d"%k
-#                        #    picname_pme11 = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d_chamber%d_endcap1"%(st, ring, k))
-#                        #    cuts_pme11 = cuts+" && "+cuts_ch+" && chamber ==%d && endcap==1"%k
-#                        #    draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts_pme11, text_pme11, picname_pme11)
-#                        #    text_mme11 = "Data Vs Re-emulation, m"+chambername+", chamber%d"%k
-#                        #    picname_mme11 = os.path.join(outputdir, obj+"_"+var+"_data_reemulation_st%d_ring%d_chamber%d_endcap2"%(st, ring, k))
-#                        #    cuts_mme11 = cuts+" && "+cuts_ch+" && chamber ==%d && endcap==2"%k
-#                        #    draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle, cuts_mme11, text_mme11, picname_mme11)
-#                    text = "Data Vs Re-emulation, "+chambername
-#                    cuts = "(bx_corr_emul>=0 || bx_data>=0)"
-#                    cuts_ch = "station == %d && ring ==%d "%(st, ring)
-#                    draw2Dplots_1(ch, xaxis, yaxis, x_bins, x_bins, xtitle, ytitle,cuts+" && "+cuts_ch, text, picname)
+            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"ME119","check_clcttree_nStub") 
+            cuts = "(bx_corr_emul>=0 || bx_data>=0) && (station==1 && (ring==1 || ring==4) && (chamber!=9 && chamber!=11))"
+            text = obj + ', ' + 'ME1/1/no911'
+            draw1D_compare(rootfiles, chname, h_names, nbin, bimMin, binMax, cuts, text, picname+"ME11no911","nocheck")
 
 #rootfileON = "TPEHists_SLHCOn_run321710.root"
-rootfileON = "TPEHists_svOn.root"
-outputdir1 = "data_reemulation_321710_SLHCOn/"
+rootfileON = "Send_322118_ON/outTOT.root"
+outputdir1 = "data_reemulation_322118_SLHCOn/"
+#outputdir1 = "data_reemulation_321710_SLHCOn/"
 os.system("mkdir -p "+outputdir1)
 #compareDataAndEmulation([rootfileON], outputdir1)
 
 #rootfileOFF = "TPEHists_SLHCOff_run321710.root"
-rootfileOFF = "TPEHists_svOff.root"
-outputdir2 = "data_reemulation_321710_SLHCOff/"
+rootfileOFF = "Send_322118_OFF/outTOT.root"
+outputdir2 = "data_reemulation_322118_SLHCOff/"
+#outputdir2 = "data_reemulation_321710_SLHCOff/"
 os.system("mkdir -p "+outputdir2)
 #compareDataAndEmulation([rootfileOFF], outputdir2)
 
-outputdir3 = "data_reemulation_321710_SLHCOff_On_1D/"
+outputdir3 = "data_reemulation_322118_SLHCOff_On_1D/"
+#outputdir3 = "data_reemulation_321710_SLHCOff_On_1D/"
 os.system("mkdir -p "+outputdir3)
+os.system("mkdir -p "+outputdir3+'/csv/')
 compareDataAndEmulation([rootfileON,rootfileOFF], outputdir3)
 
-# Overlap 1D plots
-c0 = ROOT.TCanvas("c0","c0")
-f_on = ROOT.TFile(rootfileON,"READ")
-f_of = ROOT.TFile(rootfileOFF,"READ")
-for h1D in ["ALCTs_per_event","ALCTs_per_chamber","ALCTs_per_CSCtype"]:
-    f_on.cd()
-    ALCTs_per_event_on = f_on.Get("lctreader/"+h1D)
-    f_of.cd()
-    ALCTs_per_event_of = f_of.Get("lctreader/"+h1D)
-    ALCTs_per_event_on.Draw()
-    ALCTs_per_event_of.Draw("same")
-    c0.SaveAs(outputdir3 + "/" + h1D + ".png")
-
+### Using Pandas
+##print "Creating Dataframes"
+##treename = 'lctreader/alcttree'
+##df_ON_AL = uf.root2panda(rootfileON, treename)
+##df_ON_AL.to_csv(outputdir3 + '/csv/df_ON_AL.csv')
+##treename = 'lctreader/clcttree'
+##df_ON_CL = uf.root2panda(rootfileON, treename)
+##df_ON_CL.to_csv(outputdir3 + '/csv/df_ON_CL.csv')
+##treename = 'lctreader/lcttree'
+##df_ON_CT = uf.root2panda(rootfileON, treename)
+##df_ON_CT.to_csv(outputdir3 + '/csv/df_ON_CT.csv')
+##treename = 'lctreader/alcttree'
+##df_OF_AL = uf.root2panda(rootfileOFF, treename)
+##df_OF_AL.to_csv(outputdir3 + '/csv/df_OF_AL.csv')
+##treename = 'lctreader/clcttree'
+##df_OF_CL = uf.root2panda(rootfileOFF, treename)
+##df_OF_CL.to_csv(outputdir3 + '/csv/df_OF_CL.csv')
+##treename = 'lctreader/lcttree'
+##df_OF_CT = uf.root2panda(rootfileOFF, treename)
+##df_OF_CT.to_csv(outputdir3 + '/csv/df_OF_CT.csv')
+##print "Creating Dataframes with subset of data"
+###print df_ON_CL.columns.values
+###['nEvents' 'nRUN' 'nEvent' 'totStubs_data' 'totStubs_emul' 'nStub_data'
+### 'nStub_emul' 'chamber' 'ring' 'endcap' 'station' 'chambertype' 'has_data'
+### 'has_emul' 'quality_data' 'quality_emul' 'npretrig' 'quality_pretrig'
+### 'maxquality_pretrig' 'pattern_data' 'pattern_emul' 'pattern_pretrig'
+### 'maxpattern_pretrig' 'bend_data' 'bx_data' 'fullbx_data' 'bend_emul'
+### 'bx_emul' 'fullbx_emul' 'bend_pretrig' 'bx_pretrig' 'bx_corr_emul'
+### 'key_WG_data' 'key_WG_emul' 'key_hs_data' 'key_hs_emul' 'key_hs_pretrig'
+### 'trknmb_data' 'trknmb_emul' 'dphi_data' 'dphi_emul' 'eta_data' 'eta_emul'
+### 'phi_data' 'phi_emul']
+##
+### Select events in CLCT where there is mismatch
+##print "Creating Dataframes according to selection"
+### Q)  ((df_ON_CL['bx_corr_emul']==0) | (df_ON_CL['bx_data']>=0)) ?
+##basic_AL_cutON   = ( (df_ON_AL['bx_corr_emul']==0) | (df_ON_AL['bx_data']>=0) )
+##basic_AL_cutOF   = ( (df_OF_AL['bx_corr_emul']==0) | (df_OF_AL['bx_data']>=0) )
+##sel_AL_119ON     = ((basic_AL_cutON) & ((df_ON_AL['endcap']==1) & (df_ON_AL['station']==1) & ((df_ON_AL['ring']==1) | (df_ON_AL['ring']==4))) & (df_ON_AL['chamber']==9))
+##sel_AL_119OF     = ((basic_AL_cutOF) & ((df_OF_AL['endcap']==1) & (df_OF_AL['station']==1) & ((df_OF_AL['ring']==1) | (df_OF_AL['ring']==4))) & (df_OF_AL['chamber']==9))
+##sel_AL_11no911ON = ((basic_AL_cutON) & ((df_ON_AL['station']==1) & ((df_ON_AL['ring']==1) | (df_ON_AL['ring']==4))) & ((df_ON_AL['chamber']!=9) & (df_ON_AL['chamber']!=11) ) )
+##sel_AL_11no911OF = ((basic_AL_cutOF) & ((df_OF_AL['station']==1) & ((df_OF_AL['ring']==1) | (df_OF_AL['ring']==4))) & ((df_OF_AL['chamber']!=9) & (df_OF_AL['chamber']!=11) ) )
+##sel_AL_no11ON    = ((basic_AL_cutON) & ~((df_ON_AL['station']==1) & ((df_ON_AL['ring']==1) | (df_ON_AL['ring']==4))) )
+##sel_AL_no11OF    = ((basic_AL_cutOF) & ~((df_OF_AL['station']==1) & ((df_OF_AL['ring']==1) | (df_OF_AL['ring']==4))) )
+##basic_CL_cutON   = ( (df_ON_CL['bx_corr_emul']==0) | (df_ON_CL['bx_data']>=0) )
+##basic_CL_cutOF   = ( (df_OF_CL['bx_corr_emul']==0) | (df_OF_CL['bx_data']>=0) )
+##sel_CL_119ON     = ((basic_CL_cutON) & ((df_ON_CL['endcap']==1) & (df_ON_CL['station']==1) & ((df_ON_CL['ring']==1) | (df_ON_CL['ring']==4))) & (df_ON_CL['chamber']==9))
+##sel_CL_119OF     = ((basic_CL_cutOF) & ((df_OF_CL['endcap']==1) & (df_OF_CL['station']==1) & ((df_OF_CL['ring']==1) | (df_OF_CL['ring']==4))) & (df_OF_CL['chamber']==9))
+##sel_CL_11no911ON = ((basic_CL_cutON) & ((df_ON_CL['station']==1) & ((df_ON_CL['ring']==1) | (df_ON_CL['ring']==4))) & ((df_ON_CL['chamber']!=9) & (df_ON_CL['chamber']!=11) ) )
+##sel_CL_11no911OF = ((basic_CL_cutOF) & ((df_OF_CL['station']==1) & ((df_OF_CL['ring']==1) | (df_OF_CL['ring']==4))) & ((df_OF_CL['chamber']!=9) & (df_OF_CL['chamber']!=11) ) )
+##sel_CL_no11ON    = ((basic_CL_cutON) & ~((df_ON_CL['station']==1) & ((df_ON_CL['ring']==1) | (df_ON_CL['ring']==4))) )
+##sel_CL_no11OF    = ((basic_CL_cutOF) & ~((df_OF_CL['station']==1) & ((df_OF_CL['ring']==1) | (df_OF_CL['ring']==4))) )
+##basic_CT_cutON   = ( (df_ON_CT['bx_corr_emul']==0) | (df_ON_CT['bx_data']>=0) )
+##basic_CT_cutOF   = ( (df_OF_CT['bx_corr_emul']==0) | (df_OF_CT['bx_data']>=0) )
+##sel_CT_119ON     = ((basic_CT_cutON) & ((df_ON_CT['endcap']==1) & (df_ON_CT['station']==1) & ((df_ON_CT['ring']==1) | (df_ON_CT['ring']==4))) & (df_ON_CT['chamber']==9))
+##sel_CT_119OF     = ((basic_CT_cutOF) & ((df_OF_CT['endcap']==1) & (df_OF_CT['station']==1) & ((df_OF_CT['ring']==1) | (df_OF_CT['ring']==4))) & (df_OF_CT['chamber']==9))
+##sel_CT_11no911ON = ((basic_CT_cutON) & ((df_ON_CT['station']==1) & ((df_ON_CT['ring']==1) | (df_ON_CT['ring']==4))) & ((df_ON_CT['chamber']!=9) & (df_ON_CT['chamber']!=11) ) )
+##sel_CT_11no911OF = ((basic_CT_cutOF) & ((df_OF_CT['station']==1) & ((df_OF_CT['ring']==1) | (df_OF_CT['ring']==4))) & ((df_OF_CT['chamber']!=9) & (df_OF_CT['chamber']!=11) ) )
+##sel_CT_no11ON    = ((basic_CT_cutON) & ~((df_ON_CT['station']==1) & ((df_ON_CT['ring']==1) | (df_ON_CT['ring']==4))) )
+##sel_CT_no11OF    = ((basic_CT_cutOF) & ~((df_OF_CT['station']==1) & ((df_OF_CT['ring']==1) | (df_OF_CT['ring']==4))) )
+##df_ON_AL119       = df_ON_AL.loc[ sel_AL_119ON ]
+##df_OF_AL119       = df_OF_AL.loc[ sel_AL_119OF ]
+##df_ON_AL11no911   = df_ON_AL.loc[ sel_AL_11no911ON ]
+##df_OF_AL11no911   = df_OF_AL.loc[ sel_AL_11no911OF ]
+##df_ON_ALno11      = df_ON_AL.loc[ sel_AL_no11ON ]
+##df_OF_ALno11      = df_OF_AL.loc[ sel_AL_no11OF ]
+##df_ON_CL119       = df_ON_CL.loc[ sel_CL_119ON ]
+##df_OF_CL119       = df_OF_CL.loc[ sel_CL_119OF ]
+##df_ON_CL11no911   = df_ON_CL.loc[ sel_CL_11no911ON ]
+##df_OF_CL11no911   = df_OF_CL.loc[ sel_CL_11no911OF ]
+##df_ON_CLno11      = df_ON_CL.loc[ sel_CL_no11ON ]
+##df_OF_CLno11      = df_OF_CL.loc[ sel_CL_no11OF ]
+##df_ON_CT119       = df_ON_CT.loc[ sel_CT_119ON ]
+##df_OF_CT119       = df_OF_CT.loc[ sel_CT_119OF ]
+##df_ON_CT11no911   = df_ON_CT.loc[ sel_CT_11no911ON ]
+##df_OF_CT11no911   = df_OF_CT.loc[ sel_CT_11no911OF ]
+##df_ON_CTno11      = df_ON_CT.loc[ sel_CT_no11ON ]
+##df_OF_CTno11      = df_OF_CT.loc[ sel_CT_no11OF ]
+##
+### 1D plots
+##plt.ioff()
+##h_names = ['nStub','quality','bx','fullbx','key_WG','key_hs']
+##nbin    = [9,       10,      25,    17,   81, 251]
+##bimMin  = [-4.5,    -1.5,   -12.5, -8.5 , -1, -1]
+##binMax  = [4.5,     8.5,    12.5,  8.5,  80,  250]
+##dfs = [ [df_ON_AL119, df_OF_AL119, df_ON_AL11no911, df_OF_AL11no911, df_ON_ALno11, df_OF_ALno11], \
+##        [df_ON_CL119, df_OF_CL119, df_ON_CL11no911, df_OF_CL11no911, df_ON_CLno11, df_OF_CLno11], \
+##        [df_ON_CT119, df_OF_CT119, df_ON_CT11no911, df_OF_CT11no911, df_ON_CTno11, df_OF_CTno11] ]
+##df_name = ["alct","clct","lct"]
+##
+##print "1D plots:"
+##for df_index, df in enumerate(dfs):
+##  if df[0].shape[0] != df[1].shape[0] or df[2].shape[0] != df[3].shape[0] or df[4].shape[0] != df[5].shape[0]:
+##    print "---- WARNING NEW/OLD emultor files have different size for data ----",  df[0].shape[0], "-", df[1].shape[0], "/", df[2].shape[0], "-", df[3].shape[0], "/", df[4].shape[0], "-", df[5].shape[0]
+##  for index, name in enumerate(h_names):
+##    print "  ", name
+##    Varname = name + "_data"
+##    plt.hist( df[0][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='blue', label='DATA', fill=False )
+##    Varname = name + "_emul"
+##    plt.hist( df[0][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='red', label='NEW emulator', fill=False )
+##    plt.hist( df[1][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='green', label='OLD emulator', fill=False )
+##    plt.legend(loc='best')
+##    plt.xlabel(name); plt.grid(True)
+##    plt.savefig(outputdir3 + "/" + df_name[df_index] + "_ME119" + name + "_pd.pdf")
+##    plt.clf()
+##    Varname = name + "_data"
+##    plt.hist( df[2][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='blue', label='DATA', fill=False )
+##    Varname = name + "_emul"
+##    plt.hist( df[2][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='red', label='NEW emulator', fill=False )
+##    plt.hist( df[3][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='green', label='OLD emulator', fill=False )
+##    plt.legend(loc='best')
+##    plt.xlabel(name); plt.grid(True)
+##    plt.savefig(outputdir3 + "/" + df_name[df_index] + "_ME11no911" + name + "_pd.pdf")
+##    plt.clf()
+##    Varname = name + "_data"
+##    plt.hist( df[4][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='blue', label='DATA', fill=False )
+##    Varname = name + "_emul"
+##    plt.hist( df[4][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='red', label='NEW emulator', fill=False )
+##    plt.hist( df[5][Varname], bins=nbin[index], range=(bimMin[index],binMax[index]), edgecolor='green', label='OLD emulator', fill=False )
+##    plt.legend(loc='best')
+##    plt.xlabel(name); plt.grid(True)
+##    plt.savefig(outputdir3 + "/" + df_name[df_index] + "_noMEpm11" + name + "_pd.pdf")
+##    plt.clf()
+##
+### Check the special cases
+##print "Studying special cases"
+##df_ON_CL119_EMdifDA = df_ON_CL119.loc[ (df_ON_CL119['nStub_data']!=df_ON_CL119['nStub_emul']) ]
+##num = float(df_ON_CL119_EMdifDA.shape[0])
+##den = (df_ON_CL119.shape[0]+df_ON_CL119_EMdifDA.shape[0])
+##print "CLCT: DATA-NEW_EMULATOR differs", "%.2f"%(num/den*100),"% of the times (", "%.2f"%(num), "/", "%.2f"%(den),")"
+##df_ON_CL119_EM0_DA1 = df_ON_CL119.loc[ (df_ON_CL119['nStub_data']==1) & (df_ON_CL119['nStub_emul']==0) ]
+##num = float(df_ON_CL119_EM0_DA1.shape[0])
+##den = (df_ON_CL119.shape[0]+df_ON_CL119_EM0_DA1.shape[0])
+##print "CLCT: DATA 1/NEW_EMULATOR 0: ", "%.2f"%(num/den*100),"% of the times (", "%.2f"%(num), "/", "%.2f"%(den),")"
+##df_ON_CL119_EM1_DA2 = df_ON_CL119.loc[ (df_ON_CL119['nStub_data']==2) & (df_ON_CL119['nStub_emul']==1) ]
+##num = float(df_ON_CL119_EM1_DA2.shape[0])
+##den = (df_ON_CL119.shape[0]+df_ON_CL119_EM1_DA2.shape[0])
+##print "CLCT: DATA 2/NEW_EMULATOR 1: ", "%.2f"%(num/den*100),"% of the times (", "%.2f"%(num), "/", "%.2f"%(den),")"
+##df_ON_CL119_EM2_DA1 = df_ON_CL119.loc[ (df_ON_CL119['nStub_data']==1) & (df_ON_CL119['nStub_emul']==2) ]
+##num = float(df_ON_CL119_EM2_DA1.shape[0])
+##den = (df_ON_CL119.shape[0]+df_ON_CL119_EM2_DA1.shape[0])
+##print "CLCT: DATA 1/NEW_EMULATOR 2: ", "%.2f"%(num/den*100),"% of the times (", "%.2f"%(num), "/", "%.2f"%(den),")"
+##
+### Focus on df_ON_CL119_EM0_DA1
+##plt.hist( df_ON_CL119_EM0_DA1['key_WG_data'], 10, range=(0,50) )
+##plt.savefig(outputdir3 + '/NewEM0_Data1_WG_data.png')
+##plt.hist( df_ON_CL119_EM0_DA1['bx_data'], 24, range=(-12,12) )
+##plt.savefig(outputdir3 + '/NewEM0_Data1_BX_data.png')
+##plt.hist( df_ON_CL119_EM0_DA1['fullbx_data'], 16, range=(-8,8) )
+##plt.savefig(outputdir3 + '/NewEM0_Data1_BXfull_data.png')
