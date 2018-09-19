@@ -56,6 +56,7 @@ struct MyStubComparison
   Bool_t firstfill;
   Int_t totStubs_data;
   Int_t totStubs_emul;
+  Int_t totStubs_emul_readout;
   Int_t nStub_data;
   Int_t nStub_emul;
   Int_t chamber;
@@ -85,6 +86,8 @@ struct MyStubComparison
   Int_t fullbx_emul;
   Int_t pattern_data;
   Int_t pattern_emul;
+  Bool_t WGcrossHS_data;
+  Bool_t WGcrossHS_emul;
   Int_t key_WG_data;
   Int_t key_WG_emul;  
   Int_t key_hs_data;
@@ -147,6 +150,7 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
   bool isMTCCData_;
 
   bool isTMB07;
+  bool gangedME1a;
 
   // Flag to plot or not plot ME1/A as a separate chamber.
   bool plotME1A;
@@ -249,6 +253,7 @@ class CSCTriggerPrimitivesReader : public edm::EDAnalyzer
   void drawHistosForTalks();
   
   GlobalPoint getGlobalPosition(unsigned int rawId, int keWg, int keyHS) const;
+  bool doesALCTCrossCLCT(CSCDetId id, int key_wg, int key_hs) const;
   int    getCSCType(const CSCDetId& id);
   double getHsPerRad(const int idh);
 

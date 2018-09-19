@@ -155,6 +155,7 @@ void MyStubComparison::init(int run, int event){
   firstfill =  false;
   totStubs_data = -1;
   totStubs_emul = -1;
+  totStubs_emul_readout = -1;
   nStub_data = 0;
   nStub_emul = 0;
   chamber = -1;
@@ -186,6 +187,8 @@ void MyStubComparison::init(int run, int event){
   key_WG_emul = -1;  
   key_hs_data  = -1;
   key_hs_emul = -1;  
+  WGcrossHS_data = false;
+  WGcrossHS_emul = false;
   trknmb_data = -1;
   trknmb_emul = -1;
   dphi_data = -1;
@@ -210,6 +213,7 @@ TTree *MyStubComparison::bookTree(TTree *t, const std::string & name)
   t->Branch("firstfill",&firstfill);
   t->Branch("totStubs_data",&totStubs_data);
   t->Branch("totStubs_emul",&totStubs_emul);
+  t->Branch("totStubs_emul_readout",&totStubs_emul_readout);
   t->Branch("nStub_data",&nStub_data);
   t->Branch("nStub_emul",&nStub_emul);
 
@@ -238,6 +242,8 @@ TTree *MyStubComparison::bookTree(TTree *t, const std::string & name)
   t->Branch("bend_pretrig",&bend_pretrig);   
   t->Branch("bx_pretrig",&bx_pretrig);   
   t->Branch("bx_corr_emul",&bx_corr_emul);   
+  t->Branch("WGcrossHS_data",&WGcrossHS_data);   
+  t->Branch("WGcrossHS_emul",&WGcrossHS_emul);   
   t->Branch("key_WG_data",&key_WG_data);   
   t->Branch("key_WG_emul",&key_WG_emul);   
   t->Branch("key_hs_data",&key_hs_data);   
@@ -278,6 +284,7 @@ CSCTriggerPrimitivesReader::CSCTriggerPrimitivesReader(const edm::ParameterSet& 
 
   // Switch for a new (2007) version of the TMB firmware.
   isTMB07 = commonParams.getParameter<bool>("isTMB07");
+  gangedME1a = commonParams.getParameter<bool>("gangedME1a");
 
   // is it (non-upgrade algorithm) run along with upgrade one?
   //isMTCCData_ = conf.getParameter<bool>("isMTCCData");
@@ -1562,6 +1569,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		stubs_comparison[0].chambertype = detid.iChamberType();
 		stubs_comparison[0].totStubs_data = ndata;
 		stubs_comparison[0].totStubs_emul = nemul;
+                stubs_comparison[0].totStubs_emul_readout = nemul;
 		stubs_comparison[0].nStub_data = i+1;
 		stubs_comparison[0].has_data = true;
 		stubs_comparison[0].quality_data = alctV_data[i].getQuality(); 
@@ -1656,6 +1664,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  stubs_comparison[0].chambertype = detid.iChamberType();
 		  stubs_comparison[0].totStubs_data = ndata;
 		  stubs_comparison[0].totStubs_emul = nemul;
+                  stubs_comparison[0].totStubs_emul_readout = nemul;
 		  stubs_comparison[0].nStub_data = -1;
 		  stubs_comparison[0].nStub_emul = i+1;
 		  stubs_comparison[0].has_data = false;
@@ -1744,8 +1753,22 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		int nemul = clctV_emul.size();
 		if (ndata == 0 && nemul == 0) continue;
                 bool firstfill = true;
+                int nemul_readout = 0;
+		for (pe = clctV_emul.begin(); pe != clctV_emul.end(); pe++) {
+		  for (pd = clctV_data.begin(); pd != clctV_data.end(); pd++) {
+		      int emul_bx = (*pe).getBX();
+		      int corr_bx =
+		        ((*pd).getFullBX() + emul_bx - tbin_cathode_offset) & 0x03;
+                      int bx_data = pd->getBX();
+                      if (corr_bx == bx_data){//if emulated BX after correction is same as data bx, it will be readout
+                          nemul_readout++;
+                          break;
+                      }
+                  }
+                  }
 
-		if (debug) {
+		if (debug or nemul>ndata or (nemul_readout>0 and ndata>nemul)) {
+                  LogTrace("CSCTriggerPrimitivesReader") << " CLCTs from data "<< ndata <<" CLCTs from emul "<< nemul <<" readout "<< nemul_readout;
 		  ostringstream strstrm;
 		  strstrm << "\n--- ME" << ((detid.endcap() == 1) ? "+" : "-")
 		    << detid.station() << "/" << detid.ring() << "/"
@@ -1761,10 +1784,10 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  for (pe = clctV_emul.begin(); pe != clctV_emul.end(); pe++) {
 		    strstrm << "     " << (*pe);
 		    for (pd = clctV_data.begin(); pd != clctV_data.end(); pd++) {
-			if ((*pd).getTrknmb() == (*pe).getTrknmb()) {
-			  int emul_bx = (*pe).getBX();
-			  int corr_bx =
-			    ((*pd).getFullBX() + emul_bx - tbin_cathode_offset) & 0x03;
+			if ((*pd).getTrknmb() == (*pe).getTrknmb() or abs((*pe).getKeyStrip() - (*pd).getKeyStrip())<5) {
+                            int emul_bx = (*pe).getBX();
+                            int corr_bx =
+			  ((*pd).getFullBX() + emul_bx - tbin_cathode_offset) & 0x03;
 			  strstrm << " Corr BX = " << corr_bx;
 			  break;
 			}
@@ -1775,6 +1798,10 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  //if (stat==1 && ring==1) 
 		  //	std::cout <<"ME11  CompareCLCTs "<< strstrm.str()<< std::endl;
 		}
+                if (nemul_readout > 2){//reduce nemul_readout to 2 by hand
+                    cout <<"CLCT matching nemul readout is "<< nemul_readout <<", larger than 2. reduce it to 2 by hand"<<endl;
+                    nemul_readout = 2;
+                }
 
 		int csctype = getCSCType(detid);
 		hClctCompFoundCsc[endc-1][csctype]->Fill(cham);
@@ -1834,6 +1861,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		  stubs_comparison[1].chambertype = detid.iChamberType();
 		  stubs_comparison[1].totStubs_data = ndata;
 		  stubs_comparison[1].totStubs_emul = nemul;
+                  stubs_comparison[1].totStubs_emul_readout = nemul_readout;
 		  stubs_comparison[1].nStub_data = i+1;
 		  stubs_comparison[1].has_data = true;
 		  stubs_comparison[1].quality_data = (*pd).getQuality(); 
@@ -1968,6 +1996,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			stubs_comparison[1].chambertype = detid.iChamberType();
 			stubs_comparison[1].totStubs_data = ndata;
 			stubs_comparison[1].totStubs_emul = nemul;
+                        stubs_comparison[1].totStubs_emul_readout = nemul_readout;
 			stubs_comparison[1].trknmb_emul = clctV_emul[i].getTrknmb();
 			stubs_comparison[1].nStub_data =-1;
 			stubs_comparison[1].has_data = false;
@@ -2036,8 +2065,24 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		    int nemul = lctV_emul.size();
 		    if (ndata == 0 && nemul == 0) continue;
                     bool firstfill = true;
+                    int nemul_readout = 0;
+                    for (pe = lctV_emul.begin(); pe != lctV_emul.end(); pe++) {
+                        for (pd = lctV_data.begin(); pd != lctV_data.end(); pd++) {
+                            int bx_data = pd->getBX();
+                            int bx_corr = convertBXofLCT((*pe).getBX(), detid,
+                                                          alcts_data, clcts_data);
+                            if (bx_data == bx_corr){
+                                nemul_readout++;
+                                break;
+                            }
 
-		    if (debug) {
+                        }
+                    }
+
+		    //if (debug) {
+                    if (debug or nemul>ndata or (nemul_readout>0 and ndata>nemul)) {
+
+			LogTrace("CSCTriggerPrimitivesReader") << " LCTs from data "<< ndata <<" LCTs from emul "<< nemul <<" readout "<< nemul_readout;
 			ostringstream strstrm;
 			strstrm << "\n--- ME" << ((detid.endcap() == 1) ? "+" : "-")
 			  << detid.station() << "/" << detid.ring() << "/"
@@ -2063,6 +2108,10 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			LogTrace("CSCTriggerPrimitivesReader") << strstrm.str();
 			//std::cout <<"CompareLCTs "<< strstrm.str()<< std::endl;
 		    }
+                    if (nemul_readout > 2){//reduce nemul_readout to 2 by hand
+                        cout <<"LCT matching nemul readout is "<< nemul_readout <<", larger than 2. reduce it to 2 by hand"<<endl;
+                        nemul_readout = 2;
+                    }
 
 		    int csctype = getCSCType(detid);
 		    hLctCompFoundCsc[endc-1][csctype]->Fill(cham);
@@ -2117,11 +2166,13 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			stubs_comparison[2].chambertype = detid.iChamberType();
 			stubs_comparison[2].totStubs_data = ndata;
 			stubs_comparison[2].totStubs_emul = nemul;
+                        stubs_comparison[2].totStubs_emul_readout = nemul_readout;
 			stubs_comparison[2].nStub_data = i+1;
 			stubs_comparison[2].has_data = true;
 			stubs_comparison[2].quality_data = (*pd).getQuality(); 
 			stubs_comparison[2].key_WG_data = (*pd).getKeyWG();
 			stubs_comparison[2].key_hs_data = (*pd).getStrip();
+			stubs_comparison[2].WGcrossHS_data = doesALCTCrossCLCT(detid,  (*pd).getKeyWG(),  (*pd).getStrip());
 			stubs_comparison[2].bend_data = (*pd).getBend();
 			stubs_comparison[2].pattern_data = (*pd).getCLCTPattern();
 			stubs_comparison[2].bx_data = (*pd).getBX();
@@ -2194,6 +2245,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 				stubs_comparison[2].bend_emul = (*pe).getBend();
 				stubs_comparison[2].pattern_emul = (*pe).getCLCTPattern();
 				stubs_comparison[2].bx_emul = (*pe).getBX();
+                                stubs_comparison[2].WGcrossHS_emul = doesALCTCrossCLCT(detid,  (*pe).getKeyWG(),  (*pe).getStrip());
 				stubs_comparison[2].bx_corr_emul = emul_corr_bx;
 				stubs_comparison[2].trknmb_emul = emul_trknmb;
 				GlobalPoint gp_lct_emul(getGlobalPosition(detid.rawId(), (*pe).getKeyWG(), (*pe).getStrip()));
@@ -2222,11 +2274,13 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			    stubs_comparison[2].chambertype = detid.iChamberType();
 			    stubs_comparison[2].totStubs_data = ndata;
 			    stubs_comparison[2].totStubs_emul = nemul;
+                            stubs_comparison[2].totStubs_emul_readout = nemul_readout;
 			    stubs_comparison[2].trknmb_emul = lctV_emul[i].getTrknmb();
 			    stubs_comparison[2].nStub_data =-1;
 			    stubs_comparison[2].has_data = false;
 			    stubs_comparison[2].nStub_emul = k+1;
 			    stubs_comparison[2].has_emul = true;
+                            stubs_comparison[2].WGcrossHS_emul = doesALCTCrossCLCT(detid,  lctV_emul[k].getKeyWG(),  lctV_emul[k].getStrip());
 			    stubs_comparison[2].quality_emul = lctV_emul[k].getQuality(); 
 			    stubs_comparison[2].key_WG_emul = lctV_emul[k].getKeyWG();
 			    stubs_comparison[2].key_hs_emul = lctV_emul[k].getStrip();
@@ -2366,6 +2420,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 			    stubs_comparison[3].totStubs_emul = nemul;
 			    stubs_comparison[3].nStub_data = i+1;
 			    stubs_comparison[3].has_data = true;
+                            stubs_comparison[3].WGcrossHS_data = doesALCTCrossCLCT(detid,  (*pd).getKeyWG(),  (*pd).getStrip());
 			    stubs_comparison[3].quality_data = (*pd).getQuality(); 
 			    stubs_comparison[3].key_WG_data = (*pd).getKeyWG();
 			    stubs_comparison[3].key_hs_data = (*pd).getStrip();
@@ -2430,6 +2485,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 					<< "       Identical LCTs #" << data_trknmb;
 				    stubs_comparison[3].nStub_emul = j+1;
 				    stubs_comparison[3].has_emul = true;
+                                    stubs_comparison[3].WGcrossHS_emul = doesALCTCrossCLCT(detid,  (*pe).getKeyWG(),  (*pe).getStrip());
 				    stubs_comparison[3].quality_emul = (*pe).getQuality(); 
 				    stubs_comparison[3].key_WG_emul = (*pe).getKeyWG();
 				    stubs_comparison[3].key_hs_emul = (*pe).getStrip();
@@ -2477,6 +2533,7 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 				stubs_comparison[3].has_data = false;
 				stubs_comparison[3].nStub_emul = k+1;
 				stubs_comparison[3].has_emul = true;
+                                stubs_comparison[3].WGcrossHS_emul = doesALCTCrossCLCT(detid, lctV_emul[k].getKeyWG(),  lctV_emul[k].getStrip());
 				stubs_comparison[3].quality_emul = lctV_emul[k].getQuality(); 
 				stubs_comparison[3].key_WG_emul = lctV_emul[k].getKeyWG();
 				stubs_comparison[3].key_hs_emul = lctV_emul[k].getStrip();
@@ -4507,6 +4564,43 @@ void CSCTriggerPrimitivesReader::compareALCTs(
 		    return csc_gp;
 
 		  }
+
+
+bool CSCTriggerPrimitivesReader::doesALCTCrossCLCT(CSCDetId id, int key_wg, int key_hs) const
+{
+  
+  bool isME11 = (id.station() ==1 and (id.ring()==1 or id.ring()==4));
+  if (not isME11) return true;
+
+  int theEndcap = (id.endcap() == 1)?1 : 2;
+
+  if (key_hs > CSCConstants::MAX_HALF_STRIP_ME1B)
+  {
+    key_hs = key_hs - CSCConstants::MAX_HALF_STRIP_ME1B -1;//convert it from 128-223 -> 0-95
+    if ( !gangedME1a )
+    {
+      // wrap around ME11 HS number for -z endcap
+      if (theEndcap==2) key_hs = CSCConstants::MAX_HALF_STRIP_ME1A_UNGANGED - key_hs;
+      if ( key_hs >= lut_wg_vs_hs_me1a[key_wg][0] &&
+           key_hs <= lut_wg_vs_hs_me1a[key_wg][1]    ) return true;
+      return false;
+    }
+    else
+    {
+      if (theEndcap==2) key_hs = CSCConstants::MAX_HALF_STRIP_ME1A_GANGED - key_hs;
+      if ( key_hs >= lut_wg_vs_hs_me1ag[key_wg][0] &&
+           key_hs <= lut_wg_vs_hs_me1ag[key_wg][1]    ) return true;
+      return false;
+    }
+  }
+  if ( key_hs <= CSCConstants::MAX_HALF_STRIP_ME1B)
+  {
+    if (theEndcap==2) key_hs = CSCConstants::MAX_HALF_STRIP_ME1B - key_hs;
+    if ( key_hs >= lut_wg_vs_hs_me1b[key_wg][0] &&
+         key_hs <= lut_wg_vs_hs_me1b[key_wg][1]      ) return true;
+  }
+  return false;
+}
 
 
 
