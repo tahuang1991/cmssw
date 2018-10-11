@@ -64,8 +64,12 @@ CSCBaseboard::CSCBaseboard(unsigned endcap, unsigned station,
       tmbParams_ = conf.getParameter<edm::ParameterSet>("me3141tmbSLHC");
       alctParams_ = conf.getParameter<edm::ParameterSet>("alctSLHCME3141");
       clctParams_ = conf.getParameter<edm::ParameterSet>("clctSLHCME3141");
+    }else {//SLHC is on but ME21ME31ME41 is not upgraded
+      tmbParams_ = conf.getParameter<edm::ParameterSet>("tmbParam");
+      alctParams_ = conf.getParameter<edm::ParameterSet>("alctParam07");
+      clctParams_ = conf.getParameter<edm::ParameterSet>("clctParam07");
     }
-  } else {
+  } else {//others
     tmbParams_ = conf.getParameter<edm::ParameterSet>("tmbParam");
     alctParams_ = conf.getParameter<edm::ParameterSet>("alctParam07");
     clctParams_ = conf.getParameter<edm::ParameterSet>("clctParam07");
