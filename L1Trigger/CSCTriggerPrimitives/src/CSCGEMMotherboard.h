@@ -46,6 +46,7 @@ public:
   void clear();
 
   // run TMB with GEM pads as input
+  using CSCUpgradeMotherboard::run;
   virtual void run(const CSCWireDigiCollection* wiredc,
                    const CSCComparatorDigiCollection* compdc,
                    const GEMPadDigiCollection* gemPads)=0;
@@ -251,7 +252,7 @@ void CSCGEMMotherboard::matchingPads(const CSCALCTDigi& alct,
 
   // Get the corresponding roll numbers for a given ALCT
   std::pair<int,int> alctRoll =
-    (getLUT()->get_csc_wg_to_gem_roll(par))[alct.getKeyWG()];
+    (getLUT()->get_csc_wg_to_gem_roll(theParity))[alct.getKeyWG()];
 
   // Get the pads in the ALCT bx
   const matchesBX<T>& lut = getPads<T>();
@@ -293,7 +294,7 @@ void CSCGEMMotherboard::matchingPads(const CSCCLCTDigi& clct,
 
   auto part(getCSCPart(clct.getKeyStrip()));
   // Get the corresponding pad numbers for a given CLCT
-  const auto& mymap = (getLUT()->get_csc_hs_to_gem_pad(par, part));
+  const auto& mymap = (getLUT()->get_csc_hs_to_gem_pad(theParity, part));
   const int lowPad(mymap[clct.getKeyStrip()].first);
   const int highPad(mymap[clct.getKeyStrip()].second);
 
