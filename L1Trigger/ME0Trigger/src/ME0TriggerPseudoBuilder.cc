@@ -88,7 +88,7 @@ ME0TriggerDigi ME0TriggerPseudoBuilder::segmentConversion(const ME0Segment segme
   }
   
   const ME0EtaPartition* etapart = keylayer->etaPartition(rolls[0]);
-  float strippitch = etapart->localPitch(segment.localPosition());
+  float strippitch = etapart->localPitch(segment.localPosition());//unit in cm
   float strip = etapart->strip(segment.localPosition());
   int totstrip = etapart->nstrips();
   int istrip = static_cast<int>(strip);
@@ -103,9 +103,10 @@ ME0TriggerDigi ME0TriggerPseudoBuilder::segmentConversion(const ME0Segment segme
   //gloablpoint from ME0 trigger digi
   float centreOfStrip = istrip + 0.25 +phiposition2*0.5;
   GlobalPoint gp_digi = etapart->toGlobal(etapart->centreOfStrip(centreOfStrip));
+  float strippitch_rad = strippitch/gp.perp(); //unit in rad
 
 
-  int idphi = static_cast<int>(fabs(dphi)/(strippitch*dphiresolution_));
+  int idphi = static_cast<int>(fabs(dphi)/(strippitch_rad*dphiresolution_));
   const int max_idphi = 512;
   if (idphi >= max_idphi){ 
      LogTrace("L1ME0Trigger")<<" ME0 segment dphi "<< dphi <<" and int type: "<< idphi <<" larger than max allowed: "<< max_idphi <<" !!! \n";
@@ -119,7 +120,7 @@ ME0TriggerDigi ME0TriggerPseudoBuilder::segmentConversion(const ME0Segment segme
                     <<"\t rolls size of all hits "<< rolls.size() <<" rolls[0] "<< rolls[0] <<" rolls.back() "<< rolls.back() <<" roll "<< partition <<" \n"
                     <<"\t nRechits "<< nrechits <<" quality "<< quality <<" \n"
                     <<"\t strip(float) "<< strip <<" (int) "<< istrip<<" phiposition "<< phiposition <<" resolution (in term of strip) "<< phi_resolution <<" \n"
-                    <<"\t deltaphi(float) "<< dphi <<" (int) "<< idphi <<" resolution "<< strippitch*dphiresolution_ <<" bend "<< bend <<" \n"
+                    <<"\t deltaphi(float) "<< dphi <<" (int) "<< idphi <<" resolution "<< strippitch_rad*dphiresolution_ <<" bend "<< bend <<" \n"
                     <<"\t global point eta "<< gp.eta() <<" phi "<< gp.phi() <<" trigger digi eta "<< gp_digi.eta() <<" phi "<< gp_digi.phi() <<" \n"
                     <<"\t time (ns, float) "<< time <<" BX "<< BX <<" \n";
   
