@@ -49,7 +49,7 @@ tmbPhase1 = cms.PSet(
 tmbPhase2 = tmbPhase1.clone(
     # ALCT-CLCT stays at 7 for the moment
     matchTrigWindowSize = 7,
-    # LCTs found in the window [6, 7, 8, 9, 10] are good
+    # LCTs found in the window [5, 6, 7, 8, 9, 10, 11] are good
     tmbL1aWindowSize = 7,
     tmbDropUsedClcts = False,
 )
@@ -90,14 +90,18 @@ tmbPhase2GE11 = tmbPhase2GEM.clone(
     maxDeltaHsEven = cms.uint32(5),
     maxDeltaHsOdd = cms.uint32(10),
     # efficiency recovery switches
-    dropLowQualityCLCTs_ME1a = cms.bool(True)
+    dropLowQualityCLCTs_ME1a = cms.bool(True),
+    # delay applied in OTMB to GEM trigger primitives
+    delayGEMinOTMB = cms.uint32(0)
 )
 
 # to be used by ME21 chambers with GEM-CSC ILT
 tmbPhase2GE21 = tmbPhase2GEM.clone(
     # matching to GEM clusters with half-strips
     maxDeltaHsEven = cms.uint32(5),
-    maxDeltaHsOdd = cms.uint32(10)
+    maxDeltaHsOdd = cms.uint32(10),
+    # delay applied in OTMB to GEM trigger primitives
+    delayGEMinOTMB = cms.uint32(0)
 )
 
 tmbPSets = cms.PSet(
