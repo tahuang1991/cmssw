@@ -154,7 +154,11 @@ void CSCGEMMotherboard::matchALCTCLCTGEM() {
     unsigned matchingBX = 0;
     unsigned matching_clctbx = 0;
     unsigned bx_clct = 0;
-    bool matching_useCLCTBXSort = true;
+    bool hasLocalShower = false;
+    for (unsigned ibx = 1; ibx <= match_trig_window_size/2; ibx++)
+      hasLocalShower = (hasLocalShower or clctProc->getLocalShowerFlag(bx_alct-CSCConstants::ALCT_CLCT_OFFSET-ibx));
+    //use sorting by BX if this feature is enabled or there is no local shower ahead
+    bool useCLCTBXSort = sort_clct_bx_ or not(hasLocalShower);
 
     std::vector<unsigned> clctBx_qualbend_match;
     sortCLCTByQualBend(bx_alct, clctBx_qualbend_match);
@@ -162,12 +166,12 @@ void CSCGEMMotherboard::matchALCTCLCTGEM() {
     for (unsigned mbx = 0; mbx < match_trig_window_size; mbx++) {
       //bx_clct_run2 would be overflow when bx_alct is small but it is okay
       unsigned bx_clct_run2 = bx_alct + preferred_bx_match_[mbx] - CSCConstants::ALCT_CLCT_OFFSET;
-      if (not clctProc->getBestCLCT(bx_clct_run2).isValid()) continue;
-      bool isLocalShower = clctProc->getLocalShowerFlag(bx_clct_run2);
+      //if (not clctProc->getBestCLCT(bx_clct_run2).isValid()) continue;
+      //bool isLocalShower = clctProc->getLocalShowerFlag(bx_clct_run2);
       //do CLCT sort by BX if sort_clct_bx_=true or sort_clct_bx_=false+ !isLocalShower
-      bool useCLCTBXSort = sort_clct_bx_  or not(isLocalShower);   
-      unsigned bx_clct_qualbend = clctBx_qualbend_match.at(0);
-      clctBx_qualbend_match.erase(clctBx_qualbend_match.begin());
+      //bool useCLCTBXSort = sort_clct_bx_  or not(isLocalShower);   
+      unsigned bx_clct_qualbend = clctBx_qualbend_match[mbx];
+      //clctBx_qualbend_match.erase(clctBx_qualbend_match.begin());
       bx_clct =  useCLCTBXSort ? bx_clct_run2 : bx_clct_qualbend;
       if (infoV > 1 and bx_clct_run2 != bx_clct_qualbend) 
         std::cout <<"GEMCSCOTMB CLCT  bx sortting: run2 "<< bx_clct_run2 <<" qualbend "<< bx_clct_qualbend <<" selected "<< bx_clct << std::endl;
@@ -176,7 +180,6 @@ void CSCGEMMotherboard::matchALCTCLCTGEM() {
         continue;
       matchingBX = mbx;
       matching_clctbx = bx_alct + match_trig_window_size/2 - CSCConstants::ALCT_CLCT_OFFSET - bx_clct;
-      matching_useCLCTBXSort = useCLCTBXSort;
 
       if ((clctProc->getBestCLCT(bx_clct)).isValid())
         break;
@@ -194,7 +197,7 @@ void CSCGEMMotherboard::matchALCTCLCTGEM() {
 
     if (infoV > 1)  std::cout<< "GEMCSCOTMB: Successful ALCT-CLCT match: bx_alct = " << bx_alct
                                 << "; bx_clct = " <<matching_clctbx << "; mbx = " << matchingBX
-                                <<  (matching_useCLCTBXSort ? " CLCTsortbyBX " : " CLCTSortByQualBend ")
+                                <<  (useCLCTBXSort ? " CLCTsortbyBX " : " CLCTSortByQualBend ")
                                 << " bestCLCT "<< bestCLCT
                                 << " secondCLCT "<< secondCLCT << std::endl;
     /*std::cout << "" << std::endl;

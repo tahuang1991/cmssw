@@ -1231,21 +1231,21 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::getCLCTs() const {
 // to make a proper comparison with ALCTs we need
 // CLCT and ALCT to have the central BX in the same bin
 CSCCLCTDigi CSCCathodeLCTProcessor::getBestCLCT(int bx) const {
-  if (bx >= CSCConstants::MAX_CLCT_TBINS) return CSCCLCTDigi();
+  if (bx >= CSCConstants::MAX_CLCT_TBINS or bx < 0) return CSCCLCTDigi();
   CSCCLCTDigi lct = bestCLCT[bx];
   lct.setBX(lct.getBX() + CSCConstants::ALCT_CLCT_OFFSET);
   return lct;
 }
 
 CSCCLCTDigi CSCCathodeLCTProcessor::getSecondCLCT(int bx) const {
-  if (bx >= CSCConstants::MAX_CLCT_TBINS) return CSCCLCTDigi();
+  if (bx >= CSCConstants::MAX_CLCT_TBINS or bx < 0) return CSCCLCTDigi();
   CSCCLCTDigi lct = secondCLCT[bx];
   lct.setBX(lct.getBX() + CSCConstants::ALCT_CLCT_OFFSET);
   return lct;
 }
 
 bool CSCCathodeLCTProcessor::getLocalShowerFlag(int bx) const{
-  if (bx >= CSCConstants::MAX_CLCT_TBINS) return false;
+  if (bx >= CSCConstants::MAX_CLCT_TBINS or bx < 0) return false;
   return localShowerFlag[bx];
 
 }
