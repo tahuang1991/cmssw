@@ -1182,6 +1182,7 @@ void CSCAnodeLCTProcessor::dumpDigis(
     }
   }
   LogTrace("CSCAnodeLCTProcessor") << strstrm.str();
+  std::cout <<"Wire digi in Chamber "<< cscId_ << strstrm.str() << std::endl;
 }
 
 // Returns vector of read-out ALCTs, if any.  Starts with the vector of

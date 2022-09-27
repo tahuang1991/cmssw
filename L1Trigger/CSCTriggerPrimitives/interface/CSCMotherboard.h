@@ -157,6 +157,7 @@ protected:
      then the closest early, the closest late, etc.
   */
   std::vector<int> preferred_bx_match_;
+  bool sort_clct_bx_; //true if sort CLCT by bx, otherwise by quality+bending for ALCTCLCT match
 
   /** Default values of configuration parameters. */
   static const unsigned int def_mpc_block_me1a;
@@ -189,6 +190,7 @@ protected:
      make the best-best pair and second-second pair (if applicable).
   */
   void matchALCTCLCT();
+  void sortCLCTByQualBend(int alct_bx, std::vector<unsigned>& clctBxVector);
 
   /*
     This function matches maximum two ALCTs with maximum two CLCTs in

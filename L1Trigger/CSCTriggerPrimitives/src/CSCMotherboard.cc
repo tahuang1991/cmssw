@@ -56,6 +56,8 @@ CSCMotherboard::CSCMotherboard(unsigned endcap,
 
   // get the preferred CLCT BX match array
   preferred_bx_match_ = tmbParams_.getParameter<std::vector<int> >("preferredBxMatch");
+  // sort CLCT only by bx or by quality+bending for  ALCT-CLCT match
+  sort_clct_bx_ = tmbParams_.getParameter<bool>("sortClctBx");
 
   // quality assignment
   qualityAssignment_ = std::make_unique<LCTQualityAssignment>(endcap, station, sector, subsector, chamber, conf);
@@ -186,11 +188,24 @@ void CSCMotherboard::matchALCTCLCT() {
       // windows are used).  To get rid of this assumption, one would
       // need to access "full BX" words, which are not readily
       // available.
+      // here only found best pair ALCT-CLCT for one BX
       bool is_matched = false;
+      // we can use single value to best CLCT but here use vector to keep the 
+      // the future option to do multiple ALCT-CLCT matches wiht CLCT from different bx
+      std::vector<unsigned> clctBx_qualbend_match;
+      sortCLCTByQualBend(bx_alct, clctBx_qualbend_match);
       // loop on the preferred "delta BX" array
       for (unsigned mbx = 0; mbx < match_trig_window_size; mbx++) {
         // evaluate the preffered CLCT BX, taking into account that there is an offset in the simulation
-        unsigned bx_clct = bx_alct + preferred_bx_match_[mbx] - CSCConstants::ALCT_CLCT_OFFSET;
+        //bx_clct_run2 would be overflow when bx_alct is small but it is okay
+        unsigned bx_clct_run2 = bx_alct + preferred_bx_match_[mbx] - CSCConstants::ALCT_CLCT_OFFSET;
+        bool isLocalShower = clctProc->getLocalShowerFlag(bx_clct_run2);
+        //do CLCT sort by BX if sort_clct_bx_=true or sort_clct_bx_=false+ !isLocalShower
+        bool usedCLCTBXSort = sort_clct_bx_  or not(isLocalShower);   
+        unsigned bx_clct_qualbend = clctBx_qualbend_match[mbx];
+        unsigned bx_clct = usedCLCTBXSort ? bx_clct_run2 : bx_clct_qualbend;
+        //if (bx_clct_run2 != bx_clct_qualbend) std::cout <<"TMB CLCT  bx sortting: run2 "<< bx_clct_run2 <<" qualbend "<< bx_clct_qualbend <<" selected "<< bx_clct << std::endl;
+
         // check that the CLCT BX is valid
         if (bx_clct >= CSCConstants::MAX_CLCT_TBINS)
           continue;
@@ -207,6 +222,10 @@ void CSCMotherboard::matchALCTCLCT() {
           if (infoV > 1)
             LogTrace("CSCMotherboard") << "Successful ALCT-CLCT match: bx_alct = " << bx_alct
                                        << "; bx_clct = " << bx_clct << "; mbx = " << mbx;
+          if (infoV >= 1)  std::cout<< "CSConlyOTMB: Successful ALCT-CLCT match: bx_alct = " << bx_alct
+                                    << "; bx_clct = " << bx_clct << "; mbx = " << mbx
+                                    << " bestCLCT "<< clctProc->getBestCLCT(bx_clct)
+                                    << " secondCLCT "<< clctProc->getSecondCLCT(bx_clct) << std::endl;
           // now correlate the ALCT and CLCT into LCT.
           // smaller mbx means more preferred!
           correlateLCTs(alctProc->getBestALCT(bx_alct),
@@ -525,6 +544,43 @@ void CSCMotherboard::selectLCTs() {
       LogDebug("CSCMotherboard") << "Selected LCT" << lct;
     }
   }
+}
+
+void CSCMotherboard::sortCLCTByQualBend(int bx_alct, std::vector<unsigned>& clctBxVector){
+  //find clct bx range in [centerbx-window_size/2, center_bx+window_size/2]
+  clctBxVector.clear();
+  int clctQualBendArray[CSCConstants::MAX_CLCT_TBINS+1] = {0};
+  for (unsigned mbx = 0; mbx < match_trig_window_size; mbx++){
+    unsigned bx_clct = bx_alct + preferred_bx_match_[mbx] - CSCConstants::ALCT_CLCT_OFFSET; 
+    int tempQualBend = 0;
+    if (bx_clct >= CSCConstants::MAX_CLCT_TBINS)
+      continue;
+    if (!clctProc->getBestCLCT(bx_clct).isValid()){
+      clctQualBendArray[bx_clct] = tempQualBend;
+      continue;
+    }
+    CSCCLCTDigi bestCLCT = clctProc->getBestCLCT(bx_clct);
+    //for run2 pattern, ignore direction and use &0xe
+    //for run3, slope=0 is straighest pattern
+    int clctBend = bestCLCT.isRun3() ? (16-bestCLCT.getSlope()) : (bestCLCT.getPattern() & 0xe);
+    //shift quality to left for 4 bits
+    int clctQualBend = clctBend | (bestCLCT.getQuality() << 5);
+    clctQualBendArray[bx_clct] = clctQualBend;
+    if (clctBxVector.size() == 0) clctBxVector.push_back(bx_clct);
+    else{
+      for (auto it=clctBxVector.begin(); it != clctBxVector.end(); it++)
+        if (clctQualBend > clctQualBendArray[*it]){ //insert the 
+          clctBxVector.insert(it, bx_clct);  
+          break;
+        }
+    }
+  }
+  for (unsigned bx = clctBxVector.size(); bx < match_trig_window_size; bx++)
+    clctBxVector.push_back(CSCConstants::MAX_CLCT_TBINS);
+  
+  //debug
+  //for (auto it = clctBxVector.begin(); it != clctBxVector.end(); it++)
+  //  std::cout <<" clctBx "<< *it << " qualbend "<< clctQualBendArray[*it] << std::endl;
 }
 
 void CSCMotherboard::checkConfigParameters() {

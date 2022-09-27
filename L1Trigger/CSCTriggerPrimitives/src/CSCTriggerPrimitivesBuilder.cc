@@ -25,6 +25,7 @@ CSCTriggerPrimitivesBuilder::CSCTriggerPrimitivesBuilder(const edm::ParameterSet
   disableME42_ = commonParams.getParameter<bool>("disableME42");
 
   checkBadChambers_ = conf.getParameter<bool>("checkBadChambers");
+  selectedChambers_ = conf.getParameter<std::vector<std::string>>("selectedChambers");
 
   runME11Up_ = commonParams.getParameter<bool>("runME11Up");
   runME21Up_ = commonParams.getParameter<bool>("runME21Up");
@@ -191,10 +192,19 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             if (checkBadChambers_ && badChambers->isInBadChamber(detid))
               continue;
 
+            if (!selectedChambers_.empty()) {
+              if (std::find(selectedChambers_.begin(), selectedChambers_.end(), detid.chamberName()) ==
+                        selectedChambers_.end()) {
+                  continue;
+              }
+            }
+
             const bool upgrade = runPhase2_ and ring == 1;
             const bool upgradeGE11 = upgrade and stat == 1 and runME11Up_ and runME11ILT_;
             const bool upgradeGE21 = upgrade and stat == 2 and runME21Up_ and runME21ILT_;
 
+            if (!selectedChambers_.empty()) 
+                std::cout <<"\n====================== Begin: Run trigger emulator with chamber "<< detid <<"\n"<< std::endl;
             // GE1/1-ME1/1 integrated local trigger or GE2/1-ME2/1 integrated local trigger
             if (upgradeGE11 or upgradeGE21) {
               // run the TMB
@@ -234,6 +244,18 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
             put(alctV, oc_alct, detid, tmb->getCSCName() + " ALCT digi");
             put(clctV, oc_clct, detid, tmb->getCSCName() + " CLCT digi");
             put(lctV, oc_lct, detid, tmb->getCSCName() + " LCT digi");
+
+            if (!selectedChambers_.empty()) {
+            std::cout <<"+++++++++++++++++ Begin of all stubs in this chamber "<< detid << "+++++++++++++++++" << std::endl;
+            for (const auto alct : alctV)
+                std::cout <<alct << std::endl;
+            for (const auto clct : clctV)
+                std::cout <<clct << std::endl;
+            for (const auto lct : lctV)
+                std::cout <<lct << std::endl;
+            std::cout <<"+++++++++++++++++ End of all stubs in this chamber "<< detid << "+++++++++++++++++\n" << std::endl;
+            std::cout <<"====================== End: Run trigger emulator with chamber "<< detid <<"\n\n"<< std::endl;
+            }
 
             put(preTriggerBXs, oc_pretrig, detid, tmb->getCSCName() + " CLCT pre-trigger BX");
             put(pretriggerV, oc_pretrigger, detid, tmb->getCSCName() + " CLCT pre-trigger digi");

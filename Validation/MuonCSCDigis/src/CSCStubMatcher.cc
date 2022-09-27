@@ -22,6 +22,7 @@ CSCStubMatcher::CSCStubMatcher(const edm::ParameterSet& pSet, edm::ConsumesColle
   const auto& cscLCT = pSet.getParameter<edm::ParameterSet>("cscLCT");
   minBXLCT_ = cscLCT.getParameter<int>("minBX");
   maxBXLCT_ = cscLCT.getParameter<int>("maxBX");
+  matchTypeTightLCT_ = cscLCT.getParameter<bool>("matchTypeTight");
   verboseLCT_ = cscLCT.getParameter<int>("verbose");
   minNHitsChamberLCT_ = cscLCT.getParameter<int>("minNHitsChamber");
   addGhostLCTs_ = cscLCT.getParameter<bool>("addGhosts");
@@ -127,11 +128,13 @@ void CSCStubMatcher::matchCLCTsToSimTrack(const CSCCLCTDigiCollection& clcts) {
     // print out the digis
     if (verboseCLCT_) {
       edm::LogInfo("CSCStubMatcher") << "clct: comparators " << ch_id;
+      std::cout << "clct: comparators matched to simhits " << ch_id << std::endl;
       int layer = 0;
       for (const auto& p : comps) {
         layer++;
         for (const auto& q : p) {
           edm::LogInfo("CSCStubMatcher") << "L" << layer << " " << q << " " << q.getHalfStrip() << " ";
+          std::cout << "Layer " << layer << " " << q << " " << q.getHalfStrip() << ", ";
         }
       }
     }
@@ -148,6 +151,17 @@ void CSCStubMatcher::matchCLCTsToSimTrack(const CSCCLCTDigiCollection& clcts) {
     for (auto c = clcts_in_det.first; c != clcts_in_det.second; ++c) {
       if (verboseCLCT_)
         edm::LogInfo("CSCStubMatcher") << "clct " << ch_id2 << " " << *c;
+      if (verboseCLCT_){
+        std::cout << "clct " << ch_id2 << " " << *c << std::endl;
+        //for (int layer=1; layer <=6; layer++){
+        //    for (const auto& clctComp : (*c).getHits()[layer-1]) {
+        //        if (clctComp == 65535)
+        //          continue;
+        //        std::cout<< "\t" << clctComp << " ";
+        //    }
+        //}
+        //std::cout << std::endl;
+      }
 
       if (!c->isValid())
         continue;
@@ -183,17 +197,27 @@ void CSCStubMatcher::matchCLCTsToSimTrack(const CSCCLCTDigiCollection& clcts) {
         }
       }
 
+      if (verboseCLCT_)
+          std::cout <<"Comparator digi nMatches: "<< nMatches << (nMatches < 3 ? " NOMatch" : "Matched")<< std::endl;
+
       // require at least 3 good matches
       if (nMatches < 3)
         continue;
 
       if (verboseCLCT_)
         edm::LogInfo("CSCStubMatcher") << "clctGOOD";
+      if (verboseCLCT_)
+       std::cout << "\t clctGOOD" << std::endl;
 
       // store matching CLCTs in this chamber
       if (std::find(chamber_to_clcts_[id2].begin(), chamber_to_clcts_[id2].end(), *c) == chamber_to_clcts_[id2].end()) {
         chamber_to_clcts_[id2].push_back(*c);
       }
+    }
+    if (chamber_to_clcts_[id2].size() >= 2 and verboseCLCT_){
+      std::cout << "WARNING!!! too many CLCTs " << chamber_to_clcts_[id2].size() << " in " << ch_id2 << std::endl;
+      for (const auto& clct : chamber_to_clcts_[id2])
+        std::cout <<"\t "<< clct << std::endl; 
     }
     if (chamber_to_clcts_[id2].size() > 2) {
       edm::LogInfo("CSCStubMatcher") << "WARNING!!! too many CLCTs " << chamber_to_clcts_[id2].size() << " in "
@@ -310,6 +334,7 @@ void CSCStubMatcher::matchLCTsToSimTrack(const CSCCorrelatedLCTDigiCollection& l
       }
     }
 
+    bool isTightMatch = false;
     for (const auto& lct : lcts_tmp) {
       iLct++;
 
@@ -323,6 +348,12 @@ void CSCStubMatcher::matchLCTsToSimTrack(const CSCCorrelatedLCTDigiCollection& l
         edm::LogInfo("CSCStubMatcher") << lct;
         edm::LogInfo("CSCStubMatcher") << "getCLCT " << lct.getCLCT() << "\ngetALCT " << lct.getALCT() << "\ngetGEM1 "
                                        << lct.getGEM1() << "\ngetGEM2 " << lct.getGEM2();
+      }
+      if (verboseLCT_){
+          std::cout << ch_id << " " << ch_id2;
+          std::cout << lct;
+          std::cout << "getCLCT " << lct.getCLCT() << "\ngetALCT " << lct.getALCT() << "\ngetGEM1 "
+                   << lct.getGEM1() << "\ngetGEM2 " << lct.getGEM2() << std::endl;
       }
       // Check if matched to an CLCT
       for (const auto& p : clctsInChamber(id)) {
@@ -377,14 +408,29 @@ void CSCStubMatcher::matchLCTsToSimTrack(const CSCCorrelatedLCTDigiCollection& l
 
       bool lct_tight_matched = alct_clct or alct_gem or clct_gem;
       bool lct_loose_matched = lct_clct_match or lct_alct_match;
-      bool lct_matched = lct_loose_matched or lct_tight_matched;
+      bool lct_matched = matchTypeTightLCT_ ? lct_tight_matched : lct_loose_matched;
+      
 
       if (lct_matched) {
         if (verboseLCT_)
           edm::LogInfo("CSCStubMatcher") << "...was matched";
+        if (verboseLCT_)
+          std::cout << "...was matched!! " <<(alct_clct ? " alct_clct":"") << (alct_gem ? " alct_gem":"") << (clct_gem ? " clct_gem":"")<< std::endl;
         if (std::find(chamber_to_lcts_[id2].begin(), chamber_to_lcts_[id2].end(), lct) == chamber_to_lcts_[id2].end()) {
-          chamber_to_lcts_[id2].emplace_back(lct);
+          if (chamber_to_lcts_[id2].size()>0 and lct_tight_matched and !isTightMatch){
+            chamber_to_lcts_[id2].pop_back();
+            chamber_to_lcts_[id2].emplace_back(lct);
+            isTightMatch = lct_tight_matched;
+          }else if (chamber_to_lcts_[id2].size()>0 and lct_tight_matched and isTightMatch){
+            chamber_to_lcts_[id2].emplace_back(lct);
+            isTightMatch = lct_tight_matched;
+          }else if (chamber_to_lcts_[id2].size() == 0){
+            chamber_to_lcts_[id2].emplace_back(lct);
+            isTightMatch = lct_tight_matched;
+          }
         }
+        if (verboseLCT_)
+          std::cout <<" number of matched LCT "<< chamber_to_lcts_[id2].size() << std::endl;
       }
     }  // lct loop over
   }
@@ -544,6 +590,11 @@ CSCCorrelatedLCTDigi CSCStubMatcher::bestLctInChamber(unsigned int detid) const 
       bestQ = quality;
       index = i;
     }
+    if (bestClctInChamber(detid).isValid() and bestAlctInChamber(detid).isValid() and \
+     input[i].getCLCT() == bestClctInChamber(detid) and input[i].getALCT() == bestAlctInChamber(detid)){
+      index = i;
+      break; // use this for sure
+    }
   }
   if (index != -1)
     return input[index];
@@ -701,5 +752,7 @@ void CSCStubMatcher::addGhostLCTs(const CSCCorrelatedLCTDigi& lct11,
     lct21.setALCT(lct11.getALCT());
     lct21.setCLCT(lct22.getCLCT());
     lcts_tmp.push_back(lct21);
+    if (verboseLCT_)
+      std::cout <<"ghost LCT1 "<< lct12 <<" ghost LCT2 " << lct21 << std::endl;
   }
 }

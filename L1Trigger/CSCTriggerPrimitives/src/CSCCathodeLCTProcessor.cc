@@ -42,6 +42,10 @@ CSCCathodeLCTProcessor::CSCCathodeLCTProcessor(unsigned endcap,
 
   start_bx_shift = clctParams_.getParameter<int>("clctStartBxShift");
 
+  localShowerZone = clctParams_.getParameter<int>("clctLocalShowerZone");
+
+  localShowerThresh = clctParams_.getParameter<int>("clctLocalShowerThresh"); 
+
   // Motherboard parameters: common for all configurations.
   tmb_l1a_window_size =  // Common to CLCT and TMB
       tmbParams_.getParameter<unsigned int>("tmbL1aWindowSize");
@@ -178,6 +182,7 @@ void CSCCathodeLCTProcessor::clear() {
   for (int bx = 0; bx < CSCConstants::MAX_CLCT_TBINS; bx++) {
     bestCLCT[bx].clear();
     secondCLCT[bx].clear();
+    localShowerFlag[bx] = false;//init with no shower around CLCT
   }
   inTimeHMT_ = 0;
 }
@@ -186,6 +191,8 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::run(const CSCComparatorDigiColl
   // This is the version of the run() function that is called when running
   // over the entire detector.  It gets the comparator & timing info from the
   // comparator digis and then passes them on to another run() function.
+  if (infoV > 0)
+      std::cout <<"\t\t CLCT versosity "<< infoV << (runCCLUT_ ? " runCCLUT ": " Run2 Pattern")<< std::endl;
 
   static std::atomic<bool> config_dumped{false};
   if ((infoV > 0) && !config_dumped) {
@@ -376,10 +383,37 @@ void CSCCathodeLCTProcessor::run(
             << " (sector " << theSector << " subsector " << theSubsector << " trig id. " << theTrigChamber << ")"
             << "\n";
     }
+    checkLocalShower(bx, localShowerZone, halfstrip);
   }
   // Now that we have our best CLCTs, they get correlated with the best
   // ALCTs and then get sent to the MotherBoard.  -JM
 }
+
+void CSCCathodeLCTProcessor::checkLocalShower(int bx, int zone,
+    const std::vector<int> halfstrip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]) {
+  // Fire half-strip one-shots for hit_persist bx's (4 bx's by default).
+  //check local shower after pulse extension 
+  pulseExtension(halfstrip);
+
+  if (not bestCLCT[bx].isValid()) return; 
+
+  //only check the region around best CLCT
+  int keyHS = bestCLCT[bx].getKeyStrip();
+  int minHS = (keyHS - zone) >= stagger[CSCConstants::KEY_CLCT_LAYER - 1] ? keyHS-zone : stagger[CSCConstants::KEY_CLCT_LAYER - 1]; 
+  int maxHS = (keyHS + zone) >= numHalfStrips_ ?  numHalfStrips_ : keyHS+zone;
+  int totalHits = 0;
+  for (int hstrip = minHS; hstrip < maxHS; hstrip++){
+    for (int this_layer = 0; this_layer < CSCConstants::NUM_LAYERS; this_layer++)
+      if (pulse_.isOneShotHighAtBX(this_layer, hstrip, bx)) totalHits++;
+  } 
+
+  if (totalHits >= localShowerThresh) localShowerFlag[bx] = true;
+  else localShowerFlag[bx] = false;
+  if (infoV > 1) std::cout <<" bx "<< bx <<" bestCLCT key HS "<< keyHS <<" localshower zone: "<< minHS <<", "<< maxHS
+                           << " totalHits "<< totalHits << (localShowerFlag[bx] ? " Validlocalshower ": " NolocalShower ") << std::endl;
+  return;
+
+} 
 
 bool CSCCathodeLCTProcessor::getDigis(const CSCComparatorDigiCollection* compdc) {
   bool hasDigis = false;
@@ -572,11 +606,12 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::findLCTs(
       if (infoV > 1) {
         if (hits_in_time) {
           for (int hstrip = stagger[CSCConstants::KEY_CLCT_LAYER - 1]; hstrip < numHalfStrips_; hstrip++) {
-            if (nhits[hstrip] > 0) {
-              LogTrace("CSCCathodeLCTProcessor")
+            if (nhits[hstrip] >= nplanes_hit_pattern ) {
+              //LogTrace("CSCCathodeLCTProcessor")
+              std::cout  <<"Run2 CSCCathodeLCTProcessor::findLCTs:"
                   << " bx = " << std::setw(2) << latch_bx << " --->"
                   << " halfstrip = " << std::setw(3) << hstrip << " best pid = " << std::setw(2) << best_pid[hstrip]
-                  << " nhits = " << nhits[hstrip];
+                  << " nhits = " << nhits[hstrip] << std::endl;
             }
           }
         }
@@ -685,9 +720,13 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::findLCTs(
         // add the CLCTs to the collection
         if (tempBestCLCT.isValid()) {
           lctList.push_back(tempBestCLCT);
+          if (infoV > 1) 
+              std::cout  <<"Run2 CSCCathodeLCTProcessor::findLCTs, 1st CLCT "<< tempBestCLCT << std::endl;
         }
         if (tempSecondCLCT.isValid()) {
           lctList.push_back(tempSecondCLCT);
+          if (infoV > 1) 
+              std::cout  <<"Run2 CSCCathodeLCTProcessor::findLCTs, 2nd CLCT "<<tempSecondCLCT << std::endl;
         }
       }  //find CLCT, end of best_halfstrip[0] >= 0
 
@@ -1080,7 +1119,8 @@ void CSCCathodeLCTProcessor::dumpDigis(
         strstrm << " ";
     }
   }
-  LogTrace("CSCCathodeLCTProcessor") << strstrm.str();
+  //LogTrace("CSCCathodeLCTProcessor") << strstrm.str();
+  std::cout <<"Dump comparator digis in "<< theCSCName_  <<", "<< cscId_ <<"\n"<< strstrm.str() << std::endl;
 }
 
 // Returns vector of read-out CLCTs, if any.  Starts with the vector
@@ -1190,17 +1230,24 @@ std::vector<CSCCLCTDigi> CSCCathodeLCTProcessor::getCLCTs() const {
 // to make a proper comparison with ALCTs we need
 // CLCT and ALCT to have the central BX in the same bin
 CSCCLCTDigi CSCCathodeLCTProcessor::getBestCLCT(int bx) const {
+  if (bx >= CSCConstants::MAX_CLCT_TBINS) return CSCCLCTDigi();
   CSCCLCTDigi lct = bestCLCT[bx];
   lct.setBX(lct.getBX() + CSCConstants::ALCT_CLCT_OFFSET);
   return lct;
 }
 
 CSCCLCTDigi CSCCathodeLCTProcessor::getSecondCLCT(int bx) const {
+  if (bx >= CSCConstants::MAX_CLCT_TBINS) return CSCCLCTDigi();
   CSCCLCTDigi lct = secondCLCT[bx];
   lct.setBX(lct.getBX() + CSCConstants::ALCT_CLCT_OFFSET);
   return lct;
 }
 
+bool CSCCathodeLCTProcessor::getLocalShowerFlag(int bx) const{
+  if (bx >= CSCConstants::MAX_CLCT_TBINS) return false;
+  return localShowerFlag[bx];
+
+}
 /** Returns shower bits */
 CSCShowerDigi CSCCathodeLCTProcessor::readoutShower() const { return shower_; }
 

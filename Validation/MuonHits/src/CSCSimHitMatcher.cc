@@ -50,6 +50,15 @@ void CSCSimHitMatcher::match(const SimTrack& track, const SimVertex& vertex) {
       const auto& simhits_gp = simHitsMeanPosition(simhits);
       const auto& strips = hitStripsInDetId(id);
       CSCDetId cscid(id);
+      if (verbose_) {
+          std::cout <<"CSCdetid "<< CSCDetId(id) << ": " << simhits.size() << " eta "<< simhits_gp.eta() << " phi "
+          << simhits_gp.phi() <<" size "<< detid_to_hits_[id].size() << std::endl;
+          for (const auto& sh : simhits) {
+              const LocalPoint& lp = sh.entryPoint();
+              float s = dynamic_cast<const CSCGeometry*>(geometry_)->layer(sh.detUnitId())->geometry()->strip(lp);
+              std::cout <<"\t\tsimhit strip "<< s <<" tof "<< sh.timeOfFlight() << std::endl;;
+          }
+      }
       if (cscid.station() == 1 and (cscid.ring() == 1 or cscid.ring() == 4)) {
         edm::LogInfo("CSCSimHitMatcher") << "cscdetid " << CSCDetId(id) << ": " << simhits.size() << " "
                                          << simhits_gp.phi() << " " << detid_to_hits_[id].size();
@@ -69,6 +78,13 @@ void CSCSimHitMatcher::matchSimHitsToSimTrack() {
       if (h.trackId() != track_id)
         continue;
       int pdgid = h.particleType();
+      if (std::abs(pdgid) != 13 and verbose_){
+          const CSCDetId& layer_id(h.detUnitId());
+          const LocalPoint& lp = h.entryPoint();
+          const GlobalPoint& gp = dynamic_cast<const CSCGeometry*>(geometry_)->idToDet(h.detUnitId())->surface().toGlobal(lp);
+          float s = dynamic_cast<const CSCGeometry*>(geometry_)->layer(h.detUnitId())->geometry()->strip(lp);
+          std::cout <<"hit from pdgId "<<  pdgid <<" layerid "<< layer_id <<" position eta "<< gp.eta() << " phi "<< gp.phi() <<" strip "<<s << " tof "<< h.timeOfFlight() <<std::endl;
+      }
       if (simMuOnly_ && std::abs(pdgid) != 13)
         continue;
       // discard electron hits in the CSC chambers

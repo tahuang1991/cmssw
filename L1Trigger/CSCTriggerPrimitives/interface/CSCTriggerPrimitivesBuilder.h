@@ -115,6 +115,7 @@ private:
 
   /// a flag whether to skip chambers from the bad chambers map
   bool checkBadChambers_;
+  std::vector<std::string> selectedChambers_;
 
   /** Phase2: special configuration parameters for ME11 treatment. */
   bool runPhase2_;

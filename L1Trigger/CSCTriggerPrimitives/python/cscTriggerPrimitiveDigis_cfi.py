@@ -34,6 +34,7 @@ cscTriggerPrimitiveDigis = cms.EDProducer(
 
     # If True, output collections will only be built for good chambers
     checkBadChambers = cms.bool(True),
+    selectedChambers = cms.vstring(),
 
     # Anode-DAQ rate determined by pre-CLCTs
     keepCLCTPreTriggers = cms.bool(True),

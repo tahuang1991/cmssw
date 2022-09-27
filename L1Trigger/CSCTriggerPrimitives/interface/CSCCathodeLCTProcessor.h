@@ -81,6 +81,9 @@ public:
   CSCCLCTDigi getBestCLCT(int bx) const;
   CSCCLCTDigi getSecondCLCT(int bx) const;
 
+  /* get the flag of local shower around best CLCT at bx */
+  bool getLocalShowerFlag(int bx) const;
+
   std::vector<int> preTriggerBXs() const { return thePreTriggerBXs; }
 
   /** read out CLCTs in ME1a , ME1b */
@@ -99,6 +102,9 @@ protected:
 
   /** Second best LCT in this chamber, as found by the processor. */
   CSCCLCTDigi secondCLCT[CSCConstants::MAX_CLCT_TBINS];
+
+ /* flag of shower around best CLCT in each BX */
+  bool localShowerFlag[CSCConstants::MAX_CLCT_TBINS];
 
   CSCShowerDigi shower_;
 
@@ -159,6 +165,13 @@ protected:
   void dumpDigis(
       const std::vector<int> strip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]) const;
 
+  /* check whether there is a shower around best CLCT */
+  void checkLocalShower(int bx, int zone,
+    const std::vector<int> strip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]);
+
+  void encodeHighMultiplicityBits(
+      const std::vector<int> halfstrip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]);
+
   //--------------------------- Member variables -----------------------------
 
   PulseArray pulse_;
@@ -188,8 +201,6 @@ protected:
   std::vector<CSCCLCTPreTriggerDigi> thePreTriggerDigis;
 
   /* data members for high multiplicity triggers */
-  void encodeHighMultiplicityBits(
-      const std::vector<int> halfstrip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]);
   unsigned inTimeHMT_;
   unsigned outTimeHMT_;
   std::vector<unsigned> thresholds_;
@@ -208,6 +219,12 @@ protected:
 
   /** VK: some quick and dirty fix to reduce CLCT deadtime */
   int start_bx_shift;
+
+  /* define the region around best CLCT to check local shower */
+  int localShowerZone;
+
+  /* threshold of total hits for local shower */
+  int localShowerThresh;
 
   /** VK: separate handle for early time bins */
   int early_tbins;

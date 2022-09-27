@@ -163,14 +163,15 @@ std::vector<CSCCLCTDigi> CSCUpgradeCathodeLCTProcessor::findLCTs(
       // We check if there is at least one key half strip for which at least
       // one pattern id has at least the minimum number of hits
       bool hits_in_time = patternFinding(latch_bx, hits_in_patterns);
-      if (infoV > 1) {
+      if (infoV >= 1) {
         if (hits_in_time) {
           for (int hstrip = stagger[CSCConstants::KEY_CLCT_LAYER - 1]; hstrip < numHalfStrips_; hstrip++) {
-            if (nhits[hstrip] > 0) {
-              LogTrace("CSCUpgradeCathodeLCTProcessor")
+            if (nhits[hstrip] >= nplanes_hit_pattern) {
+              //LogTrace("CSCUpgradeCathodeLCTProcessor")
+                std::cout  <<"CSCUpgradeCathodeLCTProcessor::findLCTs:"
                   << " bx = " << std::setw(2) << latch_bx << " --->"
                   << " halfstrip = " << std::setw(3) << hstrip << " best pid = " << std::setw(2) << best_pid[hstrip]
-                  << " nhits = " << nhits[hstrip];
+                  << " nhits = " << nhits[hstrip] << std::endl;
             }
           }
         }
@@ -294,9 +295,13 @@ std::vector<CSCCLCTDigi> CSCUpgradeCathodeLCTProcessor::findLCTs(
         // add the CLCTs to the collection
         if (tempBestCLCT.isValid()) {
           lctList.push_back(tempBestCLCT);
+          if (infoV >= 1) 
+              std::cout  <<"CSCUpgradeCathodeLCTProcessor::findLCTs, 1st CLCT "<< tempBestCLCT << std::endl;
         }
         if (tempSecondCLCT.isValid()) {
           lctList.push_back(tempSecondCLCT);
+          if (infoV >= 1) 
+              std::cout  <<"CSCUpgradeCathodeLCTProcessor::findLCTs, 2nd CLCT "<< tempSecondCLCT << std::endl;
         }
       }  //find CLCT, end of best_halfstrip[0] >= 0
     }    //pre_trig
