@@ -383,35 +383,36 @@ void CSCCathodeLCTProcessor::run(
             << " (sector " << theSector << " subsector " << theSubsector << " trig id. " << theTrigChamber << ")"
             << "\n";
     }
-    checkLocalShower(bx, localShowerZone, halfstrip);
   }
+  checkLocalShower(localShowerZone, halfstrip);
   // Now that we have our best CLCTs, they get correlated with the best
   // ALCTs and then get sent to the MotherBoard.  -JM
 }
 
-void CSCCathodeLCTProcessor::checkLocalShower(int bx, int zone,
+void CSCCathodeLCTProcessor::checkLocalShower(int zone,
     const std::vector<int> halfstrip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]) {
   // Fire half-strip one-shots for hit_persist bx's (4 bx's by default).
   //check local shower after pulse extension 
   pulseExtension(halfstrip);
 
-  if (not bestCLCT[bx].isValid()) return; 
+  for (int bx = 0; bx < CSCConstants::MAX_CLCT_TBINS; bx++) {
+    if (not bestCLCT[bx].isValid()) continue; 
 
-  //only check the region around best CLCT
-  int keyHS = bestCLCT[bx].getKeyStrip();
-  int minHS = (keyHS - zone) >= stagger[CSCConstants::KEY_CLCT_LAYER - 1] ? keyHS-zone : stagger[CSCConstants::KEY_CLCT_LAYER - 1]; 
-  int maxHS = (keyHS + zone) >= numHalfStrips_ ?  numHalfStrips_ : keyHS+zone;
-  int totalHits = 0;
-  for (int hstrip = minHS; hstrip < maxHS; hstrip++){
-    for (int this_layer = 0; this_layer < CSCConstants::NUM_LAYERS; this_layer++)
-      if (pulse_.isOneShotHighAtBX(this_layer, hstrip, bx)) totalHits++;
-  } 
+    //only check the region around best CLCT
+    int keyHS = bestCLCT[bx].getKeyStrip();
+    int minHS = (keyHS - zone) >= stagger[CSCConstants::KEY_CLCT_LAYER - 1] ? keyHS-zone : stagger[CSCConstants::KEY_CLCT_LAYER - 1]; 
+    int maxHS = (keyHS + zone) >= numHalfStrips_ ?  numHalfStrips_ : keyHS+zone;
+    int totalHits = 0;
+    for (int hstrip = minHS; hstrip < maxHS; hstrip++){
+      for (int this_layer = 0; this_layer < CSCConstants::NUM_LAYERS; this_layer++)
+        if (pulse_.isOneShotHighAtBX(this_layer, hstrip, bx+drift_delay)) totalHits++;
+    } 
 
-  if (totalHits >= localShowerThresh) localShowerFlag[bx] = true;
-  else localShowerFlag[bx] = false;
-  if (infoV > 1) std::cout <<" bx "<< bx <<" bestCLCT key HS "<< keyHS <<" localshower zone: "<< minHS <<", "<< maxHS
-                           << " totalHits "<< totalHits << (localShowerFlag[bx] ? " Validlocalshower ": " NolocalShower ") << std::endl;
-  return;
+    if (totalHits >= localShowerThresh) localShowerFlag[bx] = true;
+    else localShowerFlag[bx] = false;
+    if (infoV > 1) std::cout <<" bx "<< bx <<" bestCLCT key HS "<< keyHS <<" localshower zone: "<< minHS <<", "<< maxHS
+                             << " totalHits "<< totalHits << (localShowerFlag[bx] ? " Validlocalshower ": " NolocalShower ") << std::endl;
+  }
 
 } 
 

@@ -31,7 +31,7 @@ clctPhase1 = cms.PSet(
     clctStartBxShift  = cms.int32(0),
     
     # local shower zone 
-    clctLocalShowerZone = cms.int32(15),
+    clctLocalShowerZone = cms.int32(25),
     # local shower thresh 
     clctLocalShowerThresh = cms.int32(12),
 )

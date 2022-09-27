@@ -166,7 +166,7 @@ protected:
       const std::vector<int> strip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]) const;
 
   /* check whether there is a shower around best CLCT */
-  void checkLocalShower(int bx, int zone,
+  void checkLocalShower(int zone,
     const std::vector<int> strip[CSCConstants::NUM_LAYERS][CSCConstants::MAX_NUM_HALF_STRIPS_RUN2_TRIGGER]);
 
   void encodeHighMultiplicityBits(
