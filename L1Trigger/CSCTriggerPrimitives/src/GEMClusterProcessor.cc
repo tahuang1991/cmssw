@@ -190,10 +190,11 @@ void GEMClusterProcessor::addSingleClusters(const GEMPadDigiClusterCollection* i
       // put the single clusters into the collection
       if (id.layer() == 1) {
         clusters_.emplace_back(id, id, *p, GEMPadDigiCluster(), delayGEMinOTMB_, tmbL1aWindowSize_);
-        // std::cout << clusters_.back() << std::endl;
+        //std::cout <<"GEM Cluster in GE11 layer1: "<< *p <<" size "<< (p->pads()).size() << " nPartition "<< p->nPartitions() << std::endl;
       } else {
         clusters_.emplace_back(id, id, GEMPadDigiCluster(), *p, delayGEMinOTMB_, tmbL1aWindowSize_);
-        // std::cout << clusters_.back() << std::endl;
+        //std::cout <<"GEM Cluster in GE11 layer2: "<< *p <<" size "<< (p->pads()).size() << " nPartition "<< p->nPartitions() << std::endl;
+
       }
     }
   }

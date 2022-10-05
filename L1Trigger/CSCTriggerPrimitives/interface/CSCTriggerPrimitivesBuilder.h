@@ -61,6 +61,9 @@ public:
   void setCSCGeometry(const CSCGeometry* g) { csc_g = g; }
   void setGEMGeometry(const GEMGeometry* g) { gem_g = g; }
 
+  // set run number and event number
+  void setRunNumber(int runNumber) {runNumber_ = runNumber;}
+  void setEventNumber(int evtNumber) {evtNumber_ = evtNumber;}
   // Build anode, cathode, and correlated LCTs in each chamber and fill them
   // into output collections.  Pass collections of wire and comparator digis
   // to Trigger MotherBoard (TMB) processors, which, in turn, pass them to
@@ -131,6 +134,10 @@ private:
 
   /** Phase2: special switch for the upgrade ME2/1 TMB */
   bool runME21ILT_;
+
+  /*run number and evt number for debugging*/
+  int runNumber_;
+  int evtNumber_;
 
   /** Pointers to TMB processors for all possible chambers. */
   std::unique_ptr<CSCMotherboard> tmb_[MAX_ENDCAPS][MAX_STATIONS][MAX_SECTORS][MAX_SUBSECTORS][MAX_CHAMBERS];

@@ -107,6 +107,9 @@ private:
   bool runILT_;  // // 'OR' of the two options below
   bool runME11ILT_;
   bool runME21ILT_;
+
+  int runNumber_;
+  int evtNumber_;
 };
 
 #endif
@@ -182,8 +185,13 @@ CSCTriggerPrimitivesProducer::CSCTriggerPrimitivesProducer(const edm::ParameterS
 CSCTriggerPrimitivesProducer::~CSCTriggerPrimitivesProducer() {}
 
 void CSCTriggerPrimitivesProducer::produce(edm::Event& ev, const edm::EventSetup& setup) {
+
+  runNumber_ = ev.id().run();
+  evtNumber_ = ev.id().event();
   // get the csc geometry
   builder_->setCSCGeometry(&setup.getData(cscToken_));
+  builder_->setRunNumber(runNumber_);
+  builder_->setEventNumber(evtNumber_);
 
   // get the gem geometry if it's there
   edm::ESHandle<GEMGeometry> h_gem = setup.getHandle(gemToken_);

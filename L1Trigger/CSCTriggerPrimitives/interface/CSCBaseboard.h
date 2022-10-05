@@ -32,6 +32,10 @@ public:
 
   CSCDetId id() const { return cscId_; }
 
+  // set run number and event number
+  void setRunNumber(int runNumber) {runNumber_ = runNumber;}
+  void setEventNumber(int evtNumber) {evtNumber_ = evtNumber;}
+
 protected:
   void checkConfigParameters(unsigned int& var,
                              const unsigned int var_max,
@@ -112,5 +116,10 @@ protected:
   bool runCCLUT_;
   bool runCCLUT_TMB_;
   bool runCCLUT_OTMB_;
+
+  /*run number and evt number for debugging*/
+  int runNumber_;
+  int evtNumber_;
+
 };
 #endif

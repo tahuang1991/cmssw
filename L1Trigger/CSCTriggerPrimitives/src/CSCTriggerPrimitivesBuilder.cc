@@ -176,6 +176,9 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
 
             tmb->setCSCGeometry(csc_g);
 
+            tmb->setRunNumber(runNumber_);
+            tmb->setEventNumber(evtNumber_);
+
             // actual chamber number =/= trigger chamber number
             int chid = CSCTriggerNumbering::chamberFromTriggerLabels(sect, subs, stat, cham);
 
@@ -201,6 +204,9 @@ void CSCTriggerPrimitivesBuilder::build(const CSCBadChambers* badChambers,
               CSCGEMMotherboard* tmbGEM = static_cast<CSCGEMMotherboard*>(tmb);
               tmbGEM->setGEMGeometry(gem_g);
               tmbGEM->setCSCGeometry(csc_g);
+              tmbGEM->setRunNumber(runNumber_);
+              tmbGEM->setEventNumber(evtNumber_);
+
               tmbGEM->run(wiredc, compdc, gemClusters);
 
               // 0th layer means whole chamber.
