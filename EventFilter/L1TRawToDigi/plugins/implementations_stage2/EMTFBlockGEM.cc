@@ -96,8 +96,7 @@ namespace l1t {
                                 const int evt_sector,
                                 const int cluster_id,  // used to differentiate between GEM layer 1/2
                                 const int link) {
-        station =
-            1;  // station is not encoded in the GEM frame for now. Set station = 1 since we only have GE1/1 for Run 3.
+        station = 1;  // station is not encoded in the GEM frame for now. Set station = 1 since we only have GE1/1 for Run 3.
         ring = 1;  // GEMs are only in GE1/1 and GE2/1
         sector = -99;
         subsector = -99;
@@ -105,10 +104,10 @@ namespace l1t {
         layer = -99;  // the GEM layer is 1 or 2, depending on the cluster ID
 
         // Neighbor indicated by link == 6
-        sector = (link != 6 ? evt_sector : (evt_sector == 1 ? 6 : evt_sector - 1));
-        subsector = (link != 6 ? link : 0);  // TODO: verify subsector 0 in the neighbouring sector?
-        neighbor = (link == 6 ? 1 : 0);  // TODO: verify that 6 is for the neighbour, not 0 (as written in EMTFBlockRPC)
-        layer = (cluster_id % 8);        // + 1 if layer should be 1 or 2, otherwise layer is 0 or 1
+        sector = (link != 4 ? evt_sector : (evt_sector == 1 ? 6 : evt_sector - 1));
+        subsector = (link < 4 ? link : (link == 4 ? 0 : link-1));  // TODO: verify subsector 0 in the neighbouring sector?
+        neighbor = (link == 4 ? 1 : 0);  // TODO: verify that 6 is for the neighbour, not 0 (as written in EMTFBlockRPC)
+        layer = (cluster_id / 4) % 2 + 1;        // + 1 if layer should be 1 or 2, otherwise layer is 0 or 1
       }
 
       /**
@@ -215,8 +214,7 @@ namespace l1t {
           }
 
           // Convert specially-encoded GEM quantities
-          // TODO: is the RPC or CSC method for this function better... - JS 06.07.20
-          int _station, _ring, _sector, _subsector, _neighbor, _layer;
+          int _station, _ring, _sector, _subsector, _neighbor, _layer; 
           convert_GEM_location(_station,
                                _ring,
                                _sector,
@@ -228,12 +226,9 @@ namespace l1t {
                                GEM_.Link());
 
           // Rotate by 20 deg to match GEM convention in CMSSW) // FIXME VERIFY
-          // int _sector_gem = (_subsector < 5) ? _sector : (_sector % 6) + 1; //
           int _sector_gem = _sector;
-          // Rotate by 2 to match GEM convention in CMSSW (GEMDetId.h) // FIXME VERIFY
-          int _subsector_gem = ((_subsector + 1) % 6) + 1;
-          // Define chamber number) // FIXME VERIFY
-          int _chamber = (_sector_gem - 1) * 6 + _subsector_gem;
+          int _subsector_gem = _subsector; 
+          int _chamber = ((_sector_gem - 1) * 6 + _subsector_gem + 2)%36 + 1;
           // Define CSC-like subsector) // FIXME WHY?? VERIFY
           int _subsector_csc = (_station != 1) ? 0 : ((_chamber % 6 > 2) ? 1 : 2);
 
@@ -243,9 +238,11 @@ namespace l1t {
           Hit_.set_subsector(_subsector_csc);
           Hit_.set_chamber(_chamber);
           Hit_.set_neighbor(_neighbor);
+          Hit_.set_layer(_layer);
 
           // Fill the EMTFHit
           ImportGEM(Hit_, GEM_, (res->at(iOut)).PtrEventHeader()->Endcap(), (res->at(iOut)).PtrEventHeader()->Sector());
+          std::cout <<"EMTF GEMHit  "<< Hit_.GEM_DetId() <<" layer "<< _layer <<" clusterid "<< GEM_.ClusterID() <<" BX "<<  Hit_.BX() <<" pad "<< Hit_.Pad() <<" size "<< Hit_.ClusterSize() << std::endl;
 
           // Set the stub number for this hit
           // Each chamber can send up to 2 stubs per BX // FIXME is this true for GEM, are stubs relevant for GEMs?
