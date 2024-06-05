@@ -103,10 +103,10 @@ namespace l1t {
         neighbor = -99;
         layer = -99;  // the GEM layer is 1 or 2, depending on the cluster ID
 
-        // Neighbor indicated by link == 6
+        // Neighbor indicated by link == 4
         sector = (link != 4 ? evt_sector : (evt_sector == 1 ? 6 : evt_sector - 1));
-        subsector = (link < 4 ? link : (link == 4 ? 0 : link-1));  // TODO: verify subsector 0 in the neighbouring sector?
-        neighbor = (link == 4 ? 1 : 0);  // TODO: verify that 6 is for the neighbour, not 0 (as written in EMTFBlockRPC)
+        subsector = (link < 4 ? link : (link == 4 ? 5 : link-1));  
+        neighbor = (link == 4 ? 1 : 0);  
         layer = (cluster_id / 4) % 2 + 1;        // + 1 if layer should be 1 or 2, otherwise layer is 0 or 1
       }
 
