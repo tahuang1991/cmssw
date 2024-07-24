@@ -7,7 +7,7 @@ clctPhase1 = cms.PSet(
     # start time of cathode raw hits in DAQ readout
     clctFifoPretrig = cms.uint32(7),
     # duration of signal pulse, in 25 ns bins
-    clctHitPersist  = cms.uint32(4),
+    clctHitPersist  = cms.uint32(6),
     # time that is required for the electrons to drift to the
     # cathode strips. 15ns drift time --> 45 ns is 3 sigma for the delay
     # this corresponds to 2bx
@@ -50,7 +50,7 @@ clctPhase2 = clctPhase1.clone(
     # which defines how far from pretrigger HS the TMB may look for a trigger HS
     # (it becomes important to do so with localized dead-time zoning):
     # not implemented yet, 2018-10-18, Tao Huang
-    clctPretriggerTriggerZone = cms.uint32(224),
+    clctPretriggerTriggerZone = cms.uint32(4),
 )
 
 # CLCT threshold still set to 4 for now
