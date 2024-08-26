@@ -50,7 +50,7 @@ clctPhase2 = clctPhase1.clone(
     # which defines how far from pretrigger HS the TMB may look for a trigger HS
     # (it becomes important to do so with localized dead-time zoning):
     # not implemented yet, 2018-10-18, Tao Huang
-    clctPretriggerTriggerZone = cms.uint32(224),
+    clctPretriggerTriggerZone = cms.uint32(4),
 )
 
 # CLCT threshold still set to 4 for now
