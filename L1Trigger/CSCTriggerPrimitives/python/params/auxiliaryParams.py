@@ -23,6 +23,7 @@ commonParam = cms.PSet(
     runME21Up = cms.bool(False),
     runME31Up = cms.bool(False),
     runME41Up = cms.bool(False),
+    runTMB2025Up = cms.bool(False),
 
     # GEM-CSC integrated triggers
     runME11ILT = cms.bool(False),

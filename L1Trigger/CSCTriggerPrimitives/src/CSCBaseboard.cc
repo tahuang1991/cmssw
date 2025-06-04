@@ -56,6 +56,7 @@ CSCBaseboard::CSCBaseboard(
   runME21Up_ = conf.commonParams().getParameter<bool>("runME21Up");
   runME31Up_ = conf.commonParams().getParameter<bool>("runME31Up");
   runME41Up_ = conf.commonParams().getParameter<bool>("runME41Up");
+  runTMB2025Up_ = conf.commonParams().getParameter<bool>("runTMB2025Up");
 
   runME11ILT_ = conf.commonParams().getParameter<bool>("runME11ILT");
   runME21ILT_ = conf.commonParams().getParameter<bool>("runME21ILT");
@@ -76,6 +77,7 @@ CSCBaseboard::CSCBaseboard(
   const bool upgradeME31 = runPhase2_ and isME31_ and runME31Up_;
   const bool upgradeME41 = runPhase2_ and isME41_ and runME41Up_;
   const bool upgradeME = upgradeME11 or upgradeME21 or upgradeME31 or upgradeME41;
+  const bool upgradeOuterRing = hasTMB and runTMB2025Up_;
 
   if (upgradeME) {
     tmbParams = "tmbPhase2";
@@ -98,6 +100,11 @@ CSCBaseboard::CSCBaseboard(
       clctParams = "clctPhase2GEM";
       alctParams = "alctPhase2GEM";
     }
+  }
+
+  if (upgradeOuterRing){
+    tmbParams = "tmb2025";
+    clctParams = "clctTMB2025";
   }
   conf.chooseParams(tmbParams, alctParams, clctParams);
 }

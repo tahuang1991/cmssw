@@ -58,6 +58,10 @@ tmbPhase2 = tmbPhase1.clone(
     tmbDropUsedClcts = False,
 )
 
+# to be used by TMB2025
+tmb2025 = tmbPhase2.clone() ## now is identical to tmbPhase2 for OTMBs
+
+
 tmbPhase2GEM = tmbPhase2.clone(
     # matching to GEM clusters in time
     windowBXALCTGEM = cms.uint32(3),
@@ -119,6 +123,7 @@ tmbPhase2GE21 = tmbPhase2GEM.clone(
 tmbPSets = cms.PSet(
     tmbPhase1 = tmbPhase1.clone(),
     tmbPhase2 = tmbPhase2.clone(),
+    tmb2025   = tmb2025.clone(),
     tmbPhase2GE11 = tmbPhase2GE11.clone(),
     tmbPhase2GE21 = tmbPhase2GE21.clone()
 )

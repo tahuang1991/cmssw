@@ -51,6 +51,9 @@ clctPhase2 = clctPhase1.clone(
     clctPretriggerTriggerZone = cms.uint32(224),
 )
 
+#Parameters for CLCT processing in TMB2025
+clctTMB2025 = clctPhase2.clone() ##identical to clctPhase2 now, which is used for OTMB
+
 # CLCT threshold still set to 4 for now
 clctPhase2GEM = clctPhase2.clone(
     clctNplanesHitPattern = 4
@@ -59,5 +62,6 @@ clctPhase2GEM = clctPhase2.clone(
 clctPSets = cms.PSet(
     clctPhase1 = clctPhase1.clone(),
     clctPhase2 = clctPhase2.clone(),
+    clctTMB2025 = clctTMB2025.clone(),
     clctPhase2GEM = clctPhase2GEM.clone()
 )
